@@ -5,13 +5,10 @@ toc: true
 tags: post youtube
 ---
 
-{% capture time %}{{ page.content | reading_time }}{% endcapture %}
-<p>This article will take {{ time }} minute(s) to read.</p>
 
-{% capture count %}{{ page.content | count_words }}{% endcapture %}
-<p>This article has {{count}} words.</p>
-
-<p>Written: {{ page.date | timeago }}</p>
+<div id="tag-cloud">
+    {{ site | tag_cloud }}
+</div>
 
 A banana is an edible fruit – botanically a berry – produced by several kinds
 of large herbaceous flowering plants in the genus Musa.
