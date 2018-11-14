@@ -81,6 +81,7 @@ defaults:
     type: "posts"
   values:
     layout: "post"
+    author: kmazur
     author_profile: true
     read_time: true
     comments: true

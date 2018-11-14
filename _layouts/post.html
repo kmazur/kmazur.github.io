@@ -7,12 +7,27 @@ layout: default
         <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
         <p class="post-meta">
             <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
-                {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+                {%- assign date_format = site.minima.date_format | default: "%Y-%m-%d" -%}
                 {{ page.date | date: date_format }}
             </time>
+            (<time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">{{ page.date | timeago }}</time>)
             {%- if page.author -%}
-            • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">{{ page.author | escape }}</span></span>
-            {%- endif -%}</p>
+
+            <span> • </span>
+            <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">{{ page.author | escape }}</span></span>
+            {%- endif -%}
+
+            <br/>
+            <small>
+                {% capture time %}{{ page.content | reading_time }}{% endcapture %}
+                <span>{{ time }} min read</span>
+                <span> • </span>
+                {% capture count %}{{ page.content | count_words }}{% endcapture %}
+                <span>{{count}} words</span>
+            </small>
+        </p>
+
+
     </header>
 
     <div class="post-content e-content" itemprop="articleBody">
