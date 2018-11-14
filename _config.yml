@@ -39,6 +39,7 @@ plugins:
   - jekyll_figure
   - jekyll/tagging
   - jekyll-tagging-related_posts
+  - jekyll-postfiles
 
 sass:
   style: compressed
