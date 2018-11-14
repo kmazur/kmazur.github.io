@@ -31,7 +31,6 @@ plugins:
   - jekyll-sitemap
   - jekyll-admin
   - jekyll-github-metadata
-  - jekyll-analytics
   - jekyll-mermaid
   - jekyll-toc
   - liquid_reading_time
@@ -45,10 +44,7 @@ plugins:
 sass:
   style: compressed
 
-jekyll_analytics:
-  GoogleAnalytics:
-    id: UA-43483635-3
-    anonymizeIp: false
+google_analytics: UA-43483635-3
 
 jekyll_timeago:
   depth: 2

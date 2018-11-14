@@ -35,7 +35,6 @@ GEM
       jekyll (~> 3.3)
       sinatra (~> 1.4)
       sinatra-contrib (~> 1.4)
-    jekyll-analytics (0.1.11)
     jekyll-feed (0.11.0)
       jekyll (~> 3.3)
     jekyll-github-metadata (2.9.4)
@@ -134,7 +133,6 @@ PLATFORMS
 DEPENDENCIES
   jekyll (~> 3.8.5)
   jekyll-admin
-  jekyll-analytics
   jekyll-feed (~> 0.6)
   jekyll-github-metadata
   jekyll-mermaid

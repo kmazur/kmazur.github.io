@@ -24,7 +24,6 @@ group :jekyll_plugins do
   gem 'jekyll-seo-tag'
   gem 'jekyll-admin'
   gem 'jekyll-github-metadata'
-  gem 'jekyll-analytics'
   gem 'jekyll-mermaid'
   gem 'jekyll-toc'
   gem 'liquid_reading_time'
