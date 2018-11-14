@@ -131,17 +131,4 @@ build-iPhoneSimulator/
 # unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
 .rvmrc
 
-### Web ###
-*.asp
-*.cer
-*.csr
-*.css
-*.htm
-*.html
-*.js
-*.jsp
-*.php
-*.rss
-*.xhtml
-
 # End of https://www.gitignore.io/api/git,web,ruby,jekyll,intellij

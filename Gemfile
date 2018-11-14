@@ -20,6 +20,18 @@ gem "minima", "~> 2.0"
 # If you have any plugins, put them here!
 group :jekyll_plugins do
   gem "jekyll-feed", "~> 0.6"
+  gem 'jekyll-sitemap'
+  gem 'jekyll-seo-tag'
+  gem 'jekyll-admin'
+  gem 'jekyll-github-metadata'
+  gem 'jekyll-analytics'
+  gem 'jekyll-mermaid'
+  gem 'jekyll-toc'
+  gem 'liquid_reading_time'
+  gem 'jekyll-timeago'
+  gem 'jekyll-youtube'
+  gem 'jekyll_figure'
+  gem 'jekyll-tagging-related_posts'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem

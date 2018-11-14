@@ -13,22 +13,56 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Your awesome title
-email: your-email@example.com
+title: kmazur.github.io
+email: ""
 description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
+  Krzysztof Mazur's blog
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: jekyllrb
-github_username:  jekyll
+github_username: kmazur
 
 # Build settings
 markdown: kramdown
 theme: minima
 plugins:
   - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-admin
+  - jekyll-github-metadata
+  - jekyll-analytics
+  - jekyll-mermaid
+  - jekyll-toc
+  - liquid_reading_time
+  - jekyll-timeago
+  - jekyll-youtube
+  - jekyll_figure
+  - jekyll/tagging
+  - jekyll-tagging-related_posts
+
+sass:
+  style: compressed
+
+jekyll_analytics:
+  GoogleAnalytics:
+    id: UA-43483635-3
+    anonymizeIp: false
+
+jekyll_timeago:
+  depth: 2
+
+figures:
+  dir: /figures
+  enumerate: true
+  analytics: true
+
+tag_page_layout: tag_page
+tag_page_dir: tag
+tag_permalink_style: pretty
+tag_page_data:
+  sitemap: false
+tag_feed_layout: tag_feed
+tag_feed_dir: tag
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
@@ -41,3 +75,20 @@ plugins:
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+
+defaults:
+- scope:
+    path: ""
+    type: "posts"
+  values:
+    layout: "post"
+    author_profile: true
+    read_time: true
+    comments: true
+    share: true
+    related: true
+- scope:
+    path: ""
+  values:
+    layout: "default"
