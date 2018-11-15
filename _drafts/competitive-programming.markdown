@@ -18,6 +18,15 @@ tags: competitive-programming interview algorithms data-structures coding
 - Types of errors I did
 
 
+# Data gathering
+
+1. Setup timer
+2. Track reading time
+3. Track submissions, total duration
+4. Retrospective
+    - What I did well?
+    - What I did wrong?
+
 # Analysis
 
 ## Types of errors
@@ -28,8 +37,11 @@ tags: competitive-programming interview algorithms data-structures coding
     - diff error
 2. Missed a necessary piece of information from the description
 3. Corner cases
-4. 
+4. Optimization/timeouts 
 
+
+Indices: 1
+Optimization: 1
 
 ## History
 
