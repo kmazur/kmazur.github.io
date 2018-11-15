@@ -2,7 +2,7 @@
 layout: post
 author: kmazur
 toc: true
-tags: post youtube
+tags: example
 ---
 
 

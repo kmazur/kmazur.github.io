@@ -2,10 +2,10 @@
 layout: post
 author: kmazur
 toc: true
-tags: competitive-programming interview algorithms data-structures coding
+tags: interview coding algorithms data-structures
 ---
 
-# Competitive programming
+# Interview preparation - coding
 
 
 # Plan
@@ -16,6 +16,37 @@ tags: competitive-programming interview algorithms data-structures coding
 - Take notes on structure & checklist & tips & tricks
 - How that progress changes me as a programmer. What's the benefit, are my thinking schemes change? In what way?
 - Types of errors I did
+
+
+# Structured approach
+
+1. **Constraints & IO**
+2. **Examples & Tests**
+3. **Sketch design & Complexity (space & time)**
+    - **Brute force**
+    - **Optimize** (unnecessary code, duplicates, memoization)
+4. **Code**
+    - **Modularize**
+5. **Verification**
+
+
+
+## Tips & Tricks
+
+TODO: structure it
+
+- Two pointers run
+- Use Map/Set
+- Sort & then work with it
+- Use graphs: DFS/BFS
+- For intervals: sort by start (end), iterate over start
+- For recursive algorithm: use memo (and cut the list/size from start)
+- Start with reversed approach: what is the goal and what is a required one step before?  
+
+
+
+
+
 
 
 # Analysis
@@ -55,5 +86,3 @@ TODO: analyze it in pandas
 # Resources
 
 1. Youtube playlist: [Cracking the coding interview](https://www.youtube.com/watch?v=GKgAVjJxh9w&index=1&list=PLX6IKgS15Ue02WDPRCmYKuZicQHit9kFt){:target="_blank"}
-
-TODO: add from emailsiex

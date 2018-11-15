@@ -41,6 +41,9 @@ plugins:
   - jekyll-tagging-related_posts
   - jekyll-postfiles
 
+disqus:
+  shortname: kmazur
+
 sass:
   style: compressed
 
