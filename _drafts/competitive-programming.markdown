@@ -40,14 +40,54 @@ tags: competitive-programming interview algorithms data-structures coding
 4. Optimization/timeouts 
 
 
-Indices: 1
-Optimization: 1
+Count of types of errors I did:
+1. Indices: 1
+2. Optimization: 1
+
+
+### Retrospective
+
+**_Game of codes_ contest (2018-11-16)**
+
+What I did wrong:
+- After 2h I got a little irritated 
+- I didn't go through tips & tricks I had written from the beginning
+- I didn't prepare boilerplate code (like stdin parsing, etc.)
+- Too many distractions: phone, notifications
+- No water, proper eating, sedentary day (no exercises)
+- Not enough sleep
+- Straying away to other tasks I've to do today
+- I didn't write the potential solutions I've already went through (I've kept them in my mind only)
+- Didn't use structured approach based on facts & elimination
+- Didn't state brute force explicity
+- I didn't look at other challenges (maybe some would be faster to complete)
+- My goal was to correctly implement every challenge and not maximizing the total contest points
+- Didn't prepare workspace (mental & physical well-being, distractions, sleep, water, etc.)
+- Didn't warm-up on the other challenges 
+
+What I did well:
+- Forced myself to sit until completed
+- Forced myself to overcome irritation and focus on the task at hand
+- I wrote examples and went through them thouroughly
+- Didn't submit until certain of the result
+- Retest on examples when finished
+- At some point I shut down every notification
+
+How should I improve next time:
+- Get a good night sleep & exercise
+- Eat well & prepare water
+- Warm up on several challenges
+- Prepare structured approach checklist along with tips & trics
+- Prepare boilerplate code (stdin parsing, cheat-sheet with common patterns)
+- Skim through challenges and optimize for points
 
 ## History
+
 
 ### Events
 
 - 2018-11-14 - Started planning
+- 2018-11-16 - Hackerrank contest [Game of codes](https://www.hackerrank.com/contests/game-of-codes-3-0/challenges)
 
 
 ### Month statistics

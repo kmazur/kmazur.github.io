@@ -1,5 +1,6 @@
-date_time,read_time,duration,submissions,difficulty,source,title,url
+date_time,read_time,duration,submissions,source,difficulty,title,url
 2018-11-14T23:52:00,180,270,3,hackerrank,easy,Day of the Programmer,https://www.hackerrank.com/challenges/day-of-the-programmer/problem
 2018-11-15T12:13:00,180,398,1,hackerrank,easy,Picking Numbers,https://www.hackerrank.com/challenges/picking-numbers/problem
 2018-11-15T12:25:40,143,283,1,hackerrank,easy,Utopian Tree,https://www.hackerrank.com/challenges/utopian-tree/problem
 2018-11-15T20:11:30,270,2280,5,hackerrank,medium,Climbing the Leaderboard,https://www.hackerrank.com/challenges/climbing-the-leaderboard/submissions
+2018-11-16T15:45:00,350,11400,1,hackerrank,medium,Help Dory!,https://www.hackerrank.com/contests/game-of-codes-3-0/challenges/help-dory
