@@ -45,7 +45,7 @@ Count of types of errors I did:
 2. Optimization: 1
 
 
-### Retrospective
+## Retrospective
 
 **_Game of codes_ contest (2018-11-16)**
 
@@ -80,6 +80,11 @@ How should I improve next time:
 - Prepare structured approach checklist along with tips & trics
 - Prepare boilerplate code (stdin parsing, cheat-sheet with common patterns)
 - Skim through challenges and optimize for points
+
+## How this challenge influence me as a software engineer
+
+- 2018-11-14 - started
+- 2018-11-26 - Idea of starting from the end result can be useful for personal goal setting/achieving results & identifying dependencies/requirements
 
 ## History
 
