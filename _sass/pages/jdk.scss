@@ -1,0 +1,27 @@
+#jdk {
+  a:hover {
+    text-decoration: none;
+  }
+  .btn-group {
+    display: block;
+  }
+  .btn-group > * {
+    display: inline-block
+  }
+  .btn-group > [data-active=true] {
+    background-color: gray;
+  }
+
+  .jep {
+    font-weight: bold;
+  }
+  .jep-name {
+    color: #333;
+  }
+  .feature .summary {
+    display: none;
+  }
+  .feature .details {
+    display: none;
+  }
+}

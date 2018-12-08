@@ -132,3 +132,6 @@ build-iPhoneSimulator/
 .rvmrc
 
 # End of https://www.gitignore.io/api/git,web,ruby,jekyll,intellij
+
+node_modules
+.gradle

@@ -9,3 +9,9 @@ system-design
 organization
 development
 tech-radar
+jdk
+jdk8
+jdk9
+jdk10
+jdk11
+jdk12

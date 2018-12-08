@@ -1,13 +1,24 @@
 ---
 layout: default
 ---
-<h2>{{ page.tag }}</h2>
-<ul>
-    {% for post in page.posts %}
-    <li><a href="{{ post.url }}">{{ post.title }}</a> ({{ post.date | date_to_string }} | Tags: {{ post | tags }})</li>
-    {% endfor %}
-</ul>
+<div id="tags">
 
-<div id="tag-cloud">
-    {{ site | tag_cloud }}
+    <h1>This blog's tags</h1>
+    <h2><strong>{{ page.tag }}</strong> tag</h2>
+
+    {%- assign date_format = site.minima.date_format | default: "%Y-%m-%d" -%}
+
+    {% for post in page.posts %}
+    <div class="post-ref">
+        {{ post.date | date: date_format }} | <strong><a href="{{ post.url }}">{{ post.title }}</a></strong>
+        <span class="post-tags">{{ post | tags }}</span>
+    </div>
+    {% endfor %}
+
+    <hr/>
+    <h2>Tag cloud</h2>
+    <div id="tag-cloud">
+        {{ site | tag_cloud }}
+    </div>
+
 </div>

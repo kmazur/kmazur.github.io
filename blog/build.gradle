@@ -1,0 +1,79 @@
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+    }
+}
+
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'pmd'
+}
+
+group 'pl.kmazur'
+version '1.0.0'
+ext.moduleName = 'pl.kmazur.blog'
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+checkstyle {
+    showViolations = true
+    toolVersion "8.13"
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.spring.io/snapshot" }
+    maven { url "https://repo.spring.io/milestone" }
+    maven { url 'https://projectlombok.org/edge-releases' }
+}
+
+dependencies {
+    implementation("org.jsoup:jsoup:1.11.3")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.9.7")
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+afterEvaluate {
+    compileJava {
+        inputs.property("moduleName", moduleName)
+        doFirst {
+            options.compilerArgs = [
+                    '--module-path', classpath.asPath,
+            ]
+            classpath = files()
+        }
+    }
+
+    compileTestJava {
+        inputs.property("moduleName", moduleName)
+        doFirst {
+            options.compilerArgs = [
+                    '--module-path', classpath.asPath,
+                    '--add-modules', 'junit',
+                    '--add-reads', "$moduleName=junit",
+                    '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
+            ]
+            classpath = files()
+        }
+    }
+
+    test {
+        inputs.property("moduleName", moduleName)
+        doFirst {
+            jvmArgs = [
+                    '--module-path', classpath.asPath,
+                    '--add-modules', 'ALL-MODULE-PATH',
+                    '--add-reads', "$moduleName=junit",
+                    '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
+            ]
+            classpath = files()
+        }
+    }
+}
