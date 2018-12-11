@@ -15,3 +15,6 @@ jdk9
 jdk10
 jdk11
 jdk12
+personal
+travel
+checklist
