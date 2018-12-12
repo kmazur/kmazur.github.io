@@ -18,8 +18,8 @@ group 'pl.kmazur'
 version '1.0.0'
 ext.moduleName = 'pl.kmazur.blog'
 
-sourceCompatibility = 11
-targetCompatibility = 11
+sourceCompatibility = JavaVersion.VERSION_HIGHER
+targetCompatibility = JavaVersion.VERSION_HIGHER
 
 checkstyle {
     showViolations = true

@@ -47,5 +47,9 @@ layout: default
 </article>
 
 {% for js in page.jsarr %}
-<script type="text/javascript" src="{{ base.url | prepend: site.url }}/assets/js/{{js}}"></script>
+    {% if js contains '://' %}
+        <script type="text/javascript" src="{{js}}"></script>
+    {% else %}
+        <script type="text/javascript" src="{{ base.url | prepend: site.url }}/assets/js/{{js}}"></script>
+    {% endif %}
 {% endfor %}

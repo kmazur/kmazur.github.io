@@ -21,7 +21,7 @@ public class JdkCrawler {
     public List<JepData> getJepDataList(List<String> jdkFeatureUrls) {
         ForkJoinPool pool = new ForkJoinPool(PARALLELISM);
         try {
-            return jdkFeatureUrls.stream()
+            return jdkFeatureUrls.parallelStream()
                     .map(featuresUrl -> pool.submit(() -> getJepData(featuresUrl)))
                     .map(ForkJoinTask::join)
                     .flatMap(Collection::stream)
@@ -32,7 +32,7 @@ public class JdkCrawler {
     }
 
     private List<JepData> getJepData(String featuresUrl) {
-        HtmlPage    doc  = new HtmlPage(featuresUrl);
+        HtmlPage doc = new HtmlPage(featuresUrl);
         Set<String> jeps = getJepUrls(doc);
         return jeps.parallelStream()
                 .map(this::parseJepData)
@@ -68,7 +68,8 @@ public class JdkCrawler {
     }
 
     private Set<String> getJepUrls(HtmlPage page) {
-        return page.getUrls("//openjdk\\.java\\.net/jeps/\\d+");
+        //language=RegExp
+        return page.getUrls(`//openjdk\.java\.net/jeps/\d+`);
     }
 
 }

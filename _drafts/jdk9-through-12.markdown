@@ -6,65 +6,16 @@ title: From jdk8 to jdk12
 cssId: jdk
 tags: java jdk jdk8 jdk9 jdk10 jdk11 jdk12
 jsarr:
- - moment.min.js
+  - moment.min.js
+  - https://unpkg.com/react@16/umd/react.production.min.js
+  - https://unpkg.com/react-dom@16/umd/react-dom.production.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/reactstrap/6.5.0/reactstrap.full.js
+  - https://code.jquery.com/jquery-3.3.1.slim.min.js
+  - https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js
+  - jdk9-12.js
 ---
-
-<script>
-
-const getFeatureTags = (elem) => elem.dataset.tags.split(' ').map(t => t.toLowerCase())
-
-const getButtonGroup = () => document.getElementById("filter");
-const getAllFeatures = () => [...document.querySelectorAll(".feature")];
-const getAllTags     = () => Array.from(new Set(getAllFeatures()
-                                 .map(f => getFeatureTags(f))
-                                 .reduce((x,y) => x.concat(y), [])))
-                                 .filter(tag => tag.trim().length > 0);
-const getActiveTags  = () => [...getButtonGroup().children]
-                                 .filter(c => c.dataset.active == "true")
-                                 .map(c => c.textContent);
- 
-
-function createTagButton(tag) {
-    let elem = document.createElement("button");
-    elem.textContent = tag.toLowerCase();
-    elem.dataset.active = false;
-    elem.onclick = function(e) {
-        let flag = elem.dataset.active == "true";
-        elem.dataset.active = !flag;
-        filterFeatures();
-    };
-    return elem;
-}
-
-function filterFeatures() {
-    let activeTags = getActiveTags();
-    if(activeTags.length === 0) {
-        activeTags = getAllTags();
-    }
-    let featureElems = getAllFeatures();
-    featureElems.forEach(elem => {
-        let tags = getFeatureTags(elem);
-        let matchedTags = tags.filter(tag => activeTags.includes(tag));
-        elem.style.display = matchedTags.length > 0 ? "block" : "none";
-    });
-}
-
-window.onload = function() {
-    let tags = getAllTags();
-    let btnGroup = getButtonGroup();
-    
-    tags.map(tag => createTagButton(tag)).forEach(button => btnGroup.append(button));
-    
-    [...document.querySelectorAll(".timeago")].forEach(e => {
-        e.textContent = "(" + moment(e.getAttribute("datetime")).fromNow() + ")";
-    });
-};
-
-</script>
-
-<div class="btn-group" id="filter">
+<div class="bootstrap-styles" id="react-root">
 </div>
-
 # [JDK 8](https://openjdk.java.net/projects/jdk8/){:target="_blank"}
 
 GA: 2014-03-18 <small class="timeago" datetime="2014-03-18"></small>
@@ -404,7 +355,6 @@ Features:
 </div>
 
 </section>
-
 
 # [JDK 9](https://openjdk.java.net/projects/jdk9/){:target="_blank"}
 
@@ -962,7 +912,6 @@ Features:
 
 </section>
 
-
 # [JDK 10](https://openjdk.java.net/projects/jdk10/){:target="_blank"}
 
 GA: 2018-03-20 <small class="timeago" datetime="2018-03-20"></small>
@@ -1044,7 +993,6 @@ Features:
 </div>
 
 </section>
-
 
 # [JDK 11](https://openjdk.java.net/projects/jdk11/){:target="_blank"}
 
@@ -1158,7 +1106,6 @@ Features:
 
 </section>
 
-
 # [JDK 12](https://openjdk.java.net/projects/jdk12/){:target="_blank"}
 
 GA: 2019-03-19 <small class="timeago" datetime="2019-03-19"></small>
@@ -1222,7 +1169,4 @@ Features:
 </div>
 
 </section>
-
-<script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
 
