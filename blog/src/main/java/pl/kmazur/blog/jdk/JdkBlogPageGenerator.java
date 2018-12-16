@@ -1,5 +1,9 @@
 package pl.kmazur.blog.jdk;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -8,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
@@ -33,12 +37,24 @@ public class JdkBlogPageGenerator {
     );
 
     private static final String DRAFTS_PATH = "_drafts";
+    private static final String JS_PATH = "assets/js/jdk";
 
     public static void main(String[] args) throws IOException {
         var crawler = new JdkCrawler();
         var jepDataList = crawler.getJepDataList(JDK_FEATURE_URLS);
         var jepByVersion = jepDataList.stream().collect(groupingBy(JepData::getRelease));
 
+        ObjectMapper mapper = new ObjectMapper()
+                .findAndRegisterModules()
+                .enable(SerializationFeature.INDENT_OUTPUT);
+
+        String jsonDataFile = "jdk-data.json";
+        Files.writeString(Paths.get(JS_PATH + "/" + jsonDataFile), mapper.writeValueAsString(jepByVersion), CREATE, TRUNCATE_EXISTING);
+
+        //generateMarkdownPage(jepByVersion);
+    }
+
+    private static void generateMarkdownPage(Map<String, List<JepData>> jepByVersion) throws IOException {
         String data = jepByVersion.keySet().stream()
                 .sorted(Comparator.comparing(Integer::valueOf))
                 .map(version -> getJdkSection(jepByVersion, version))
@@ -50,7 +66,7 @@ public class JdkBlogPageGenerator {
         String fileName = "jdk9-through-12.markdown";
         String content = header + placeholder + data;
 
-        Files.write(Paths.get(DRAFTS_PATH + "/" + fileName), content.getBytes(UTF_8), TRUNCATE_EXISTING);
+        Files.writeString(Paths.get(DRAFTS_PATH + "/" + fileName), content, TRUNCATE_EXISTING);
     }
 
     private static String getFilterPlaceholder() {
@@ -109,4 +125,5 @@ public class JdkBlogPageGenerator {
                 jep.getSummary()
         );
     }
+
 }

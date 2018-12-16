@@ -21,7 +21,7 @@ public class JdkCrawler {
     public List<JepData> getJepDataList(List<String> jdkFeatureUrls) {
         ForkJoinPool pool = new ForkJoinPool(PARALLELISM);
         try {
-            return jdkFeatureUrls.parallelStream()
+            return jdkFeatureUrls.stream()
                     .map(featuresUrl -> pool.submit(() -> getJepData(featuresUrl)))
                     .map(ForkJoinTask::join)
                     .flatMap(Collection::stream)

@@ -18,3 +18,7 @@ jdk12
 personal
 travel
 checklist
+reactive
+message-driven
+elastic
+book
