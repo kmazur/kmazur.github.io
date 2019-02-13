@@ -24,6 +24,8 @@ const items = [
     { name: "Towel", type: "hygiene", size: "big", weight: "medium", handLuggage: "yes", male: true, female: true },
     { name: "Shaver for beard", type: "hygiene", size: "medium", weight: "medium", handLuggage: "yes", male: true, female: false },
     { name: "Shaver for legs", type: "hygiene", size: "medium", weight: "medium", handLuggage: "yes", male: false, female: true },
+    { name: "Antibacterial gel", type: "hygiene", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+    { name: "Lip balm", type: "hygiene", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
     { name: "Contact lenses", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Glasses", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
@@ -80,6 +82,9 @@ const items = [
 
     { name: "Swiss army knife", type: "other", size: "small", weight: "light", handLuggage: "no", male: true, female: true },
     { name: "Cash", type: "other", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+
+    { name: "Instant coffee", type: "other", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+
 ];
 
 const actions = [
@@ -100,9 +105,11 @@ const actions = [
     { name: "Buy snacks/food", male: true, female: true },
     { name: "Iron shirts", male: true, female: true },
     { name: "Check-in (online/airport)", male: true, female: true },
-    { name: "Print check-in", male: true, female: true },
+    { name: "Print check-in/tickets", male: true, female: true },
     { name: "Take ID card", male: true, female: true },
     { name: "Take passport", male: true, female: true },
+
+    { name: "Shave", male: true, female: true },
 ];
 
 window.onload = function() {

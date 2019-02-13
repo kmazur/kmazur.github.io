@@ -18,3 +18,6 @@ jsarr:
 
 <div id="react-root">
 </div>
+
+https://dzone.com/articles/4-new-jeps-proposed-for-java-12
+https://howtodoinjava.com/ -> core java

@@ -35,3 +35,5 @@ Automated tools:
 - https://gist.github.com/kashifrazzaqui/44b868a59e99c2da7b14
 - https://www.fromdev.com/2015/02/code-review-checklist.html
 - https://github.com/grafeas/kritis
+- https://www.kevinlondon.com/2015/05/05/code-review-best-practices.html
+- https://robatwilliams.github.io/decent-code/
