@@ -35,14 +35,15 @@ const items = [
     { name: "Nailfile", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Nail cutter", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
+    { name: "Eye cream", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
+    { name: "Face cream", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
+    { name: "Hand cream", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
+    { name: "Sunscreen", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: true, female: true },
+
     { name: "Eye shadows", type: "makeup", size: "small", weight: "light", handLuggage: "yes", male: false, female: true },
     { name: "Undercoat", type: "makeup", size: "small", weight: "light", handLuggage: "yes", male: false, female: true },
     { name: "Make-up remover+wipes", type: "makeup", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
     { name: "Blusher", type: "makeup", size: "small", weight: "light", handLuggage: "yes", male: false, female: true },
-
-    { name: "Eye cream", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
-    { name: "Face cream", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
-    { name: "Hand cream", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
 
     { name: "Umbrella", type: "weather", size: "big", weight: "medium", handLuggage: "yes", male: true, female: true },
     { name: "Sunglasses", type: "weather", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
@@ -57,6 +58,7 @@ const items = [
     { name: "Mouse", type: "electronics", size: "small", weight: "small", handLuggage: "yes", male: true, female: true },
     { name: "Powerbank", type: "electronics", size: "small", weight: "medium", handLuggage: "yes", male: true, female: true },
     { name: "Flashlight", type: "electronics", size: "small", weight: "medium", handLuggage: "yes", male: true, female: true },
+    { name: "Power plug", type: "electronics", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
 
     { name: "Backpack", type: "cloths", size: "large", weight: "heavy", handLuggage: "yes", male: true, female: true },
@@ -75,15 +77,16 @@ const items = [
     { name: "Bra", type: "cloths", size: "medium", weight: "medium", handLuggage: "yes", male: false, female: true },
     { name: "Blouse", type: "cloths", size: "large", weight: "heavy", handLuggage: "yes", male: true, female: true },
 
-
     { name: "Home keys", type: "important", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Wallet", type: "important", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Notes", type: "important", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
     { name: "Swiss army knife", type: "other", size: "small", weight: "light", handLuggage: "no", male: true, female: true },
     { name: "Cash", type: "other", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+    { name: "Trash bags", type: "other", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
-    { name: "Instant coffee", type: "other", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+
+    { name: "Instant coffee", type: "food", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
 ];
 
@@ -108,8 +111,12 @@ const actions = [
     { name: "Print check-in/tickets", male: true, female: true },
     { name: "Take ID card", male: true, female: true },
     { name: "Take passport", male: true, female: true },
+    { name: "Check supported power plug", male: true, female: true },
 
     { name: "Shave", male: true, female: true },
+    { name: "Cut nails", male: true, female: true },
+    { name: "Buy food/snacks", male: true, female: true },
+    { name: "Buy water", male: true, female: true },
 ];
 
 window.onload = function() {
@@ -135,7 +142,7 @@ window.onload = function() {
         render() {
             return React.createElement(Reactstrap.Button, null, `Hello ${this.props.toWhat}`);
         }
-    };
+    }
 
     ReactDOM.render(
         React.createElement(Hello2, {toWhat: 'World'}, null),
