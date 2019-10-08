@@ -30,10 +30,15 @@ const items = [
     { name: "Contact lenses", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Glasses", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Earplugs", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
-    { name: "Painkillers", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Wipes", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Nailfile", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Nail cutter", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+
+    { name: "Painkillers", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+    { name: "Bandages", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+    { name: "Amol", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+    { name: "Rutinoscorbin", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+    { name: "Cholinex", type: "health", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
     { name: "Eye cream", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
     { name: "Face cream", type: "health", size: "small", weight: "light", handLuggage: "bottle", male: false, female: true },
@@ -58,8 +63,8 @@ const items = [
     { name: "Mouse", type: "electronics", size: "small", weight: "small", handLuggage: "yes", male: true, female: true },
     { name: "Powerbank", type: "electronics", size: "small", weight: "medium", handLuggage: "yes", male: true, female: true },
     { name: "Flashlight", type: "electronics", size: "small", weight: "medium", handLuggage: "yes", male: true, female: true },
+    { name: "Binoculars", type: "electronics", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Power plug", type: "electronics", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
-
 
     { name: "Backpack", type: "cloths", size: "large", weight: "heavy", handLuggage: "yes", male: true, female: true },
 
@@ -85,8 +90,9 @@ const items = [
     { name: "Cash", type: "other", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
     { name: "Trash bags", type: "other", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
-
     { name: "Instant coffee", type: "food", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
+
+    { name: "Insurance documents", type: "other", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
 
 ];
 
@@ -96,6 +102,7 @@ const actions = [
     { name: "Charge laptop battery", male: true, female: true },
     { name: "Charge smartphone battery", male: true, female: true },
     { name: "Turn on roaming", male: true, female: true },
+    { name: "Check country UE roaming status", male: true, female: true },
     { name: "Buy data transfer packet", male: true, female: true },
     { name: "Downlaod Google Maps Offline", male: true, female: true },
     { name: "Empty the fridge", male: true, female: true },
@@ -117,6 +124,9 @@ const actions = [
     { name: "Cut nails", male: true, female: true },
     { name: "Buy food/snacks", male: true, female: true },
     { name: "Buy water", male: true, female: true },
+
+    { name: "Download Netflix movies", male: true, female: true },
+    { name: "Take something to read (whitepapers, books, etc)", male: true, female: true },
 ];
 
 window.onload = function() {
