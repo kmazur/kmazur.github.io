@@ -30,6 +30,8 @@ date_time,read_time,duration,submissions,source,difficulty,title,url
 2019-11-21T22:09:00,181,2284,0,leetcode,hard,Minimum Cost to Hire K Workers,https://leetcode.com/problems/minimum-cost-to-hire-k-workers/
 2019-11-21T22:48:00,89,797,1,leetcode,medium,K Closest Points to Origin,https://leetcode.com/problems/k-closest-points-to-origin/
 2019-11-21T23:12:00,14,375,2,leetcode,medium,Add Two Numbers,https://leetcode.com/problems/add-two-numbers
+2019-11-21T23:12:00,25,780,3,leetcode,easy,Two Sum,https://leetcode.com/problems/two-sum/
+2019-11-21T23:27:00,63,2633,2,leetcode,easy,Maximum Subarray,https://leetcode.com/problems/maximum-subarray/
 
 
 2019-11-18T20:50:00,-,-,-,leetcode,hard,Longest Substring with At Most Two Distinct Characters,https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters/
