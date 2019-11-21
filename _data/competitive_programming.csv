@@ -9,3 +9,29 @@ date_time,read_time,duration,submissions,source,difficulty,title,url
 2018-12-07T20:06:50,280,1552,1,hackerrank,easy,Cut the sticks,https://www.hackerrank.com/challenges/cut-the-sticks/problem
 2019-06-20T21:33:45,148,937,1,leetcode,medium,807. Max Increase to Keep City Skyline,https://leetcode.com/problems/max-increase-to-keep-city-skyline/
 2019-06-20T22:02:01,176,1200,1,hackerrank,medium,Forming a Magic Square,https://www.hackerrank.com/challenges/magic-square-forming/problem
+2019-11-13T17:53:00,103,743,2,leetcode,easy,Unique Email Addresses,https://leetcode.com/problems/unique-email-addresses/
+2019-11-13T18:07:00,193,14880,25,leetcode,hard,Odd Even Jump,https://leetcode.com/problems/odd-even-jump/
+2019-11-14T23:29:00,360,450,2,leetcode,easy,Odd Even Jump,https://leetcode.com/problems/odd-even-jump/
+2019-11-14T23:46:00,240,1463,2,leetcode,medium,Fruit Into Baskets,https://leetcode.com/problems/fruit-into-baskets/
+2019-11-15T00:44:00,80,920,2,leetcode,medium,License Key Formatting,https://leetcode.com/problems/longest-substring-without-repeating-characters/
+2019-11-18T20:34:00,24,583,2,leetcode,medium,Jump Game,https://leetcode.com/problems/jump-game/
+2019-11-18T20:50:00,24,357,1,leetcode,easy,Plus One,https://leetcode.com/problems/plus-one/
+2019-11-18T21:01:00,12,3020,9,leetcode,medium,Missing Ranges,https://leetcode.com/problems/missing-ranges/
+2019-11-18T21:56:00,49,1432,4,leetcode,medium,Next Closest Time,https://leetcode.com/problems/next-closest-time/
+2019-11-18T22:38:00,145,1309,3,leetcode,medium,Expressive Words,https://leetcode.com/problems/expressive-words/
+2019-11-19T20:20:00,153,1919,2,leetcode,medium,Find And Replace in String,https://leetcode.com/problems/find-and-replace-in-string/
+2019-11-19T21:30:00,43,869,2,leetcode,easy,Maximize Distance to Closest Person,https://leetcode.com/problems/maximize-distance-to-closest-person/
+2019-11-19T21:47:00,5,582,3,leetcode,easy,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/
+2019-11-19T21:58:00,55,848,1,leetcode,hard,Merge k Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/
+2019-11-19T21:58:00,25,4078,0,leetcode,hard,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/
+2019-11-21T20:53:00,30,180,1,leetcode,medium,Kth Largest Element in an Array,https://leetcode.com/problems/kth-largest-element-in-an-array/
+2019-11-21T21:02:00,44,552,2,leetcode,medium,Meeting Rooms II,https://leetcode.com/explore/interview/card/google/59/array-and-strings/3059/
+2019-11-21T21:39:00,25,1522,2,leetcode,easy,Backspace String Compare,https://leetcode.com/problems/backspace-string-compare/
+2019-11-21T22:09:00,181,2284,0,leetcode,hard,Minimum Cost to Hire K Workers,https://leetcode.com/problems/minimum-cost-to-hire-k-workers/
+2019-11-21T22:48:00,89,797,1,leetcode,medium,K Closest Points to Origin,https://leetcode.com/problems/k-closest-points-to-origin/
+2019-11-21T23:12:00,14,375,2,leetcode,medium,Add Two Numbers,https://leetcode.com/problems/add-two-numbers
+
+
+2019-11-18T20:50:00,-,-,-,leetcode,hard,Longest Substring with At Most Two Distinct Characters,https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters/
+2019-11-18T20:50:00,-,-,-,leetcode,hard,Read N Characters Given Read4 II - Call multiple times,https://leetcode.com/problems/read-n-characters-given-read4-ii-call-multiple-times/
+2019-11-18T20:58:00,48,-,-,leetcode,hard,Minimum Window Substring,https://leetcode.com/problems/minimum-window-substring/
