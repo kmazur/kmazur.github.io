@@ -23,17 +23,27 @@ date_time,read_time,duration,submissions,source,difficulty,title,url
 2019-11-19T21:30:00,43,869,2,leetcode,easy,Maximize Distance to Closest Person,https://leetcode.com/problems/maximize-distance-to-closest-person/
 2019-11-19T21:47:00,5,582,3,leetcode,easy,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/
 2019-11-19T21:58:00,55,848,1,leetcode,hard,Merge k Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/
-2019-11-19T21:58:00,25,4078,0,leetcode,hard,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/
 2019-11-21T20:53:00,30,180,1,leetcode,medium,Kth Largest Element in an Array,https://leetcode.com/problems/kth-largest-element-in-an-array/
 2019-11-21T21:02:00,44,552,2,leetcode,medium,Meeting Rooms II,https://leetcode.com/explore/interview/card/google/59/array-and-strings/3059/
 2019-11-21T21:39:00,25,1522,2,leetcode,easy,Backspace String Compare,https://leetcode.com/problems/backspace-string-compare/
-2019-11-21T22:09:00,181,2284,0,leetcode,hard,Minimum Cost to Hire K Workers,https://leetcode.com/problems/minimum-cost-to-hire-k-workers/
 2019-11-21T22:48:00,89,797,1,leetcode,medium,K Closest Points to Origin,https://leetcode.com/problems/k-closest-points-to-origin/
 2019-11-21T23:12:00,14,375,2,leetcode,medium,Add Two Numbers,https://leetcode.com/problems/add-two-numbers
 2019-11-21T23:12:00,25,780,3,leetcode,easy,Two Sum,https://leetcode.com/problems/two-sum/
 2019-11-21T23:27:00,63,2633,2,leetcode,easy,Maximum Subarray,https://leetcode.com/problems/maximum-subarray/
+2019-11-22T22:47:00,40,500,1,leetcode,medium,Remove Nth Node From End of List,https://leetcode.com/problems/remove-nth-node-from-end-of-list/
+2019-11-22T23:02:00,10,321,1,leetcode,easy,Merge Two Sorted Lists,https://leetcode.com/problems/merge-two-sorted-lists/
+2019-11-22T23:12:00,125,1952,2,leetcode,medium,Copy List with Random Pointer,https://leetcode.com/problems/copy-list-with-random-pointer/
+2019-11-23T00:19:00,240,2104,2,leetcode,medium,Word Ladder,https://leetcode.com/problems/word-ladder/
+2019-11-23T12:24:00,47,528,2,leetcode,medium,Number of Islands,https://leetcode.com/problems/number-of-islands/
+2019-11-23T17:06:00,23,321,1,leetcode,medium,Count Complete Tree Nodes,https://leetcode.com/problems/count-complete-tree-nodes/
+2019-11-23T17:06:00,153,2532,2,leetcode,medium,Decode String,https://leetcode.com/problems/decode-string/
 
 
-2019-11-18T20:50:00,-,-,-,leetcode,hard,Longest Substring with At Most Two Distinct Characters,https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters/
-2019-11-18T20:50:00,-,-,-,leetcode,hard,Read N Characters Given Read4 II - Call multiple times,https://leetcode.com/problems/read-n-characters-given-read4-ii-call-multiple-times/
-2019-11-18T20:58:00,48,-,-,leetcode,hard,Minimum Window Substring,https://leetcode.com/problems/minimum-window-substring/
+2019-11-23T12:24:00,,,,leetcode,hard,Longest Increasing Path in a Matrix,https://leetcode.com/problems/longest-increasing-path-in-a-matrix/
+2019-11-23T12:24:00,320,4277,0,leetcode,medium,Course Schedule II,https://leetcode.com/problems/course-schedule-ii/
+2019-11-19T21:58:00,25,4078,0,leetcode,hard,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/
+2019-11-21T22:09:00,181,2284,0,leetcode,hard,Minimum Cost to Hire K Workers,https://leetcode.com/problems/minimum-cost-to-hire-k-workers/
+2019-11-23T00:17:00,,,,leetcode,hard,Binary Tree Maximum Path Sum,https://leetcode.com/problems/binary-tree-maximum-path-sum/
+2019-11-18T20:50:00,,,,leetcode,hard,Longest Substring with At Most Two Distinct Characters,https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters/
+2019-11-18T20:50:00,,,,leetcode,hard,Read N Characters Given Read4 II - Call multiple times,https://leetcode.com/problems/read-n-characters-given-read4-ii-call-multiple-times/
+2019-11-18T20:58:00,,,,leetcode,hard,Minimum Window Substring,https://leetcode.com/problems/minimum-window-substring/
