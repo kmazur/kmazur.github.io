@@ -58,7 +58,43 @@ date_time,with_help,read_time,duration,submissions,source,difficulty,title,url
 2019-12-01,0,34,365,2,leetcode,easy,Isomorphic Strings,https://leetcode.com/problems/isomorphic-strings/
 2019-12-01,0,149,5648,9,leetcode,medium,Isomorphic Strings,https://leetcode.com/problems/exam-room
 2019-12-01,0,28,248,9,leetcode,medium,Decode String,https://leetcode.com/problems/decode-string/
-
+2019-12-06,0,60,123,1,leetcode,medium,Find Peak Element,https://leetcode.com/problems/find-peak-element/
+2019-12-06,0,20,420,2,leetcode,easy,Repeated Substring Pattern,https://leetcode.com/problems/repeated-substring-pattern/submissions/
+2019-12-06,0,20,145,1,leetcode,easy,Robot Return to Origin,https://leetcode.com/problems/robot-return-to-origin/
+2019-12-06,0,45,1006,1,leetcode,medium,Expressive Words,https://leetcode.com/problems/expressive-words/submissions/
+2019-12-06,0,61,1020,2,leetcode,medium,Most Stones Removed with Same Row or Column,https://leetcode.com/problems/most-stones-removed-with-same-row-or-column/
+2019-12-06,0,32,3915,16,leetcode,hard,Longest Increasing Path in a Matrix,https://leetcode.com/problems/longest-increasing-path-in-a-matrix/solution/
+2019-12-07,0,15,372,1,leetcode,easy,Single-Row Keyboard,https://leetcode.com/problems/single-row-keyboard/
+2019-12-07,0,33,648,1,leetcode,medium,Maximum Level Sum of a Binary Tree,https://leetcode.com/problems/maximum-level-sum-of-a-binary-tree/
+2019-12-07,0,181,1002,1,leetcode,hard,Odd Even Jump,https://leetcode.com/problems/odd-even-jump/
+2019-12-07,0,15,405,1,leetcode,easy,Remove All Adjacent Duplicates In String,https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string/
+2019-12-07,0,39,720,1,leetcode,medium,Brace Expansion,https://leetcode.com/problems/brace-expansion/
+2019-12-07,1,48,7180,18,leetcode,hard,Stream of Characters,https://leetcode.com/problems/stream-of-characters/
+2019-12-08,0,66,1275,3,leetcode,medium,Alphabet Board Path,https://leetcode.com/problems/alphabet-board-path/submissions/
+2019-12-08,0,60,2484,4,leetcode,medium,Shortest Distance to Target Color,https://leetcode.com/problems/shortest-distance-to-target-color/
+2019-12-08,0,144,1920,1,leetcode,hard,Sliding Puzzle,https://leetcode.com/problems/sliding-puzzle/
+2019-12-09,0,37,1730,1,leetcode,medium,Perfect Squares,https://leetcode.com/problems/perfect-squares/
+2019-12-09,0,199,2871,2,leetcode,medium,Binary Tree Coloring Game,https://leetcode.com/problems/binary-tree-coloring-game/
+2019-12-09,1,196,2432,0,leetcode,medium,Campus Bikes II,https://leetcode.com/problems/campus-bikes-ii/
+2019-12-09,0,13,1140,3,leetcode,medium,Maximal Square,https://leetcode.com/problems/maximal-square/
+2019-12-09,0,38,1022,2,leetcode,easy,Maximal Square,https://leetcode.com/problems/logger-rate-limiter
+2019-12-09,1,49,1500,5,leetcode,medium,All Paths from Source Lead to Destination,https://leetcode.com/problems/all-paths-from-source-lead-to-destination/
+2019-12-10,0,0,0,1,leetcode,easy,Happy Number,https://leetcode.com/problems/happy-number/
+2019-12-10,0,2,37,1,leetcode,easy,Reverse Linked List,https://leetcode.com/problems/reverse-linked-list/
+2019-12-10,0,40,568,1,leetcode,easy,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/
+2019-12-10,0,125,1195,1,leetcode,easy,Verifying an Alien Dictionary,https://leetcode.com/problems/verifying-an-alien-dictionary/
+2019-12-10,0,53,840,2,leetcode,easy,Merge Sorted Array,https://leetcode.com/problems/merge-sorted-array/
+2019-12-10,0,19,461,2,leetcode,easy,Reverse Integer,https://leetcode.com/problems/reverse-integer/
+2019-12-10,0,1,660,1,leetcode,easy,Valid Palindrome,https://leetcode.com/problems/valid-palindrome/
+2019-12-10,0,12,135,1,leetcode,easy,Fizz Buzz,https://leetcode.com/problems/fizz-buzz/
+2019-12-10,0,110,226,1,leetcode,easy,Roman to Integer,https://leetcode.com/problems/roman-to-integer/
+2019-12-10,0,39,1007,1,leetcode,easy,Subdomain Visit Count,https://leetcode.com/problems/subdomain-visit-count/
+2019-12-10,0,13,85,1,leetcode,easy,Palindrome Number,https://leetcode.com/problems/palindrome-number/
+2019-12-10,0,32,503,1,leetcode,medium,Group Shifted Strings,https://leetcode.com/problems/group-shifted-strings/
+2019-12-10,0,20,337,1,leetcode,medium,Number of Islands,https://leetcode.com/problems/number-of-islands/
+2019-12-10,0,39,1278,1,leetcode,medium,Sentence Screen Fitting,https://leetcode.com/problems/sentence-screen-fitting/
+2019-12-10,0,120,1145,1,leetcode,hard,Sentence Screen Fitting,https://leetcode.com/problems/number-of-islands-ii/
+2019-12-10,0,57,1302,1,leetcode,easy,Paint Fence,https://leetcode.com/problems/paint-fence/
 
 
 
