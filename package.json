@@ -21,7 +21,7 @@
   "homepage": "https://github.com/kmazur/kmazur.github.io#readme",
   "dependencies": {
     "bootstrap": "^4.1.3",
-    "moment": "^2.22.2",
+    "moment": "^2.29.4",
     "reactstrap": "^6.5.0"
   }
 }
