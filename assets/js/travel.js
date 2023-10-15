@@ -121,6 +121,9 @@ const actions = [
     { name: "Take passport", male: true, female: true },
     { name: "Check supported power plug", male: true, female: true },
 
+    { name: "Check driving rules", male: true, female: true },
+    { name: "Check items to have in car", male: true, female: true },
+
     { name: "Shave", male: true, female: true },
     { name: "Cut nails", male: true, female: true },
     { name: "Buy food/snacks", male: true, female: true },
