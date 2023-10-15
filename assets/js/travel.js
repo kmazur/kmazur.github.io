@@ -68,6 +68,8 @@ const items = [
 
     { name: "Backpack", type: "cloths", size: "large", weight: "heavy", handLuggage: "yes", male: true, female: true },
 
+    { name: "Walking sticks", type: "items", size: "medium", weight: "light", handLuggage: "no", male: true, female: true },
+
     { name: "T-shirt", type: "cloths", size: "medium", weight: "medium", handLuggage: "yes", male: true, female: true },
     { name: "Jeans", type: "cloths", size: "large", weight: "heavy", handLuggage: "yes", male: true, female: true },
     { name: "Underwear", type: "cloths", size: "medium", weight: "medium", handLuggage: "yes", male: true, female: true },
@@ -123,6 +125,8 @@ const actions = [
 
     { name: "Check driving rules", male: true, female: true },
     { name: "Check items to have in car", male: true, female: true },
+
+    { name: "Check items to take on this specific kind of trip (mountains, etc.)", male: true, female: true },
 
     { name: "Shave", male: true, female: true },
     { name: "Cut nails", male: true, female: true },
