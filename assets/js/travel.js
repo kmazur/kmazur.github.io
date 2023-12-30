@@ -12,6 +12,7 @@
 // if plane -> timelines - arrival, departure from/to source&destination + durations, reservation number + other info
 // place for stay/hotel info, contact, reservation numbers (+url?)
 // requires passport?
+// discover places to visit on Google Maps & save them in a list
 
 const items = [
     { name: "Toothbrush", type: "hygiene", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
