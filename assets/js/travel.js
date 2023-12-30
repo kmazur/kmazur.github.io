@@ -13,6 +13,7 @@
 // place for stay/hotel info, contact, reservation numbers (+url?)
 // requires passport?
 // discover places to visit on Google Maps & save them in a list
+// register in flight provider, download app, download boarding passes pdf on phone & make screenshot
 
 const items = [
     { name: "Toothbrush", type: "hygiene", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
