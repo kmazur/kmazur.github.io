@@ -14,6 +14,7 @@
 // requires passport?
 // discover places to visit on Google Maps & save them in a list
 // register in flight provider, download app, download boarding passes pdf on phone & make screenshot
+// take gifts for people in the destination place
 
 const items = [
     { name: "Toothbrush", type: "hygiene", size: "small", weight: "light", handLuggage: "yes", male: true, female: true },
