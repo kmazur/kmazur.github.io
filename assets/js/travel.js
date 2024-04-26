@@ -1,4 +1,6 @@
-
+// skrzynia pocztowa
+// przygotować samochod
+// zmywarke nastawic
 // TODO:
 // travel days + dates
 // travel country
