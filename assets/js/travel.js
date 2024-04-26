@@ -1,4 +1,6 @@
 // skrzynia pocztowa
+// schować rowery
+
 // przygotować samochod
 // zmywarke nastawic
 // TODO:
