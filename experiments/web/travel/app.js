@@ -41,8 +41,8 @@ const groupBy = (entries, key, fallbackLabel) => Object.values(entries.reduce((g
     return groups;
 }, {}));
 
-document.addEventListener("alpine:init", () => {
-    Alpine.data("travelChecklistApp", () => ({
+window.travelChecklistApp = function () {
+    return {
         dataset: normalizeDataset({}),
         checked: { items: {}, actions: {} },
         loading: true,
@@ -202,5 +202,5 @@ document.addEventListener("alpine:init", () => {
             this.checked = { items: {}, actions: {} };
             this.copyState = "Copy Checked";
         }
-    }));
-});
+    };
+};
