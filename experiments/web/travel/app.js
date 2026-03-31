@@ -1,4 +1,5 @@
 const STORAGE_KEY = "travel-packing-checklist-v1";
+const DATASET_URL = "./data.json?v=20260331-2";
 
 function normalizeEntry(entry) {
     return {
@@ -57,7 +58,7 @@ window.travelChecklistApp = function () {
             });
 
             try {
-                const response = await fetch("./data.json", { cache: "no-store" });
+                const response = await fetch(DATASET_URL, { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error(`Failed to load checklist data (${response.status})`);
                 }
