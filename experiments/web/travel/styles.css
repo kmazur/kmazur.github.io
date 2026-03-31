@@ -92,6 +92,24 @@ code {
     margin-bottom: 30px;
 }
 
+.app-nav {
+    justify-content: flex-end;
+}
+
+.utility-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.60);
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
 .back-link, .ghost-link, .action-button, .chip, .tab-button {
     transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
 }
@@ -212,6 +230,16 @@ h1 { font-size: clamp(3.1rem, 7vw, 5.8rem); max-width: 9ch; }
     grid-template-columns: minmax(310px, 380px) minmax(0, 1fr);
     gap: 22px;
     margin-top: 26px;
+}
+
+.workspace.single-column {
+    grid-template-columns: 1fr;
+}
+
+.result-split {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
 }
 
 .planner-panel {
@@ -361,7 +389,7 @@ h1 { font-size: clamp(3.1rem, 7vw, 5.8rem); max-width: 9ch; }
 }
 
 @media (max-width: 1080px) {
-    .hero-grid, .workspace { grid-template-columns: 1fr; }
+    .hero-grid, .workspace, .result-split { grid-template-columns: 1fr; }
     .planner-panel { position: static; }
 }
 

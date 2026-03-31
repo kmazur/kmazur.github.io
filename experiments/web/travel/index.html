@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Packing Helper</title>
-    <meta name="description" content="Frontend-only travel checklist app backed by predefined JSON items and actions.">
+    <title>Travel Checklist</title>
+    <meta name="description" content="Dedicated frontend-only travel checklist backed by predefined JSON items and actions.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,35 +15,35 @@
 <body>
 <div class="page-shell" x-data="travelChecklistApp()" x-cloak>
     <header class="hero">
-        <nav class="hero-nav">
-            <a class="back-link" href="./data.json" target="_blank" rel="noreferrer">Open JSON</a>
-            <a class="ghost-link" href="../../../index.html">Archive</a>
-        </nav>
+        <div class="hero-nav app-nav">
+            <span class="utility-pill">Dedicated checklist app</span>
+            <a class="ghost-link" href="./data.json" target="_blank" rel="noreferrer">Open JSON</a>
+        </div>
 
         <div class="hero-grid">
             <section class="hero-copy">
                 <p class="eyebrow">Frontend Only • Alpine.js • JSON</p>
-                <h1>Travel Checklist App</h1>
+                <h1>Travel Checklist</h1>
                 <p class="hero-text">
-                    Dedicated checkbox app for predefined travel items and actions loaded from JSON.
-                    No backend, no build step, no generator logic in the UI.
+                    Open the page and tick items. That is the whole point.
+                    All packing entries and travel actions come straight from a predefined JSON file.
                 </p>
 
                 <div class="hero-actions">
                     <button class="action-button primary" type="button" @click="copyChecked()" x-text="copyState"></button>
-                    <button class="action-button secondary" type="button" @click="clearChecks()">Clear Checks</button>
+                    <button class="action-button secondary" type="button" @click="clearChecks()">Clear All</button>
                 </div>
 
                 <div class="hero-pills">
+                    <span>all checkboxes visible</span>
                     <span>json-backed</span>
-                    <span>local progress memory</span>
-                    <span>grouped by items and actions</span>
-                    <span>browser only</span>
+                    <span>browser-only state</span>
+                    <span>no planner mode</span>
                 </div>
             </section>
 
             <aside class="hero-summary">
-                <p class="summary-label">Checklist overview</p>
+                <p class="summary-label">Overview</p>
                 <h2 x-text="headline()"></h2>
                 <p class="summary-copy" x-text="summaryText()"></p>
 
@@ -58,128 +58,62 @@
                     </article>
                     <article class="metric-card">
                         <strong x-text="completedCount()"></strong>
-                        <span>checked so far</span>
+                        <span>checked entries</span>
                     </article>
                     <article class="metric-card">
-                        <strong x-text="activeSectionCount()"></strong>
-                        <span>currently visible</span>
+                        <strong x-text="`${progressPercent()}%`"></strong>
+                        <span>progress</span>
                     </article>
                 </div>
 
                 <div class="mini-note">
-                    <span class="mini-note-title">Mode</span>
-                    <p x-text="checklistMode()"></p>
+                    <span class="mini-note-title">Storage</span>
+                    <p>Checks stay in localStorage on this browser until you clear them.</p>
                 </div>
             </aside>
         </div>
     </header>
 
-    <main class="workspace">
-        <aside class="planner-panel">
-            <div class="panel-header">
-                <p class="panel-kicker">Controls</p>
-                <h2>Focus the checklist</h2>
+    <main class="workspace single-column">
+        <section class="status-strip">
+            <div>
+                <p class="strip-label">Checklist progress</p>
+                <strong x-text="progressLabel()"></strong>
             </div>
-
-            <label class="field">
-                <span>Search items and actions</span>
-                <input type="text" x-model.trim="search" placeholder="passport, charger, boarding pass">
-            </label>
-
-            <div class="control-block">
-                <div class="control-title">Visible lists</div>
-                <div class="tab-row">
-                    <button type="button" class="tab-button" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">All</button>
-                    <button type="button" class="tab-button" :class="{ active: activeTab === 'items' }" @click="activeTab = 'items'">Items</button>
-                    <button type="button" class="tab-button" :class="{ active: activeTab === 'actions' }" @click="activeTab = 'actions'">Actions</button>
-                </div>
+            <div class="progress-bar">
+                <span :style="`width: ${progressPercent()}%`"></span>
             </div>
+        </section>
 
-            <div class="control-block">
-                <div class="control-title">Item categories</div>
-                <div class="chip-grid">
-                    <template x-for="category in itemCategories()" :key="category">
-                        <button
-                            type="button"
-                            class="chip"
-                            :class="{ active: itemFilter === category }"
-                            @click="itemFilter = category"
-                            x-text="category === 'all' ? 'All items' : category"></button>
-                    </template>
-                </div>
-            </div>
-
-            <div class="control-block">
-                <div class="control-title">Action stages</div>
-                <div class="chip-grid">
-                    <template x-for="stage in actionStages()" :key="stage">
-                        <button
-                            type="button"
-                            class="chip"
-                            :class="{ active: actionFilter === stage }"
-                            @click="actionFilter = stage"
-                            x-text="stage === 'all' ? 'All actions' : stage"></button>
-                    </template>
-                </div>
-            </div>
-
-            <div class="toggle-list">
-                <div class="toggle-row static-row">
-                    <strong>Checked items</strong>
-                    <span x-text="`${checkedCount('items')} / ${dataset.items.length}`"></span>
-                </div>
-                <div class="toggle-row static-row">
-                    <strong>Checked actions</strong>
-                    <span x-text="`${checkedCount('actions')} / ${dataset.actions.length}`"></span>
-                </div>
-                <div class="toggle-row static-row">
-                    <strong>Source</strong>
-                    <code>data.json</code>
-                </div>
-            </div>
-        </aside>
-
-        <section class="results-column">
-            <section class="status-strip">
+        <section class="result-panel" x-show="loading" x-transition>
+            <div class="result-header">
                 <div>
-                    <p class="strip-label">Checklist progress</p>
-                    <strong x-text="progressLabel()"></strong>
+                    <p class="panel-kicker">Loading</p>
+                    <h3>Preparing checklist data</h3>
                 </div>
-                <div class="progress-bar">
-                    <span :style="`width: ${progressPercent()}%`"></span>
-                </div>
-            </section>
+            </div>
+            <div class="loading-card">Fetching predefined entries from <code>data.json</code>.</div>
+        </section>
 
-            <section class="result-panel" x-show="loading" x-transition>
-                <div class="result-header">
-                    <div>
-                        <p class="panel-kicker">Loading</p>
-                        <h3>Preparing checklist data</h3>
-                    </div>
+        <section class="result-panel warning" x-show="loadError" x-transition>
+            <div class="result-header">
+                <div>
+                    <p class="panel-kicker">Error</p>
+                    <h3>Checklist data unavailable</h3>
                 </div>
-                <div class="loading-card">Fetching predefined travel items and actions from <code>data.json</code>.</div>
-            </section>
+            </div>
+            <div class="empty-state" x-text="loadError"></div>
+        </section>
 
-            <section class="result-panel warning" x-show="loadError" x-transition>
-                <div class="result-header">
-                    <div>
-                        <p class="panel-kicker">Error</p>
-                        <h3>Checklist data unavailable</h3>
-                    </div>
-                </div>
-                <div class="empty-state" x-text="loadError"></div>
-            </section>
-
-            <section class="result-panel" x-show="!loading && !loadError && activeTab !== 'actions'">
+        <div class="result-split" x-show="!loading && !loadError">
+            <section class="result-panel">
                 <div class="result-header">
                     <div>
                         <p class="panel-kicker">Pack</p>
-                        <h3>Predefined packing items</h3>
+                        <h3>Packing checklist</h3>
                     </div>
-                    <span class="panel-count" x-text="`${visibleItems().length} visible`"></span>
+                    <span class="panel-count" x-text="`${dataset.items.length} items`"></span>
                 </div>
-
-                <div class="empty-state" x-show="!visibleItems().length">No packing items match the current filters.</div>
 
                 <template x-for="group in itemGroups()" :key="group.label">
                     <div class="group-block">
@@ -198,11 +132,6 @@
                                             <span class="qty-pill" x-show="item.qty" x-text="item.qty"></span>
                                         </div>
                                         <p x-text="item.note"></p>
-                                        <div class="meta-row" x-show="item.tags.length">
-                                            <template x-for="tag in item.tags" :key="tag">
-                                                <span x-text="tag"></span>
-                                            </template>
-                                        </div>
                                     </div>
                                 </label>
                             </template>
@@ -211,16 +140,14 @@
                 </template>
             </section>
 
-            <section class="result-panel soft" x-show="!loading && !loadError && activeTab !== 'items'">
+            <section class="result-panel soft">
                 <div class="result-header">
                     <div>
                         <p class="panel-kicker">Do</p>
-                        <h3>Predefined travel actions</h3>
+                        <h3>Travel actions</h3>
                     </div>
-                    <span class="panel-count" x-text="`${visibleActions().length} visible`"></span>
+                    <span class="panel-count" x-text="`${dataset.actions.length} actions`"></span>
                 </div>
-
-                <div class="empty-state" x-show="!visibleActions().length">No travel actions match the current filters.</div>
 
                 <template x-for="group in actionGroups()" :key="group.label">
                     <div class="group-block">
@@ -238,11 +165,6 @@
                                             <strong x-text="action.name"></strong>
                                         </div>
                                         <p x-text="action.note"></p>
-                                        <div class="meta-row" x-show="action.tags.length">
-                                            <template x-for="tag in action.tags" :key="tag">
-                                                <span x-text="tag"></span>
-                                            </template>
-                                        </div>
                                     </div>
                                 </label>
                             </template>
@@ -250,23 +172,22 @@
                     </div>
                 </template>
             </section>
+        </div>
 
-            <section class="result-panel future">
-                <div class="result-header">
-                    <div>
-                        <p class="panel-kicker">How It Works</p>
-                        <h3>Simple static app flow</h3>
-                    </div>
+        <section class="result-panel future">
+            <div class="result-header">
+                <div>
+                    <p class="panel-kicker">Data</p>
+                    <h3>One source of truth</h3>
                 </div>
+            </div>
 
-                <div class="idea-cloud">
-                    <span>edit data.json</span>
-                    <span>reload the page</span>
-                    <span>tick what is done</span>
-                    <span>progress stays in localStorage</span>
-                    <span>copy checked entries when needed</span>
-                </div>
-            </section>
+            <div class="idea-cloud">
+                <span>edit data.json</span>
+                <span>reload page</span>
+                <span>tick checkboxes</span>
+                <span>copy checked entries</span>
+            </div>
         </section>
     </main>
 </div>

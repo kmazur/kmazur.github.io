@@ -1,45 +1,47 @@
-const STORAGE_KEY = "travel-packing-helper-v3";
+const STORAGE_KEY = "travel-packing-helper-v4";
 
-const unique = (values) => Array.from(new Set(values.filter(Boolean)));
+function normalizeEntry(entry) {
+    return {
+        id: entry.id || "",
+        name: entry.name || "",
+        category: entry.category || "",
+        stage: entry.stage || "",
+        qty: entry.qty || "",
+        note: entry.note || "",
+        tags: Array.isArray(entry.tags) ? entry.tags : []
+    };
+}
 
-const normalizeEntry = (entry) => ({
-    id: entry.id,
-    name: entry.name,
-    category: entry.category || "",
-    stage: entry.stage || "",
-    qty: entry.qty || "",
-    note: entry.note || "",
-    tags: Array.isArray(entry.tags) ? entry.tags : []
-});
+function normalizeDataset(dataset) {
+    const meta = dataset && dataset.meta ? dataset.meta : {};
+    const items = dataset && Array.isArray(dataset.items) ? dataset.items.map(normalizeEntry) : [];
+    const actions = dataset && Array.isArray(dataset.actions) ? dataset.actions.map(normalizeEntry) : [];
 
-const normalizeDataset = (dataset) => ({
-    meta: {
-        title: dataset?.meta?.title || "Travel Packing Helper",
-        subtitle: dataset?.meta?.subtitle || "Predefined travel checklist"
-    },
-    items: (dataset?.items || []).map(normalizeEntry),
-    actions: (dataset?.actions || []).map(normalizeEntry)
-});
+    return {
+        meta: {
+            title: meta.title || "Travel Checklist",
+            subtitle: meta.subtitle || "Predefined travel checklist"
+        },
+        items,
+        actions
+    };
+}
 
-const matchesSearch = (entry, term) => {
-    if (!term) return true;
-    const haystack = [
-        entry.name,
-        entry.category,
-        entry.stage,
-        entry.qty,
-        entry.note,
-        ...(entry.tags || [])
-    ].join(" ").toLowerCase();
-    return haystack.includes(term);
-};
+function groupBy(entries, key, fallbackLabel) {
+    const groups = [];
+    const index = {};
 
-const groupBy = (entries, key, fallbackLabel) => Object.values(entries.reduce((groups, entry) => {
-    const label = entry[key] || fallbackLabel;
-    groups[label] ||= { label, entries: [] };
-    groups[label].entries.push(entry);
+    entries.forEach(entry => {
+        const label = entry[key] || fallbackLabel;
+        if (index[label] === undefined) {
+            index[label] = groups.length;
+            groups.push({ label, entries: [] });
+        }
+        groups[index[label]].entries.push(entry);
+    });
+
     return groups;
-}, {}));
+}
 
 window.travelChecklistApp = function () {
     return {
@@ -47,11 +49,7 @@ window.travelChecklistApp = function () {
         checked: { items: {}, actions: {} },
         loading: true,
         loadError: "",
-        search: "",
-        itemFilter: "all",
-        actionFilter: "all",
-        activeTab: "all",
-        copyState: "Copy Checked",
+        copyState: "Copy checked",
 
         async init() {
             const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
@@ -68,7 +66,9 @@ window.travelChecklistApp = function () {
 
             try {
                 const response = await fetch("./data.json", { cache: "no-store" });
-                if (!response.ok) throw new Error(`Failed to load checklist data (${response.status})`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load checklist data (${response.status})`);
+                }
                 this.dataset = normalizeDataset(await response.json());
             } catch (error) {
                 this.loadError = "Checklist data could not be loaded.";
@@ -78,39 +78,15 @@ window.travelChecklistApp = function () {
             }
         },
 
-        itemCategories() {
-            return ["all"].concat(unique(this.dataset.items.map(item => item.category)));
-        },
-
-        actionStages() {
-            return ["all"].concat(unique(this.dataset.actions.map(action => action.stage)));
-        },
-
-        visibleItems() {
-            const term = this.search.trim().toLowerCase();
-            return this.dataset.items.filter(item =>
-                (this.itemFilter === "all" || item.category === this.itemFilter) &&
-                matchesSearch(item, term)
-            );
-        },
-
-        visibleActions() {
-            const term = this.search.trim().toLowerCase();
-            return this.dataset.actions.filter(action =>
-                (this.actionFilter === "all" || action.stage === this.actionFilter) &&
-                matchesSearch(action, term)
-            );
-        },
-
         itemGroups() {
-            return groupBy(this.visibleItems(), "category", "Other").map(group => ({
-                ...group,
+            return groupBy(this.dataset.items, "category", "Other").map(group => ({
+                label: group.label,
                 entries: group.entries.slice().sort((a, b) => a.name.localeCompare(b.name))
             }));
         },
 
         actionGroups() {
-            return groupBy(this.visibleActions(), "stage", "Later");
+            return groupBy(this.dataset.actions, "stage", "Later");
         },
 
         isChecked(kind, id) {
@@ -154,17 +130,7 @@ window.travelChecklistApp = function () {
         },
 
         summaryText() {
-            return `${this.dataset.items.length} packing items and ${this.dataset.actions.length} travel actions, all defined in JSON and saved in your browser as you tick them.`;
-        },
-
-        checklistMode() {
-            return this.activeTab === "all" ? "All lists" : (this.activeTab === "items" ? "Packing items only" : "Travel actions only");
-        },
-
-        activeSectionCount() {
-            if (this.activeTab === "items") return this.visibleItems().length;
-            if (this.activeTab === "actions") return this.visibleActions().length;
-            return this.visibleItems().length + this.visibleActions().length;
+            return `${this.dataset.items.length} packing items and ${this.dataset.actions.length} travel actions, all visible immediately and ready to tick.`;
         },
 
         async copyChecked() {
@@ -174,14 +140,18 @@ window.travelChecklistApp = function () {
 
             lines.push("Checked packing items:");
             if (checkedItems.length) {
-                checkedItems.forEach(item => lines.push(`- ${item.name}${item.qty ? ` (${item.qty})` : ""}${item.note ? ` — ${item.note}` : ""}`));
+                checkedItems.forEach(item => {
+                    lines.push(`- ${item.name}${item.qty ? ` (${item.qty})` : ""}${item.note ? ` - ${item.note}` : ""}`);
+                });
             } else {
                 lines.push("- none");
             }
 
             lines.push("", "Checked travel actions:");
             if (checkedActions.length) {
-                checkedActions.forEach(action => lines.push(`- ${action.name}${action.note ? ` — ${action.note}` : ""}`));
+                checkedActions.forEach(action => {
+                    lines.push(`- ${action.name}${action.note ? ` - ${action.note}` : ""}`);
+                });
             } else {
                 lines.push("- none");
             }
@@ -194,13 +164,13 @@ window.travelChecklistApp = function () {
             }
 
             setTimeout(() => {
-                this.copyState = "Copy Checked";
+                this.copyState = "Copy checked";
             }, 1400);
         },
 
         clearChecks() {
             this.checked = { items: {}, actions: {} };
-            this.copyState = "Copy Checked";
+            this.copyState = "Copy checked";
         }
     };
 };
