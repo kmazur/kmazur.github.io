@@ -1,26 +1,27 @@
 # Travel Packing Helper
 
-This page is now a fully custom frontend-only helper rather than an old static draft.
+This page is now a frontend-only checklist app backed by explicit JSON data.
 
 Stack:
 
 - Alpine.js from CDN
 - plain browser JavaScript
 - static HTML and CSS
+- `data.json` as the source of truth
 
 What it does:
 
-- builds a trip-specific packing list from transport, luggage, weather, stay type, style, and activities
-- separates must-pack items from comfort extras
-- surfaces carry-on restrictions when cabin-only mode is selected
-- generates pre-departure actions
+- loads predefined packing items and travel actions from `data.json`
+- groups items by category and actions by stage
+- lets you tick entries directly in the browser
+- supports search and quick filtering
 - stores progress in local browser storage
+- copies checked entries to the clipboard
 
 Files:
 
-- `index.html`: travel helper page
+- `index.html`: checklist app page
 - `styles.css`: standalone styling
-- `app.js`: Alpine data model, rules, and persistence
-
-Future ideas preserved from the original notes are still shown inside the UI.
+- `app.js`: Alpine data model, fetch logic, and persistence
+- `data.json`: predefined items and actions
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Packing Helper</title>
-    <meta name="description" content="Frontend-only travel packing helper with reactive checklists, carry-on alerts, and trip planning notes.">
+    <meta name="description" content="Frontend-only travel checklist app backed by predefined JSON items and actions.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
     <script defer src="./app.js"></script>
 </head>
 <body>
-<div class="page-shell" x-data="travelHelper()" x-cloak>
+<div class="page-shell" x-data="travelChecklistApp()" x-cloak>
     <header class="hero">
         <nav class="hero-nav">
             <a class="back-link" href="../../../index.html">Back to archive</a>
@@ -22,53 +22,53 @@
 
         <div class="hero-grid">
             <section class="hero-copy">
-                <p class="eyebrow">Frontend Only • Alpine.js • CDN</p>
-                <h1>Travel Packing Helper</h1>
+                <p class="eyebrow">Frontend Only • Alpine.js • JSON</p>
+                <h1>Travel Checklist App</h1>
                 <p class="hero-text">
-                    Tune the trip, get an instant checklist, and keep progress directly in the browser.
-                    The page stays static-hosting friendly while behaving like a proper planning tool.
+                    Tick through a predefined packing list and travel actions loaded straight from JSON.
+                    No backend, no build step, no hidden generator rules.
                 </p>
 
                 <div class="hero-actions">
-                    <button class="action-button primary" type="button" @click="copyPlan()" x-text="copyState"></button>
-                    <button class="action-button secondary" type="button" @click="resetTrip()">Reset Trip</button>
+                    <button class="action-button primary" type="button" @click="copyChecked()" x-text="copyState"></button>
+                    <button class="action-button secondary" type="button" @click="clearChecks()">Clear Checks</button>
                 </div>
 
                 <div class="hero-pills">
-                    <span>carry-on aware</span>
-                    <span>quantity hints</span>
-                    <span>trip-specific actions</span>
+                    <span>json-backed</span>
                     <span>local progress memory</span>
+                    <span>grouped by items and actions</span>
+                    <span>browser only</span>
                 </div>
             </section>
 
             <aside class="hero-summary">
-                <p class="summary-label">Current trip</p>
+                <p class="summary-label">Checklist overview</p>
                 <h2 x-text="headline()"></h2>
                 <p class="summary-copy" x-text="summaryText()"></p>
 
                 <div class="metric-grid">
                     <article class="metric-card">
-                        <strong x-text="mustPack().length"></strong>
-                        <span>must-pack items</span>
+                        <strong x-text="dataset.items.length"></strong>
+                        <span>packing items</span>
                     </article>
                     <article class="metric-card">
-                        <strong x-text="optionalPack().length"></strong>
-                        <span>optional extras</span>
+                        <strong x-text="dataset.actions.length"></strong>
+                        <span>travel actions</span>
                     </article>
                     <article class="metric-card">
-                        <strong x-text="departureActions().length"></strong>
-                        <span>before-you-go actions</span>
+                        <strong x-text="completedCount()"></strong>
+                        <span>checked so far</span>
                     </article>
                     <article class="metric-card">
-                        <strong x-text="carryOnWatchlist().length"></strong>
-                        <span>carry-on flags</span>
+                        <strong x-text="activeSectionCount()"></strong>
+                        <span>currently visible</span>
                     </article>
                 </div>
 
                 <div class="mini-note">
-                    <span class="mini-note-title">Planner mode</span>
-                    <p x-text="modeHint()"></p>
+                    <span class="mini-note-title">Mode</span>
+                    <p x-text="checklistMode()"></p>
                 </div>
             </aside>
         </div>
@@ -77,117 +77,65 @@
     <main class="workspace">
         <aside class="planner-panel">
             <div class="panel-header">
-                <p class="panel-kicker">Trip Setup</p>
-                <h2>Build the checklist</h2>
+                <p class="panel-kicker">Controls</p>
+                <h2>Focus the checklist</h2>
             </div>
 
-            <div class="field-grid">
-                <label class="field">
-                    <span>Destination</span>
-                    <input type="text" x-model.trim="trip.destination" placeholder="Lisbon, Tokyo, mountain cabin">
-                </label>
-
-                <label class="field">
-                    <span>Trip length</span>
-                    <input type="number" min="1" max="21" x-model.number="trip.days">
-                </label>
-            </div>
+            <label class="field">
+                <span>Search items and actions</span>
+                <input type="text" x-model.trim="search" placeholder="passport, charger, boarding pass">
+            </label>
 
             <div class="control-block">
-                <div class="control-title">Transport</div>
-                <div class="chip-grid three">
-                    <template x-for="option in options.transport" :key="option.value">
-                        <button
-                            type="button"
-                            class="chip"
-                            :class="{ active: trip.transport === option.value }"
-                            @click="trip.transport = option.value; normalizeLuggage()"
-                            x-text="option.label"></button>
-                    </template>
+                <div class="control-title">Visible lists</div>
+                <div class="tab-row">
+                    <button type="button" class="tab-button" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'">All</button>
+                    <button type="button" class="tab-button" :class="{ active: activeTab === 'items' }" @click="activeTab = 'items'">Items</button>
+                    <button type="button" class="tab-button" :class="{ active: activeTab === 'actions' }" @click="activeTab = 'actions'">Actions</button>
                 </div>
             </div>
 
             <div class="control-block">
-                <div class="control-title">Luggage</div>
-                <div class="chip-grid three">
-                    <template x-for="option in luggageOptions()" :key="option.value">
-                        <button
-                            type="button"
-                            class="chip"
-                            :class="{ active: trip.luggage === option.value }"
-                            @click="trip.luggage = option.value"
-                            x-text="option.label"></button>
-                    </template>
-                </div>
-            </div>
-
-            <div class="field-grid">
-                <label class="field">
-                    <span>Weather</span>
-                    <select x-model="trip.weather">
-                        <template x-for="option in options.weather" :key="option.value">
-                            <option :value="option.value" x-text="option.label"></option>
-                        </template>
-                    </select>
-                </label>
-
-                <label class="field">
-                    <span>Travel style</span>
-                    <select x-model="trip.style">
-                        <template x-for="option in options.style" :key="option.value">
-                            <option :value="option.value" x-text="option.label"></option>
-                        </template>
-                    </select>
-                </label>
-            </div>
-
-            <div class="field-grid">
-                <label class="field">
-                    <span>Traveler profile</span>
-                    <select x-model="trip.profile">
-                        <template x-for="option in options.profile" :key="option.value">
-                            <option :value="option.value" x-text="option.label"></option>
-                        </template>
-                    </select>
-                </label>
-
-                <label class="field">
-                    <span>Stay type</span>
-                    <select x-model="trip.stay">
-                        <template x-for="option in options.stay" :key="option.value">
-                            <option :value="option.value" x-text="option.label"></option>
-                        </template>
-                    </select>
-                </label>
-            </div>
-
-            <div class="control-block">
-                <div class="control-title">Activities</div>
+                <div class="control-title">Item categories</div>
                 <div class="chip-grid">
-                    <template x-for="option in options.activities" :key="option.value">
+                    <template x-for="category in itemCategories()" :key="category">
                         <button
                             type="button"
                             class="chip"
-                            :class="{ active: trip.activities.includes(option.value) }"
-                            @click="toggleActivity(option.value)"
-                            x-text="option.label"></button>
+                            :class="{ active: itemFilter === category }"
+                            @click="itemFilter = category"
+                            x-text="category === 'all' ? 'All items' : category"></button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="control-block">
+                <div class="control-title">Action stages</div>
+                <div class="chip-grid">
+                    <template x-for="stage in actionStages()" :key="stage">
+                        <button
+                            type="button"
+                            class="chip"
+                            :class="{ active: actionFilter === stage }"
+                            @click="actionFilter = stage"
+                            x-text="stage === 'all' ? 'All actions' : stage"></button>
                     </template>
                 </div>
             </div>
 
             <div class="toggle-list">
-                <label class="toggle-row">
-                    <input type="checkbox" x-model="trip.international">
-                    <span>International trip</span>
-                </label>
-                <label class="toggle-row">
-                    <input type="checkbox" x-model="trip.remoteWork">
-                    <span>Working while away</span>
-                </label>
-                <label class="toggle-row">
-                    <input type="checkbox" x-model="trip.laundry">
-                    <span>Laundry access during stay</span>
-                </label>
+                <div class="toggle-row static-row">
+                    <strong>Checked items</strong>
+                    <span x-text="`${checkedCount('items')} / ${dataset.items.length}`"></span>
+                </div>
+                <div class="toggle-row static-row">
+                    <strong>Checked actions</strong>
+                    <span x-text="`${checkedCount('actions')} / ${dataset.actions.length}`"></span>
+                </div>
+                <div class="toggle-row static-row">
+                    <strong>Source</strong>
+                    <code>data.json</code>
+                </div>
             </div>
         </aside>
 
@@ -202,52 +150,59 @@
                 </div>
             </section>
 
-            <section class="result-panel warning" x-show="carryOnWatchlist().length" x-transition>
+            <section class="result-panel" x-show="loading" x-transition>
                 <div class="result-header">
                     <div>
-                        <p class="panel-kicker">Review</p>
-                        <h3>Carry-on watchlist</h3>
+                        <p class="panel-kicker">Loading</p>
+                        <h3>Preparing checklist data</h3>
                     </div>
-                    <span class="panel-count" x-text="`${carryOnWatchlist().length} flags`"></span>
                 </div>
-
-                <div class="watch-grid">
-                    <template x-for="item in carryOnWatchlist()" :key="item.id">
-                        <article class="watch-card">
-                            <strong x-text="item.name"></strong>
-                            <p x-text="item.carryOnNote"></p>
-                        </article>
-                    </template>
-                </div>
+                <div class="loading-card">Fetching predefined travel items and actions from <code>data.json</code>.</div>
             </section>
 
-            <section class="result-panel">
+            <section class="result-panel warning" x-show="loadError" x-transition>
                 <div class="result-header">
                     <div>
-                        <p class="panel-kicker">Pack First</p>
-                        <h3>Must-pack checklist</h3>
+                        <p class="panel-kicker">Error</p>
+                        <h3>Checklist data unavailable</h3>
                     </div>
-                    <span class="panel-count" x-text="`${mustPack().length} items`"></span>
+                </div>
+                <div class="empty-state" x-text="loadError"></div>
+            </section>
+
+            <section class="result-panel" x-show="!loading && !loadError && activeTab !== 'actions'">
+                <div class="result-header">
+                    <div>
+                        <p class="panel-kicker">Pack</p>
+                        <h3>Predefined packing items</h3>
+                    </div>
+                    <span class="panel-count" x-text="`${visibleItems().length} visible`"></span>
                 </div>
 
-                <template x-for="group in packingGroups('must')" :key="group.category">
+                <div class="empty-state" x-show="!visibleItems().length">No packing items match the current filters.</div>
+
+                <template x-for="group in itemGroups()" :key="group.label">
                     <div class="group-block">
                         <div class="group-header">
                             <h4 x-text="group.label"></h4>
-                            <span x-text="`${group.items.length} entries`"></span>
+                            <span x-text="`${group.entries.length} entries`"></span>
                         </div>
 
                         <div class="check-grid">
-                            <template x-for="item in group.items" :key="item.id">
-                                <label class="check-card" :class="{ checked: isChecked('packing', item.id) }">
-                                    <input type="checkbox" :checked="isChecked('packing', item.id)" @change="toggleChecked('packing', item.id)">
+                            <template x-for="item in group.entries" :key="item.id">
+                                <label class="check-card" :class="{ checked: isChecked('items', item.id) }">
+                                    <input type="checkbox" :checked="isChecked('items', item.id)" @change="toggleChecked('items', item.id)">
                                     <div class="check-content">
                                         <div class="check-topline">
                                             <strong x-text="item.name"></strong>
-                                            <span class="qty-pill" x-text="item.qtyLabel"></span>
+                                            <span class="qty-pill" x-show="item.qty" x-text="item.qty"></span>
                                         </div>
-                                        <p x-text="item.reasonText"></p>
-                                        <small x-show="item.note" x-text="item.note"></small>
+                                        <p x-text="item.note"></p>
+                                        <div class="meta-row" x-show="item.tags.length">
+                                            <template x-for="tag in item.tags" :key="tag">
+                                                <span x-text="tag"></span>
+                                            </template>
+                                        </div>
                                     </div>
                                 </label>
                             </template>
@@ -256,63 +211,38 @@
                 </template>
             </section>
 
-            <section class="result-panel soft">
+            <section class="result-panel soft" x-show="!loading && !loadError && activeTab !== 'items'">
                 <div class="result-header">
                     <div>
-                        <p class="panel-kicker">Optional</p>
-                        <h3>Comfort and backup items</h3>
+                        <p class="panel-kicker">Do</p>
+                        <h3>Predefined travel actions</h3>
                     </div>
-                    <span class="panel-count" x-text="`${optionalPack().length} extras`"></span>
+                    <span class="panel-count" x-text="`${visibleActions().length} visible`"></span>
                 </div>
 
-                <template x-for="group in packingGroups('optional')" :key="group.category">
+                <div class="empty-state" x-show="!visibleActions().length">No travel actions match the current filters.</div>
+
+                <template x-for="group in actionGroups()" :key="group.label">
                     <div class="group-block">
                         <div class="group-header">
                             <h4 x-text="group.label"></h4>
-                            <span x-text="`${group.items.length} entries`"></span>
-                        </div>
-
-                        <div class="check-grid compact">
-                            <template x-for="item in group.items" :key="item.id">
-                                <label class="check-card small" :class="{ checked: isChecked('packing', item.id) }">
-                                    <input type="checkbox" :checked="isChecked('packing', item.id)" @change="toggleChecked('packing', item.id)">
-                                    <div class="check-content">
-                                        <div class="check-topline">
-                                            <strong x-text="item.name"></strong>
-                                            <span class="qty-pill" x-text="item.qtyLabel"></span>
-                                        </div>
-                                        <p x-text="item.reasonText"></p>
-                                    </div>
-                                </label>
-                            </template>
-                        </div>
-                    </div>
-                </template>
-            </section>
-
-            <section class="result-panel">
-                <div class="result-header">
-                    <div>
-                        <p class="panel-kicker">Before You Leave</p>
-                        <h3>Action checklist</h3>
-                    </div>
-                    <span class="panel-count" x-text="`${departureActions().length} actions`"></span>
-                </div>
-
-                <template x-for="group in actionGroups()" :key="group.stage">
-                    <div class="group-block">
-                        <div class="group-header">
-                            <h4 x-text="group.label"></h4>
-                            <span x-text="`${group.items.length} tasks`"></span>
+                            <span x-text="`${group.entries.length} tasks`"></span>
                         </div>
 
                         <div class="action-list">
-                            <template x-for="action in group.items" :key="action.id">
+                            <template x-for="action in group.entries" :key="action.id">
                                 <label class="action-row" :class="{ checked: isChecked('actions', action.id) }">
                                     <input type="checkbox" :checked="isChecked('actions', action.id)" @change="toggleChecked('actions', action.id)">
-                                    <div>
-                                        <strong x-text="action.name"></strong>
-                                        <p x-text="action.reasonText"></p>
+                                    <div class="check-content">
+                                        <div class="check-topline">
+                                            <strong x-text="action.name"></strong>
+                                        </div>
+                                        <p x-text="action.note"></p>
+                                        <div class="meta-row" x-show="action.tags.length">
+                                            <template x-for="tag in action.tags" :key="tag">
+                                                <span x-text="tag"></span>
+                                            </template>
+                                        </div>
                                     </div>
                                 </label>
                             </template>
@@ -324,15 +254,17 @@
             <section class="result-panel future">
                 <div class="result-header">
                     <div>
-                        <p class="panel-kicker">Next Iteration</p>
-                        <h3>Ideas preserved from the original notes</h3>
+                        <p class="panel-kicker">How It Works</p>
+                        <h3>Simple static app flow</h3>
                     </div>
                 </div>
 
                 <div class="idea-cloud">
-                    <template x-for="idea in planningIdeas" :key="idea">
-                        <span x-text="idea"></span>
-                    </template>
+                    <span>edit data.json</span>
+                    <span>reload the page</span>
+                    <span>tick what is done</span>
+                    <span>progress stays in localStorage</span>
+                    <span>copy checked entries when needed</span>
                 </div>
             </section>
         </section>

@@ -1,0 +1,456 @@
+{
+  "meta": {
+    "title": "Travel Packing Helper",
+    "subtitle": "Predefined checklist for packing and travel prep"
+  },
+  "items": [
+    {
+      "id": "wallet",
+      "name": "Wallet",
+      "category": "Essentials",
+      "qty": "1",
+      "note": "Cards, cash, and everyday payments.",
+      "tags": ["money", "daily"]
+    },
+    {
+      "id": "home-keys",
+      "name": "Home keys",
+      "category": "Essentials",
+      "qty": "1 set",
+      "note": "Easy to forget on departure day.",
+      "tags": ["daily"]
+    },
+    {
+      "id": "phone",
+      "name": "Smartphone",
+      "category": "Essentials",
+      "qty": "1",
+      "note": "Maps, boarding passes, and communication.",
+      "tags": ["daily", "tech"]
+    },
+    {
+      "id": "passport",
+      "name": "Passport",
+      "category": "Documents",
+      "qty": "1",
+      "note": "Required for international travel.",
+      "tags": ["document", "international"]
+    },
+    {
+      "id": "id-card",
+      "name": "ID card",
+      "category": "Documents",
+      "qty": "1",
+      "note": "Useful for local or regional trips.",
+      "tags": ["document"]
+    },
+    {
+      "id": "booking-confirmations",
+      "name": "Booking confirmations",
+      "category": "Documents",
+      "qty": "1 set",
+      "note": "Hotel, tickets, reservation numbers.",
+      "tags": ["document", "booking"]
+    },
+    {
+      "id": "insurance-documents",
+      "name": "Insurance documents",
+      "category": "Documents",
+      "qty": "1 set",
+      "note": "Keep a digital or printed copy.",
+      "tags": ["document", "health"]
+    },
+    {
+      "id": "cash-backup",
+      "name": "Cash backup",
+      "category": "Documents",
+      "qty": "1 envelope",
+      "note": "Useful fallback when cards fail.",
+      "tags": ["money", "international"]
+    },
+    {
+      "id": "phone-charger",
+      "name": "Phone charger",
+      "category": "Tech",
+      "qty": "1",
+      "note": "The one cable you will actually need.",
+      "tags": ["tech", "daily"]
+    },
+    {
+      "id": "powerbank",
+      "name": "Powerbank",
+      "category": "Tech",
+      "qty": "1",
+      "note": "Helpful for long airport or train days.",
+      "tags": ["tech", "transit"]
+    },
+    {
+      "id": "headphones",
+      "name": "Headphones",
+      "category": "Tech",
+      "qty": "1",
+      "note": "Transit comfort and calls.",
+      "tags": ["tech", "comfort"]
+    },
+    {
+      "id": "laptop",
+      "name": "Laptop",
+      "category": "Tech",
+      "qty": "1",
+      "note": "Take it if you plan to work while away.",
+      "tags": ["tech", "work"]
+    },
+    {
+      "id": "laptop-charger",
+      "name": "Laptop charger",
+      "category": "Tech",
+      "qty": "1",
+      "note": "Easy to leave on the desk.",
+      "tags": ["tech", "work"]
+    },
+    {
+      "id": "plug-adapter",
+      "name": "Plug adapter",
+      "category": "Tech",
+      "qty": "1",
+      "note": "Required in some countries and hotels.",
+      "tags": ["tech", "international"]
+    },
+    {
+      "id": "toothbrush",
+      "name": "Toothbrush",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Daily basic.",
+      "tags": ["washbag", "daily"]
+    },
+    {
+      "id": "toothpaste",
+      "name": "Toothpaste",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Travel-size tube for cabin bags.",
+      "tags": ["washbag", "daily"]
+    },
+    {
+      "id": "deodorant",
+      "name": "Deodorant",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Cabin-friendly size if flying.",
+      "tags": ["washbag"]
+    },
+    {
+      "id": "shower-gel",
+      "name": "Shower gel",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Optional if your stay already provides it.",
+      "tags": ["washbag"]
+    },
+    {
+      "id": "shampoo",
+      "name": "Shampoo",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Travel bottle is enough for a short trip.",
+      "tags": ["washbag"]
+    },
+    {
+      "id": "painkillers",
+      "name": "Painkillers",
+      "category": "Health",
+      "qty": "1 pack",
+      "note": "Basic emergency kit.",
+      "tags": ["health", "daily"]
+    },
+    {
+      "id": "bandages",
+      "name": "Bandages",
+      "category": "Health",
+      "qty": "1 pack",
+      "note": "Good for blisters and minor cuts.",
+      "tags": ["health"]
+    },
+    {
+      "id": "prescription-meds",
+      "name": "Prescription medicine",
+      "category": "Health",
+      "qty": "as needed",
+      "note": "Bring enough for the whole trip.",
+      "tags": ["health", "important"]
+    },
+    {
+      "id": "tshirts",
+      "name": "T-shirts",
+      "category": "Clothes",
+      "qty": "3-5",
+      "note": "Base layer for most trips.",
+      "tags": ["clothes", "daily"]
+    },
+    {
+      "id": "trousers",
+      "name": "Jeans or trousers",
+      "category": "Clothes",
+      "qty": "1-2",
+      "note": "Choose repeatable basics.",
+      "tags": ["clothes"]
+    },
+    {
+      "id": "underwear",
+      "name": "Underwear",
+      "category": "Clothes",
+      "qty": "1 per day",
+      "note": "Adjust if laundry is available.",
+      "tags": ["clothes", "daily"]
+    },
+    {
+      "id": "socks",
+      "name": "Socks",
+      "category": "Clothes",
+      "qty": "1 pair per day",
+      "note": "A few extra pairs never hurt.",
+      "tags": ["clothes", "daily"]
+    },
+    {
+      "id": "shoes",
+      "name": "Shoes",
+      "category": "Clothes",
+      "qty": "1 pair",
+      "note": "Reliable daily pair.",
+      "tags": ["clothes", "daily"]
+    },
+    {
+      "id": "sleepwear",
+      "name": "Sleepwear",
+      "category": "Clothes",
+      "qty": "1 set",
+      "note": "Easy one to miss while packing fast.",
+      "tags": ["clothes", "comfort"]
+    },
+    {
+      "id": "smart-outfit",
+      "name": "Smart outfit",
+      "category": "Clothes",
+      "qty": "1 set",
+      "note": "Useful for dinner, business, or events.",
+      "tags": ["clothes", "business"]
+    },
+    {
+      "id": "jacket",
+      "name": "Jacket",
+      "category": "Weather",
+      "qty": "1",
+      "note": "Flexible extra layer.",
+      "tags": ["weather", "cold"]
+    },
+    {
+      "id": "umbrella",
+      "name": "Umbrella",
+      "category": "Weather",
+      "qty": "1",
+      "note": "Best for mixed or rainy forecasts.",
+      "tags": ["weather", "rain"]
+    },
+    {
+      "id": "raincoat",
+      "name": "Raincoat",
+      "category": "Weather",
+      "qty": "1",
+      "note": "Better than an umbrella for long walks.",
+      "tags": ["weather", "rain"]
+    },
+    {
+      "id": "sunglasses",
+      "name": "Sunglasses",
+      "category": "Weather",
+      "qty": "1",
+      "note": "Strong sun and beach days.",
+      "tags": ["weather", "hot"]
+    },
+    {
+      "id": "sunscreen",
+      "name": "Sunscreen",
+      "category": "Weather",
+      "qty": "1",
+      "note": "Especially for summer and hiking trips.",
+      "tags": ["weather", "hot"]
+    },
+    {
+      "id": "gloves",
+      "name": "Gloves",
+      "category": "Weather",
+      "qty": "1 pair",
+      "note": "Cold-weather comfort item.",
+      "tags": ["weather", "cold"]
+    },
+    {
+      "id": "water-bottle",
+      "name": "Reusable water bottle",
+      "category": "Comfort",
+      "qty": "1",
+      "note": "Handy for transit and day walks.",
+      "tags": ["comfort", "daily"]
+    },
+    {
+      "id": "backpack",
+      "name": "Backpack",
+      "category": "Comfort",
+      "qty": "1",
+      "note": "Useful as a day bag or personal item.",
+      "tags": ["comfort", "daily"]
+    },
+    {
+      "id": "swimwear",
+      "name": "Swimwear",
+      "category": "Comfort",
+      "qty": "1",
+      "note": "Pool, spa, or beach trips.",
+      "tags": ["comfort", "swim"]
+    },
+    {
+      "id": "slippers",
+      "name": "Slippers",
+      "category": "Comfort",
+      "qty": "1 pair",
+      "note": "Nice for hotels and shared bathrooms.",
+      "tags": ["comfort"]
+    },
+    {
+      "id": "snacks",
+      "name": "Travel snacks",
+      "category": "Comfort",
+      "qty": "1 pack",
+      "note": "Good for delays and long transfers.",
+      "tags": ["comfort", "transit"]
+    }
+  ],
+  "actions": [
+    {
+      "id": "check-passport-validity",
+      "name": "Check passport validity",
+      "stage": "Before Booking",
+      "note": "Some destinations require months of validity left.",
+      "tags": ["international", "document"]
+    },
+    {
+      "id": "check-baggage-rules",
+      "name": "Review baggage rules",
+      "stage": "Before Booking",
+      "note": "Especially important for low-cost airlines.",
+      "tags": ["plane", "luggage"]
+    },
+    {
+      "id": "download-maps",
+      "name": "Download offline maps",
+      "stage": "Week Of Trip",
+      "note": "Useful when signal is weak.",
+      "tags": ["maps", "international"]
+    },
+    {
+      "id": "download-translate",
+      "name": "Download offline translator",
+      "stage": "Week Of Trip",
+      "note": "A simple fallback for travel abroad.",
+      "tags": ["international", "language"]
+    },
+    {
+      "id": "exchange-cash",
+      "name": "Exchange or withdraw backup cash",
+      "stage": "Week Of Trip",
+      "note": "Cards do fail sometimes.",
+      "tags": ["money", "international"]
+    },
+    {
+      "id": "confirm-hotel",
+      "name": "Check hotel or apartment details",
+      "stage": "Week Of Trip",
+      "note": "Address, contact, check-in window.",
+      "tags": ["stay", "booking"]
+    },
+    {
+      "id": "check-in-online",
+      "name": "Check in online",
+      "stage": "Day Before",
+      "note": "Get the boarding pass sorted early.",
+      "tags": ["plane", "boarding"]
+    },
+    {
+      "id": "save-boarding-pass",
+      "name": "Save boarding passes and screenshots",
+      "stage": "Day Before",
+      "note": "Keep offline copies on the phone.",
+      "tags": ["plane", "boarding"]
+    },
+    {
+      "id": "charge-phone",
+      "name": "Charge smartphone battery",
+      "stage": "Day Before",
+      "note": "Start the day on a full battery.",
+      "tags": ["tech", "daily"]
+    },
+    {
+      "id": "charge-laptop",
+      "name": "Charge laptop battery",
+      "stage": "Day Before",
+      "note": "Only if you are taking it.",
+      "tags": ["tech", "work"]
+    },
+    {
+      "id": "prepare-outfit",
+      "name": "Prepare tomorrow's outfit",
+      "stage": "Day Before",
+      "note": "Reduces last-minute friction.",
+      "tags": ["clothes"]
+    },
+    {
+      "id": "empty-fridge",
+      "name": "Empty the fridge",
+      "stage": "Before Leaving Home",
+      "note": "Avoid waste on longer trips.",
+      "tags": ["home"]
+    },
+    {
+      "id": "empty-trash",
+      "name": "Empty the trash",
+      "stage": "Before Leaving Home",
+      "note": "Come back to a cleaner place.",
+      "tags": ["home"]
+    },
+    {
+      "id": "water-plants",
+      "name": "Water the plants",
+      "stage": "Before Leaving Home",
+      "note": "If you will be away for a few days.",
+      "tags": ["home"]
+    },
+    {
+      "id": "switch-off-utilities",
+      "name": "Turn off unnecessary utilities",
+      "stage": "Before Leaving Home",
+      "note": "Lights, devices, and anything risky.",
+      "tags": ["home", "safety"]
+    },
+    {
+      "id": "take-id-docs",
+      "name": "Take ID and travel documents",
+      "stage": "Departure Day",
+      "note": "Final pocket check before leaving.",
+      "tags": ["document", "important"]
+    },
+    {
+      "id": "take-keys-wallet-phone",
+      "name": "Take keys, wallet, and phone",
+      "stage": "Departure Day",
+      "note": "The core three.",
+      "tags": ["important", "daily"]
+    },
+    {
+      "id": "buy-water-snacks",
+      "name": "Buy water and snacks",
+      "stage": "Departure Day",
+      "note": "Helps with delays and transfers.",
+      "tags": ["comfort", "transit"]
+    }
+  ]
+}
