@@ -3,81 +3,340 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Plan Checklist Prototype</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #f4f6f8;
-            color: #1f252b;
-        }
-
-        main {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 32px 20px 56px;
-        }
-
-        .summary {
-            margin-bottom: 24px;
-            color: #5a6671;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        section {
-            padding: 20px;
-            border-radius: 12px;
-            background: #ffffff;
-            box-shadow: 0 8px 24px rgba(31, 37, 43, 0.08);
-        }
-
-        h1, h2 {
-            margin-top: 0;
-        }
-
-        ul {
-            padding-left: 20px;
-            margin-bottom: 0;
-        }
-
-        li + li {
-            margin-top: 10px;
-        }
-
-        .meta {
-            display: block;
-            margin-top: 4px;
-            color: #64707c;
-            font-size: 0.92rem;
-        }
-    </style>
+    <title>Travel Packing Helper</title>
+    <meta name="description" content="Frontend-only travel packing helper with reactive checklists, carry-on alerts, and trip planning notes.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+    <script defer src="./app.js"></script>
 </head>
 <body>
-<main>
-    <header>
-        <p>Experiment</p>
-        <h1>Travel Plan Checklist Prototype</h1>
-        <p class="summary" id="summary"></p>
+<div class="page-shell" x-data="travelHelper()" x-cloak>
+    <header class="hero">
+        <nav class="hero-nav">
+            <a class="back-link" href="../../../index.html">Back to archive</a>
+            <a class="ghost-link" href="./README.md">Project notes</a>
+        </nav>
+
+        <div class="hero-grid">
+            <section class="hero-copy">
+                <p class="eyebrow">Frontend Only • Alpine.js • CDN</p>
+                <h1>Travel Packing Helper</h1>
+                <p class="hero-text">
+                    Tune the trip, get an instant checklist, and keep progress directly in the browser.
+                    The page stays static-hosting friendly while behaving like a proper planning tool.
+                </p>
+
+                <div class="hero-actions">
+                    <button class="action-button primary" type="button" @click="copyPlan()" x-text="copyState"></button>
+                    <button class="action-button secondary" type="button" @click="resetTrip()">Reset Trip</button>
+                </div>
+
+                <div class="hero-pills">
+                    <span>carry-on aware</span>
+                    <span>quantity hints</span>
+                    <span>trip-specific actions</span>
+                    <span>local progress memory</span>
+                </div>
+            </section>
+
+            <aside class="hero-summary">
+                <p class="summary-label">Current trip</p>
+                <h2 x-text="headline()"></h2>
+                <p class="summary-copy" x-text="summaryText()"></p>
+
+                <div class="metric-grid">
+                    <article class="metric-card">
+                        <strong x-text="mustPack().length"></strong>
+                        <span>must-pack items</span>
+                    </article>
+                    <article class="metric-card">
+                        <strong x-text="optionalPack().length"></strong>
+                        <span>optional extras</span>
+                    </article>
+                    <article class="metric-card">
+                        <strong x-text="departureActions().length"></strong>
+                        <span>before-you-go actions</span>
+                    </article>
+                    <article class="metric-card">
+                        <strong x-text="carryOnWatchlist().length"></strong>
+                        <span>carry-on flags</span>
+                    </article>
+                </div>
+
+                <div class="mini-note">
+                    <span class="mini-note-title">Planner mode</span>
+                    <p x-text="modeHint()"></p>
+                </div>
+            </aside>
+        </div>
     </header>
 
-    <div class="grid">
-        <section>
-            <h2>Packing Items</h2>
-            <ul id="packing-items"></ul>
-        </section>
+    <main class="workspace">
+        <aside class="planner-panel">
+            <div class="panel-header">
+                <p class="panel-kicker">Trip Setup</p>
+                <h2>Build the checklist</h2>
+            </div>
 
-        <section>
-            <h2>Pre-Trip Actions</h2>
-            <ul id="pre-trip-actions"></ul>
-        </section>
-    </div>
-</main>
+            <div class="field-grid">
+                <label class="field">
+                    <span>Destination</span>
+                    <input type="text" x-model.trim="trip.destination" placeholder="Lisbon, Tokyo, mountain cabin">
+                </label>
 
-<script src="./app.js"></script>
+                <label class="field">
+                    <span>Trip length</span>
+                    <input type="number" min="1" max="21" x-model.number="trip.days">
+                </label>
+            </div>
+
+            <div class="control-block">
+                <div class="control-title">Transport</div>
+                <div class="chip-grid three">
+                    <template x-for="option in options.transport" :key="option.value">
+                        <button
+                            type="button"
+                            class="chip"
+                            :class="{ active: trip.transport === option.value }"
+                            @click="trip.transport = option.value; normalizeLuggage()"
+                            x-text="option.label"></button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="control-block">
+                <div class="control-title">Luggage</div>
+                <div class="chip-grid three">
+                    <template x-for="option in luggageOptions()" :key="option.value">
+                        <button
+                            type="button"
+                            class="chip"
+                            :class="{ active: trip.luggage === option.value }"
+                            @click="trip.luggage = option.value"
+                            x-text="option.label"></button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="field-grid">
+                <label class="field">
+                    <span>Weather</span>
+                    <select x-model="trip.weather">
+                        <template x-for="option in options.weather" :key="option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>Travel style</span>
+                    <select x-model="trip.style">
+                        <template x-for="option in options.style" :key="option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </label>
+            </div>
+
+            <div class="field-grid">
+                <label class="field">
+                    <span>Traveler profile</span>
+                    <select x-model="trip.profile">
+                        <template x-for="option in options.profile" :key="option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>Stay type</span>
+                    <select x-model="trip.stay">
+                        <template x-for="option in options.stay" :key="option.value">
+                            <option :value="option.value" x-text="option.label"></option>
+                        </template>
+                    </select>
+                </label>
+            </div>
+
+            <div class="control-block">
+                <div class="control-title">Activities</div>
+                <div class="chip-grid">
+                    <template x-for="option in options.activities" :key="option.value">
+                        <button
+                            type="button"
+                            class="chip"
+                            :class="{ active: trip.activities.includes(option.value) }"
+                            @click="toggleActivity(option.value)"
+                            x-text="option.label"></button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="toggle-list">
+                <label class="toggle-row">
+                    <input type="checkbox" x-model="trip.international">
+                    <span>International trip</span>
+                </label>
+                <label class="toggle-row">
+                    <input type="checkbox" x-model="trip.remoteWork">
+                    <span>Working while away</span>
+                </label>
+                <label class="toggle-row">
+                    <input type="checkbox" x-model="trip.laundry">
+                    <span>Laundry access during stay</span>
+                </label>
+            </div>
+        </aside>
+
+        <section class="results-column">
+            <section class="status-strip">
+                <div>
+                    <p class="strip-label">Checklist progress</p>
+                    <strong x-text="progressLabel()"></strong>
+                </div>
+                <div class="progress-bar">
+                    <span :style="`width: ${progressPercent()}%`"></span>
+                </div>
+            </section>
+
+            <section class="result-panel warning" x-show="carryOnWatchlist().length" x-transition>
+                <div class="result-header">
+                    <div>
+                        <p class="panel-kicker">Review</p>
+                        <h3>Carry-on watchlist</h3>
+                    </div>
+                    <span class="panel-count" x-text="`${carryOnWatchlist().length} flags`"></span>
+                </div>
+
+                <div class="watch-grid">
+                    <template x-for="item in carryOnWatchlist()" :key="item.id">
+                        <article class="watch-card">
+                            <strong x-text="item.name"></strong>
+                            <p x-text="item.carryOnNote"></p>
+                        </article>
+                    </template>
+                </div>
+            </section>
+
+            <section class="result-panel">
+                <div class="result-header">
+                    <div>
+                        <p class="panel-kicker">Pack First</p>
+                        <h3>Must-pack checklist</h3>
+                    </div>
+                    <span class="panel-count" x-text="`${mustPack().length} items`"></span>
+                </div>
+
+                <template x-for="group in packingGroups('must')" :key="group.category">
+                    <div class="group-block">
+                        <div class="group-header">
+                            <h4 x-text="group.label"></h4>
+                            <span x-text="`${group.items.length} entries`"></span>
+                        </div>
+
+                        <div class="check-grid">
+                            <template x-for="item in group.items" :key="item.id">
+                                <label class="check-card" :class="{ checked: isChecked('packing', item.id) }">
+                                    <input type="checkbox" :checked="isChecked('packing', item.id)" @change="toggleChecked('packing', item.id)">
+                                    <div class="check-content">
+                                        <div class="check-topline">
+                                            <strong x-text="item.name"></strong>
+                                            <span class="qty-pill" x-text="item.qtyLabel"></span>
+                                        </div>
+                                        <p x-text="item.reasonText"></p>
+                                        <small x-show="item.note" x-text="item.note"></small>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </section>
+
+            <section class="result-panel soft">
+                <div class="result-header">
+                    <div>
+                        <p class="panel-kicker">Optional</p>
+                        <h3>Comfort and backup items</h3>
+                    </div>
+                    <span class="panel-count" x-text="`${optionalPack().length} extras`"></span>
+                </div>
+
+                <template x-for="group in packingGroups('optional')" :key="group.category">
+                    <div class="group-block">
+                        <div class="group-header">
+                            <h4 x-text="group.label"></h4>
+                            <span x-text="`${group.items.length} entries`"></span>
+                        </div>
+
+                        <div class="check-grid compact">
+                            <template x-for="item in group.items" :key="item.id">
+                                <label class="check-card small" :class="{ checked: isChecked('packing', item.id) }">
+                                    <input type="checkbox" :checked="isChecked('packing', item.id)" @change="toggleChecked('packing', item.id)">
+                                    <div class="check-content">
+                                        <div class="check-topline">
+                                            <strong x-text="item.name"></strong>
+                                            <span class="qty-pill" x-text="item.qtyLabel"></span>
+                                        </div>
+                                        <p x-text="item.reasonText"></p>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </section>
+
+            <section class="result-panel">
+                <div class="result-header">
+                    <div>
+                        <p class="panel-kicker">Before You Leave</p>
+                        <h3>Action checklist</h3>
+                    </div>
+                    <span class="panel-count" x-text="`${departureActions().length} actions`"></span>
+                </div>
+
+                <template x-for="group in actionGroups()" :key="group.stage">
+                    <div class="group-block">
+                        <div class="group-header">
+                            <h4 x-text="group.label"></h4>
+                            <span x-text="`${group.items.length} tasks`"></span>
+                        </div>
+
+                        <div class="action-list">
+                            <template x-for="action in group.items" :key="action.id">
+                                <label class="action-row" :class="{ checked: isChecked('actions', action.id) }">
+                                    <input type="checkbox" :checked="isChecked('actions', action.id)" @change="toggleChecked('actions', action.id)">
+                                    <div>
+                                        <strong x-text="action.name"></strong>
+                                        <p x-text="action.reasonText"></p>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </section>
+
+            <section class="result-panel future">
+                <div class="result-header">
+                    <div>
+                        <p class="panel-kicker">Next Iteration</p>
+                        <h3>Ideas preserved from the original notes</h3>
+                    </div>
+                </div>
+
+                <div class="idea-cloud">
+                    <template x-for="idea in planningIdeas" :key="idea">
+                        <span x-text="idea"></span>
+                    </template>
+                </div>
+            </section>
+        </section>
+    </main>
+</div>
 </body>
 </html>

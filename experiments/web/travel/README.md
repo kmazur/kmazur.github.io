@@ -1,22 +1,26 @@
-# Travel Plan Checklist Prototype
+# Travel Packing Helper
 
-Preserved from the former travel checklist draft.
+This page is now a fully custom frontend-only helper rather than an old static draft.
+
+Stack:
+
+- Alpine.js from CDN
+- plain browser JavaScript
+- static HTML and CSS
+
+What it does:
+
+- builds a trip-specific packing list from transport, luggage, weather, stay type, style, and activities
+- separates must-pack items from comfort extras
+- surfaces carry-on restrictions when cabin-only mode is selected
+- generates pre-departure actions
+- stores progress in local browser storage
 
 Files:
 
-- `index.html`: standalone prototype page
-- `app.js`: checklist data plus rendering logic
+- `index.html`: travel helper page
+- `styles.css`: standalone styling
+- `app.js`: Alpine data model, rules, and persistence
 
-Ideas kept from the prototype TODO list:
-
-- travel days and dates
-- travel country
-- weather forecast and temperatures
-- official or casual mode
-- print support
-- cash exchange rate
-- standard prices such as transit or groceries
-- plane travel timeline, durations, and reservation details
-- hotel or stay details
-- passport requirements
+Future ideas preserved from the original notes are still shown inside the UI.
 
