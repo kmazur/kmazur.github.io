@@ -1,10 +1,3 @@
----
-layout: post
-author: kmazur
-toc: true
-tags: competitive-programming interview algorithms data-structures coding
----
-
 # Competitive programming
 
 
@@ -111,6 +104,6 @@ TODO: analyze it in pandas
 
 # Resources
 
-1. Youtube playlist: [Cracking the coding interview](https://www.youtube.com/watch?v=GKgAVjJxh9w&index=1&list=PLX6IKgS15Ue02WDPRCmYKuZicQHit9kFt){:target="_blank"}
+1. Youtube playlist: [Cracking the coding interview](https://www.youtube.com/watch?v=GKgAVjJxh9w&index=1&list=PLX6IKgS15Ue02WDPRCmYKuZicQHit9kFt)
 
 TODO: add from emailsiex

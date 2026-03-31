@@ -1,13 +1,6 @@
----
-layout: post
-author: kmazur
-title: A journey though time
-toc: false
-tags: algorithms data-structures coding system-design development
-jsarr:
----
+# A journey through time
 
-# Theory
+## Theory
 
 
 ## Time related things

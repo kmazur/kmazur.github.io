@@ -1,6 +1,1 @@
----
-layout: post
-author: kmazur
-toc: true
-tags: coding java development review testing
----
+# Subjective list of best IT books

@@ -1,9 +1,4 @@
----
-layout: post
-author: kmazur
-toc: true
-tags: algorithms coding development machine-learning tensorflow neural-networks
----
+# Experiments in neural networks
 
 TODO: different kind of operations on nn
 genetic algorithms on neurons 

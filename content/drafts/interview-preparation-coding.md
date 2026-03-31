@@ -1,10 +1,3 @@
----
-layout: post
-author: kmazur
-toc: true
-tags: interview coding algorithms data-structures
----
-
 # Interview preparation - coding
 
 
@@ -85,4 +78,4 @@ TODO: analyze it in pandas
 
 # Resources
 
-1. Youtube playlist: [Cracking the coding interview](https://www.youtube.com/watch?v=GKgAVjJxh9w&index=1&list=PLX6IKgS15Ue02WDPRCmYKuZicQHit9kFt){:target="_blank"}
+1. Youtube playlist: [Cracking the coding interview](https://www.youtube.com/watch?v=GKgAVjJxh9w&index=1&list=PLX6IKgS15Ue02WDPRCmYKuZicQHit9kFt)

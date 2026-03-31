@@ -1,10 +1,3 @@
----
-layout: post
-author: kmazur
-toc: true
-tags: interview system-design
----
-
 # Interview preparation - system design
 
 1. Think broadly
