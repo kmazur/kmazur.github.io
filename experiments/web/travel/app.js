@@ -1,29 +1,24 @@
-const STORAGE_KEY = "travel-packing-helper-v4";
+const STORAGE_KEY = "travel-packing-checklist-v1";
 
 function normalizeEntry(entry) {
     return {
         id: entry.id || "",
         name: entry.name || "",
         category: entry.category || "",
-        stage: entry.stage || "",
         qty: entry.qty || "",
-        note: entry.note || "",
-        tags: Array.isArray(entry.tags) ? entry.tags : []
+        note: entry.note || ""
     };
 }
 
 function normalizeDataset(dataset) {
     const meta = dataset && dataset.meta ? dataset.meta : {};
     const items = dataset && Array.isArray(dataset.items) ? dataset.items.map(normalizeEntry) : [];
-    const actions = dataset && Array.isArray(dataset.actions) ? dataset.actions.map(normalizeEntry) : [];
 
     return {
         meta: {
-            title: meta.title || "Travel Checklist",
-            subtitle: meta.subtitle || "Predefined travel checklist"
+            title: meta.title || "Packing Checklist"
         },
-        items,
-        actions
+        items
     };
 }
 
@@ -46,18 +41,15 @@ function groupBy(entries, key, fallbackLabel) {
 window.travelChecklistApp = function () {
     return {
         dataset: normalizeDataset({}),
-        checked: { items: {}, actions: {} },
+        checked: { items: {} },
         loading: true,
         loadError: "",
-        copyState: "Copy checked",
+        copyState: "Copy packed",
 
         async init() {
             const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-            if (saved.checked) {
-                this.checked = {
-                    items: saved.checked.items || {},
-                    actions: saved.checked.actions || {}
-                };
+            if (saved.checked && saved.checked.items) {
+                this.checked = { items: saved.checked.items };
             }
 
             this.$watch("checked", () => {
@@ -85,44 +77,38 @@ window.travelChecklistApp = function () {
             }));
         },
 
-        actionGroups() {
-            return groupBy(this.dataset.actions, "stage", "Later");
+        isChecked(id) {
+            return !!this.checked.items[id];
         },
 
-        isChecked(kind, id) {
-            return !!this.checked[kind][id];
-        },
-
-        toggleChecked(kind, id) {
+        toggleChecked(id) {
             this.checked = {
-                ...this.checked,
-                [kind]: {
-                    ...this.checked[kind],
-                    [id]: !this.checked[kind][id]
+                items: {
+                    ...this.checked.items,
+                    [id]: !this.checked.items[id]
                 }
             };
         },
 
-        checkedCount(kind) {
-            const source = kind === "items" ? this.dataset.items : this.dataset.actions;
-            return source.filter(entry => this.checked[kind][entry.id]).length;
+        packedCount() {
+            return this.dataset.items.filter(item => this.checked.items[item.id]).length;
         },
 
         totalCount() {
-            return this.dataset.items.length + this.dataset.actions.length;
+            return this.dataset.items.length;
         },
 
-        completedCount() {
-            return this.checkedCount("items") + this.checkedCount("actions");
+        remainingCount() {
+            return this.totalCount() - this.packedCount();
         },
 
         progressLabel() {
-            return `${this.completedCount()} of ${this.totalCount()} checked`;
+            return `${this.packedCount()} of ${this.totalCount()} packed`;
         },
 
         progressPercent() {
             const total = this.totalCount();
-            return total ? Math.round((this.completedCount() / total) * 100) : 0;
+            return total ? Math.round((this.packedCount() / total) * 100) : 0;
         },
 
         headline() {
@@ -130,27 +116,16 @@ window.travelChecklistApp = function () {
         },
 
         summaryText() {
-            return `${this.dataset.items.length} packing items and ${this.dataset.actions.length} travel actions, all visible immediately and ready to tick.`;
+            return `${this.dataset.items.length} things to pack. Tick what is already packed and leave the rest unchecked.`;
         },
 
-        async copyChecked() {
-            const lines = [this.dataset.meta.title, ""];
-            const checkedItems = this.dataset.items.filter(item => this.checked.items[item.id]);
-            const checkedActions = this.dataset.actions.filter(action => this.checked.actions[action.id]);
+        async copyPacked() {
+            const lines = [this.dataset.meta.title, "", "Already packed:"];
+            const packedItems = this.dataset.items.filter(item => this.checked.items[item.id]);
 
-            lines.push("Checked packing items:");
-            if (checkedItems.length) {
-                checkedItems.forEach(item => {
-                    lines.push(`- ${item.name}${item.qty ? ` (${item.qty})` : ""}${item.note ? ` - ${item.note}` : ""}`);
-                });
-            } else {
-                lines.push("- none");
-            }
-
-            lines.push("", "Checked travel actions:");
-            if (checkedActions.length) {
-                checkedActions.forEach(action => {
-                    lines.push(`- ${action.name}${action.note ? ` - ${action.note}` : ""}`);
+            if (packedItems.length) {
+                packedItems.forEach(item => {
+                    lines.push(`- ${item.name}${item.qty ? ` (${item.qty})` : ""}`);
                 });
             } else {
                 lines.push("- none");
@@ -164,13 +139,13 @@ window.travelChecklistApp = function () {
             }
 
             setTimeout(() => {
-                this.copyState = "Copy checked";
+                this.copyState = "Copy packed";
             }, 1400);
         },
 
         clearChecks() {
-            this.checked = { items: {}, actions: {} };
-            this.copyState = "Copy checked";
+            this.checked = { items: {} };
+            this.copyState = "Copy packed";
         }
     };
 };
