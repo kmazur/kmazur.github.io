@@ -1,6 +1,599 @@
----
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Archive</title>
+    <meta name="description" content="A cleaned static archive of software drafts, browser experiments, data sets, and tooling.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f2e9;
+            --bg-strong: #efe5d6;
+            --panel: rgba(255, 255, 255, 0.72);
+            --panel-border: rgba(34, 41, 37, 0.12);
+            --ink: #1f2422;
+            --muted: #5d6663;
+            --accent: #0b7666;
+            --accent-warm: #d86e40;
+            --accent-cool: #3f7195;
+            --shadow: 0 24px 60px rgba(34, 41, 37, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+        }
 
-layout: home
----
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Manrope", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(255, 207, 149, 0.45), transparent 32%),
+                radial-gradient(circle at 85% 12%, rgba(63, 113, 149, 0.20), transparent 28%),
+                radial-gradient(circle at 70% 78%, rgba(11, 118, 102, 0.18), transparent 26%),
+                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 50%, var(--bg-strong) 100%);
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: auto;
+            pointer-events: none;
+            z-index: 0;
+            border-radius: 999px;
+            filter: blur(16px);
+            opacity: 0.6;
+        }
+
+        body::before {
+            width: 22rem;
+            height: 22rem;
+            top: 5rem;
+            right: -6rem;
+            background: rgba(216, 110, 64, 0.14);
+        }
+
+        body::after {
+            width: 28rem;
+            height: 28rem;
+            left: -10rem;
+            bottom: -8rem;
+            background: rgba(11, 118, 102, 0.12);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .frame {
+            position: relative;
+            z-index: 1;
+            width: min(1160px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 24px 0 72px;
+        }
+
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 12px 4px 36px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .brand-mark {
+            display: inline-grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(11, 118, 102, 0.95), rgba(63, 113, 149, 0.95));
+            color: #fff;
+            box-shadow: 0 14px 30px rgba(11, 118, 102, 0.28);
+        }
+
+        .top-link {
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.62);
+            border: 1px solid rgba(34, 41, 37, 0.10);
+            color: var(--muted);
+            transition: transform 180ms ease, background 180ms ease;
+        }
+
+        .top-link:hover,
+        .button:hover,
+        .card-link:hover {
+            transform: translateY(-2px);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.95fr);
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        .hero-copy,
+        .hero-panel,
+        .feature-card,
+        .shelf-card {
+            border: 1px solid var(--panel-border);
+            background: var(--panel);
+            backdrop-filter: blur(16px);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-copy {
+            padding: clamp(28px, 4vw, 56px);
+            border-radius: var(--radius-xl);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 18px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 40px;
+            height: 1px;
+            background: currentColor;
+            opacity: 0.65;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: "Fraunces", serif;
+            font-weight: 700;
+            line-height: 0.96;
+            letter-spacing: -0.03em;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(3.1rem, 8vw, 6.4rem);
+            max-width: 9.5ch;
+        }
+
+        .lede {
+            max-width: 60ch;
+            margin: 24px 0 0;
+            font-size: 1.06rem;
+            line-height: 1.8;
+            color: var(--muted);
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 32px;
+        }
+
+        .button,
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 48px;
+            padding: 14px 20px;
+            border-radius: 999px;
+            border: 1px solid rgba(34, 41, 37, 0.12);
+            transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+        }
+
+        .button.primary {
+            background: linear-gradient(135deg, var(--accent), #185f8f);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .button.secondary {
+            background: rgba(255, 255, 255, 0.62);
+            color: var(--ink);
+        }
+
+        .hero-panel {
+            position: relative;
+            padding: 26px;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+
+        .hero-panel::before {
+            content: "";
+            position: absolute;
+            inset: auto -40px -56px auto;
+            width: 220px;
+            height: 220px;
+            border-radius: 44px;
+            background: linear-gradient(180deg, rgba(216, 110, 64, 0.18), rgba(11, 118, 102, 0.16));
+            transform: rotate(16deg);
+        }
+
+        .metrics {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .metric {
+            padding: 18px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(34, 41, 37, 0.08);
+        }
+
+        .metric strong {
+            display: block;
+            font-size: 2.1rem;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .metric span {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .tag-bank {
+            position: relative;
+            margin-top: 22px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag-bank span {
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(34, 41, 37, 0.08);
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .section-label {
+            margin: 72px 0 20px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .feature-grid,
+        .shelf-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .feature-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .feature-card,
+        .shelf-card {
+            position: relative;
+            padding: 26px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .feature-card::after,
+        .shelf-card::after {
+            content: "";
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-warm), var(--accent-cool));
+            opacity: 0.92;
+        }
+
+        .feature-card h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-top: 18px;
+        }
+
+        .feature-copy,
+        .shelf-copy {
+            margin: 16px 0 0;
+            line-height: 1.8;
+            color: var(--muted);
+        }
+
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pill {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(11, 118, 102, 0.08);
+            color: var(--accent);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .card-link {
+            background: rgba(255, 255, 255, 0.66);
+        }
+
+        .card-link.primary {
+            background: rgba(11, 118, 102, 0.10);
+            color: var(--accent);
+        }
+
+        .shelf-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .shelf-card h3 {
+            font-size: 1.85rem;
+        }
+
+        .footer-note {
+            margin-top: 64px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(34, 41, 37, 0.12);
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(22px);
+            animation: rise 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .reveal-delay-1 { animation-delay: 100ms; }
+        .reveal-delay-2 { animation-delay: 180ms; }
+        .reveal-delay-3 { animation-delay: 260ms; }
+        .reveal-delay-4 { animation-delay: 340ms; }
+
+        @keyframes rise {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .feature-grid,
+            .shelf-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .site-header {
+                padding-bottom: 26px;
+            }
+
+            .hero-panel::before {
+                width: 180px;
+                height: 180px;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .frame {
+                width: min(100% - 22px, 1160px);
+                padding-top: 18px;
+            }
+
+            .site-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .hero-copy,
+            .hero-panel,
+            .feature-card,
+            .shelf-card {
+                padding: 22px;
+            }
+
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                max-width: 11ch;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="frame">
+    <header class="site-header">
+        <a class="brand" href="#top">
+            <span class="brand-mark">KM</span>
+            <span>Knowledge Archive</span>
+        </a>
+        <a class="top-link" href="https://github.com/kmazur/kmazur.github.io" target="_blank" rel="noreferrer">View Repository</a>
+    </header>
+
+    <main id="top">
+        <section class="hero">
+            <article class="hero-copy reveal">
+                <p class="eyebrow">Krzysztof Mazur</p>
+                <h1>Ideas kept sharp, not buried in scaffolding.</h1>
+                <p class="lede">
+                    A cleaned static archive of software drafts, lightweight browser prototypes, curated data, and one focused crawler tool.
+                    The old Jekyll shell is gone. What remains is the material worth keeping.
+                </p>
+                <div class="hero-actions">
+                    <a class="button primary" href="./experiments/web/jdk/">Open JDK Explorer</a>
+                    <a class="button secondary" href="./experiments/web/travel/">Open Travel Prototype</a>
+                    <a class="button secondary" href="https://github.com/kmazur/kmazur.github.io/tree/master/content" target="_blank" rel="noreferrer">Browse Drafts</a>
+                </div>
+            </article>
+
+            <aside class="hero-panel reveal reveal-delay-1">
+                <div class="metrics">
+                    <div class="metric">
+                        <strong>13</strong>
+                        <span>draft essays and notes</span>
+                    </div>
+                    <div class="metric">
+                        <strong>2</strong>
+                        <span>browser experiments</span>
+                    </div>
+                    <div class="metric">
+                        <strong>2</strong>
+                        <span>data files preserved</span>
+                    </div>
+                    <div class="metric">
+                        <strong>1</strong>
+                        <span>crawler tool retained</span>
+                    </div>
+                </div>
+
+                <div class="tag-bank" aria-label="topic highlights">
+                    <span>Java &amp; JDK</span>
+                    <span>System design</span>
+                    <span>Reactive systems</span>
+                    <span>Machine learning</span>
+                    <span>Travel tooling</span>
+                    <span>Personal research</span>
+                </div>
+            </aside>
+        </section>
+
+        <p class="section-label">Featured Work</p>
+        <section class="feature-grid">
+            <article class="feature-card reveal reveal-delay-2">
+                <span class="pill">Prototype</span>
+                <h2>JDK Explorer</h2>
+                <p class="feature-copy">
+                    A standalone React page that renders JEP data for JDK 8 through 12 from a generated JSON snapshot.
+                    It is the most polished interactive piece in the archive and still backed by a reusable crawler.
+                </p>
+                <div class="pill-row">
+                    <span class="pill">React</span>
+                    <span class="pill">Moment.js</span>
+                    <span class="pill">Generated data</span>
+                </div>
+                <div class="card-actions">
+                    <a class="card-link primary" href="./experiments/web/jdk/">Launch experiment</a>
+                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/tools/jdk-crawler" target="_blank" rel="noreferrer">Inspect crawler</a>
+                </div>
+            </article>
+
+            <article class="feature-card reveal reveal-delay-3">
+                <span class="pill" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);">Prototype</span>
+                <h2>Travel Checklist</h2>
+                <p class="feature-copy">
+                    A compact planning prototype built around structured packing data and pre-trip actions.
+                    It now stands on its own as a static page, with the original expansion ideas kept alongside it.
+                </p>
+                <div class="pill-row">
+                    <span class="pill" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);">Packing data</span>
+                    <span class="pill" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);">Travel actions</span>
+                    <span class="pill" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);">Prototype notes</span>
+                </div>
+                <div class="card-actions">
+                    <a class="card-link primary" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);" href="./experiments/web/travel/">Open prototype</a>
+                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/experiments/web/travel" target="_blank" rel="noreferrer">View files</a>
+                </div>
+            </article>
+        </section>
+
+        <p class="section-label">Archive Sections</p>
+        <section class="shelf-grid">
+            <article class="shelf-card reveal reveal-delay-1">
+                <h3>Drafts</h3>
+                <p class="shelf-copy">
+                    Long-form notes on code review, competitive programming, system design, software craftsmanship, and more.
+                </p>
+                <div class="card-actions">
+                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noreferrer">Browse drafts</a>
+                </div>
+            </article>
+
+            <article class="shelf-card reveal reveal-delay-2">
+                <h3>Data</h3>
+                <p class="shelf-copy">
+                    Small preserved datasets, including competitive programming history and the legacy tag catalog.
+                </p>
+                <div class="card-actions">
+                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/data" target="_blank" rel="noreferrer">Open data</a>
+                </div>
+            </article>
+
+            <article class="shelf-card reveal reveal-delay-3">
+                <h3>Tooling</h3>
+                <p class="shelf-copy">
+                    One focused Java utility remains: the OpenJDK crawler that refreshes the explorer data set.
+                </p>
+                <div class="card-actions">
+                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/tools" target="_blank" rel="noreferrer">Open tools</a>
+                </div>
+            </article>
+
+            <article class="shelf-card reveal reveal-delay-4">
+                <h3>Legacy</h3>
+                <p class="shelf-copy">
+                    Jekyll-specific experiments were kept only as reference material, separated from the active archive.
+                </p>
+                <div class="card-actions">
+                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/legacy/jekyll" target="_blank" rel="noreferrer">View legacy</a>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <footer class="footer-note">
+        <span>Clean static archive. No generator dependency required.</span>
+        <span>Designed to foreground the work, not the framework.</span>
+    </footer>
+</div>
+</body>
+</html>

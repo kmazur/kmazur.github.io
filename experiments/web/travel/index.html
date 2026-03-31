@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Plan Checklist Prototype</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f4f6f8;
+            color: #1f252b;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 56px;
+        }
+
+        .summary {
+            margin-bottom: 24px;
+            color: #5a6671;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        section {
+            padding: 20px;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(31, 37, 43, 0.08);
+        }
+
+        h1, h2 {
+            margin-top: 0;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+
+        li + li {
+            margin-top: 10px;
+        }
+
+        .meta {
+            display: block;
+            margin-top: 4px;
+            color: #64707c;
+            font-size: 0.92rem;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <p>Experiment</p>
+        <h1>Travel Plan Checklist Prototype</h1>
+        <p class="summary" id="summary"></p>
+    </header>
+
+    <div class="grid">
+        <section>
+            <h2>Packing Items</h2>
+            <ul id="packing-items"></ul>
+        </section>
+
+        <section>
+            <h2>Pre-Trip Actions</h2>
+            <ul id="pre-trip-actions"></ul>
+        </section>
+    </div>
+</main>
+
+<script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+    }
+}
+
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'pmd'
+}
+
+group 'pl.kmazur'
+version '1.0.0'
+
+sourceCompatibility = JavaVersion.VERSION_HIGHER
+targetCompatibility = JavaVersion.VERSION_HIGHER
+
+checkstyle {
+    showViolations = true
+    toolVersion "8.13"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation('org.jsoup:jsoup:1.15.3')
+    implementation('com.fasterxml.jackson.core:jackson-databind:2.12.7.1')
+    implementation('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.8')
+
+    testImplementation group: 'junit', name: 'junit', version: '4.13.1'
+}
