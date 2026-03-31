@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Travel Packing Helper",
-    "subtitle": "Predefined checklist for packing and travel prep"
+    "title": "Packing Checklist",
+    "subtitle": "Full list of things to pack and tick off"
   },
   "items": [
     {
@@ -322,134 +322,6 @@
       "category": "Comfort",
       "qty": "1 pack",
       "note": "Good for delays and long transfers.",
-      "tags": ["comfort", "transit"]
-    }
-  ],
-  "actions": [
-    {
-      "id": "check-passport-validity",
-      "name": "Check passport validity",
-      "stage": "Before Booking",
-      "note": "Some destinations require months of validity left.",
-      "tags": ["international", "document"]
-    },
-    {
-      "id": "check-baggage-rules",
-      "name": "Review baggage rules",
-      "stage": "Before Booking",
-      "note": "Especially important for low-cost airlines.",
-      "tags": ["plane", "luggage"]
-    },
-    {
-      "id": "download-maps",
-      "name": "Download offline maps",
-      "stage": "Week Of Trip",
-      "note": "Useful when signal is weak.",
-      "tags": ["maps", "international"]
-    },
-    {
-      "id": "download-translate",
-      "name": "Download offline translator",
-      "stage": "Week Of Trip",
-      "note": "A simple fallback for travel abroad.",
-      "tags": ["international", "language"]
-    },
-    {
-      "id": "exchange-cash",
-      "name": "Exchange or withdraw backup cash",
-      "stage": "Week Of Trip",
-      "note": "Cards do fail sometimes.",
-      "tags": ["money", "international"]
-    },
-    {
-      "id": "confirm-hotel",
-      "name": "Check hotel or apartment details",
-      "stage": "Week Of Trip",
-      "note": "Address, contact, check-in window.",
-      "tags": ["stay", "booking"]
-    },
-    {
-      "id": "check-in-online",
-      "name": "Check in online",
-      "stage": "Day Before",
-      "note": "Get the boarding pass sorted early.",
-      "tags": ["plane", "boarding"]
-    },
-    {
-      "id": "save-boarding-pass",
-      "name": "Save boarding passes and screenshots",
-      "stage": "Day Before",
-      "note": "Keep offline copies on the phone.",
-      "tags": ["plane", "boarding"]
-    },
-    {
-      "id": "charge-phone",
-      "name": "Charge smartphone battery",
-      "stage": "Day Before",
-      "note": "Start the day on a full battery.",
-      "tags": ["tech", "daily"]
-    },
-    {
-      "id": "charge-laptop",
-      "name": "Charge laptop battery",
-      "stage": "Day Before",
-      "note": "Only if you are taking it.",
-      "tags": ["tech", "work"]
-    },
-    {
-      "id": "prepare-outfit",
-      "name": "Prepare tomorrow's outfit",
-      "stage": "Day Before",
-      "note": "Reduces last-minute friction.",
-      "tags": ["clothes"]
-    },
-    {
-      "id": "empty-fridge",
-      "name": "Empty the fridge",
-      "stage": "Before Leaving Home",
-      "note": "Avoid waste on longer trips.",
-      "tags": ["home"]
-    },
-    {
-      "id": "empty-trash",
-      "name": "Empty the trash",
-      "stage": "Before Leaving Home",
-      "note": "Come back to a cleaner place.",
-      "tags": ["home"]
-    },
-    {
-      "id": "water-plants",
-      "name": "Water the plants",
-      "stage": "Before Leaving Home",
-      "note": "If you will be away for a few days.",
-      "tags": ["home"]
-    },
-    {
-      "id": "switch-off-utilities",
-      "name": "Turn off unnecessary utilities",
-      "stage": "Before Leaving Home",
-      "note": "Lights, devices, and anything risky.",
-      "tags": ["home", "safety"]
-    },
-    {
-      "id": "take-id-docs",
-      "name": "Take ID and travel documents",
-      "stage": "Departure Day",
-      "note": "Final pocket check before leaving.",
-      "tags": ["document", "important"]
-    },
-    {
-      "id": "take-keys-wallet-phone",
-      "name": "Take keys, wallet, and phone",
-      "stage": "Departure Day",
-      "note": "The core three.",
-      "tags": ["important", "daily"]
-    },
-    {
-      "id": "buy-water-snacks",
-      "name": "Buy water and snacks",
-      "stage": "Departure Day",
-      "note": "Helps with delays and transfers.",
       "tags": ["comfort", "transit"]
     }
   ]
