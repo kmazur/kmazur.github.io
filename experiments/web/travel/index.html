@@ -4,138 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Packing Checklist</title>
-    <meta name="description" content="Dedicated frontend-only packing checklist backed by predefined JSON items.">
+    <meta name="description" content="Minimal frontend-only packing checklist backed by predefined JSON items.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20260401-1">
     <script defer src="./app.js?v=20260331-2"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
 </head>
 <body>
-<div class="page-shell" x-data="travelChecklistApp()" x-cloak>
-    <header class="hero">
-        <div class="hero-nav app-nav">
-            <span class="utility-pill">Packing only</span>
+<div class="shell" x-data="travelChecklistApp()" x-cloak>
+    <header class="masthead">
+        <div class="masthead-bar">
+            <span class="section-tag">Travel / Pack</span>
+            <span class="storage-badge">Saved in this browser</span>
         </div>
 
-        <div class="hero-grid">
-            <section class="hero-copy">
-                <p class="eyebrow">Frontend Only • Alpine.js • Checklist</p>
-                <h1>Packing Checklist</h1>
-                <p class="hero-text">
-                    Full list on the page, simple checkboxes, no travel-planner extras.
-                    You just tick what is already packed.
+        <div class="masthead-main">
+            <div class="intro-copy">
+                <p class="eyebrow">Minimal Packing Tool</p>
+                <h1>Packing, kept strict.</h1>
+                <p class="lede">
+                    Every item stays visible. You just mark what is already packed.
+                    No planner flow, no hidden steps, no extra noise.
                 </p>
+            </div>
 
-                <div class="hero-actions">
-                    <button class="action-button primary" type="button" @click="copyPacked()" x-text="copyState"></button>
-                    <button class="action-button secondary" type="button" @click="clearChecks()">Clear All</button>
-                </div>
-
-                <div class="hero-pills">
-                    <span>all items visible</span>
-                    <span>grouped by category</span>
-                    <span>local progress memory</span>
-                    <span>packed vs remaining</span>
-                </div>
-            </section>
-
-            <aside class="hero-summary">
-                <p class="summary-label">Overview</p>
-                <h2 x-text="headline()"></h2>
-                <p class="summary-copy" x-text="summaryText()"></p>
-
-                <div class="metric-grid">
-                    <article class="metric-card">
-                        <strong x-text="totalCount()"></strong>
-                        <span>things to pack</span>
-                    </article>
-                    <article class="metric-card">
-                        <strong x-text="packedCount()"></strong>
-                        <span>already packed</span>
-                    </article>
-                    <article class="metric-card">
-                        <strong x-text="remainingCount()"></strong>
-                        <span>still missing</span>
-                    </article>
-                    <article class="metric-card">
-                        <strong x-text="`${progressPercent()}%`"></strong>
-                        <span>progress</span>
-                    </article>
-                </div>
-
-                <div class="mini-note">
-                    <span class="mini-note-title">Storage</span>
-                    <p>Checks stay in this browser until you clear them.</p>
-                </div>
-            </aside>
+            <div class="header-actions">
+                <button class="button button-primary" type="button" @click="copyPacked()" x-text="copyState"></button>
+                <button class="button button-secondary" type="button" @click="clearChecks()">Clear all</button>
+            </div>
         </div>
     </header>
 
-    <main class="workspace single-column">
-        <section class="status-strip">
-            <div>
-                <p class="strip-label">Packing progress</p>
-                <strong x-text="progressLabel()"></strong>
-            </div>
-            <div class="progress-bar">
-                <span :style="`width: ${progressPercent()}%`"></span>
-            </div>
-        </section>
+    <main class="layout">
+        <aside class="sidebar">
+            <section class="panel intro-panel">
+                <p class="panel-label">Checklist</p>
+                <h2 x-text="headline()"></h2>
+                <p class="panel-copy" x-text="summaryText()"></p>
+            </section>
 
-        <section class="result-panel" x-show="loading" x-transition>
-            <div class="result-header">
-                <div>
-                    <p class="panel-kicker">Loading</p>
-                    <h3>Preparing packing list</h3>
+            <section class="panel metrics-panel">
+                <div class="metric">
+                    <span>Total</span>
+                    <strong x-text="totalCount()"></strong>
                 </div>
-            </div>
-            <div class="loading-card">Fetching predefined items from <code>data.json</code>.</div>
-        </section>
-
-        <section class="result-panel warning" x-show="loadError" x-transition>
-            <div class="result-header">
-                <div>
-                    <p class="panel-kicker">Error</p>
-                    <h3>Checklist data unavailable</h3>
+                <div class="metric">
+                    <span>Packed</span>
+                    <strong x-text="packedCount()"></strong>
                 </div>
-            </div>
-            <div class="empty-state" x-text="loadError"></div>
-        </section>
-
-        <section class="result-panel" x-show="!loading && !loadError">
-            <div class="result-header">
-                <div>
-                    <p class="panel-kicker">Checklist</p>
-                    <h3>Things to pack</h3>
+                <div class="metric">
+                    <span>Remaining</span>
+                    <strong x-text="remainingCount()"></strong>
                 </div>
-                <span class="panel-count" x-text="`${totalCount()} items`"></span>
-            </div>
+                <div class="metric">
+                    <span>Progress</span>
+                    <strong x-text="`${progressPercent()}%`"></strong>
+                </div>
+            </section>
 
-            <template x-for="group in itemGroups()" :key="group.label">
-                <div class="group-block">
-                    <div class="group-header">
-                        <h4 x-text="group.label"></h4>
-                        <span x-text="`${group.entries.length} entries`"></span>
-                    </div>
+            <section class="panel progress-panel">
+                <div class="progress-header">
+                    <span>Progress</span>
+                    <strong x-text="progressLabel()"></strong>
+                </div>
+                <div class="progress-track" aria-hidden="true">
+                    <span :style="`width: ${progressPercent()}%`"></span>
+                </div>
+            </section>
+        </aside>
 
-                    <div class="check-grid">
-                        <template x-for="item in group.entries" :key="item.id">
-                            <label class="check-card" :class="{ checked: isChecked(item.id) }">
-                                <input type="checkbox" :checked="isChecked(item.id)" @change="toggleChecked(item.id)">
-                                <div class="check-content">
-                                    <div class="check-topline">
-                                        <strong x-text="item.name"></strong>
-                                        <span class="qty-pill" x-show="item.qty" x-text="item.qty"></span>
+        <section class="content">
+            <section class="panel state-panel" x-show="loading" x-transition.opacity>
+                <p class="panel-label">Loading</p>
+                <h3>Preparing checklist</h3>
+                <p class="panel-copy">Reading the predefined pack list from <code>data.json</code>.</p>
+            </section>
+
+            <section class="panel state-panel error" x-show="loadError" x-transition.opacity>
+                <p class="panel-label">Error</p>
+                <h3>Checklist unavailable</h3>
+                <p class="panel-copy" x-text="loadError"></p>
+            </section>
+
+            <section class="checklist-board" x-show="!loading && !loadError">
+                <template x-for="group in itemGroups()" :key="group.label">
+                    <section class="group">
+                        <header class="group-header">
+                            <div>
+                                <p class="group-kicker">Category</p>
+                                <h3 x-text="group.label"></h3>
+                            </div>
+                            <span class="group-count" x-text="`${group.entries.length} items`"></span>
+                        </header>
+
+                        <div class="item-list">
+                            <template x-for="item in group.entries" :key="item.id">
+                                <label class="item-row" :class="{ checked: isChecked(item.id) }">
+                                    <input type="checkbox" :checked="isChecked(item.id)" @change="toggleChecked(item.id)">
+                                    <div class="item-copy">
+                                        <div class="item-main">
+                                            <strong x-text="item.name"></strong>
+                                            <span class="item-qty" x-show="item.qty" x-text="item.qty"></span>
+                                        </div>
+                                        <p x-text="item.note"></p>
                                     </div>
-                                    <p x-text="item.note"></p>
-                                </div>
-                            </label>
-                        </template>
-                    </div>
-                </div>
-            </template>
+                                </label>
+                            </template>
+                        </div>
+                    </section>
+                </template>
+            </section>
         </section>
     </main>
 </div>
