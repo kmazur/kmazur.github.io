@@ -1,619 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Archive</title>
-    <meta name="description" content="A cleaned static archive of software drafts, browser experiments, data sets, and tooling.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #f7f2e9;
-            --bg-strong: #efe5d6;
-            --panel: rgba(255, 255, 255, 0.72);
-            --panel-border: rgba(34, 41, 37, 0.12);
-            --ink: #1f2422;
-            --muted: #5d6663;
-            --accent: #0b7666;
-            --accent-warm: #d86e40;
-            --accent-cool: #3f7195;
-            --shadow: 0 24px 60px rgba(34, 41, 37, 0.12);
-            --radius-xl: 28px;
-            --radius-lg: 20px;
-            --radius-md: 14px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krzysztof Mazur</title>
+<meta name="description" content="Personal knowledge archive. Interactive tools, curated references, and collected experiments.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-        * {
-            box-sizing: border-box;
-        }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: #111113;
+    color: #ededef;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-        html {
-            scroll-behavior: smooth;
-        }
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 80px 24px 120px;
+  }
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: "Manrope", sans-serif;
-            color: var(--ink);
-            background:
-                radial-gradient(circle at top left, rgba(255, 207, 149, 0.45), transparent 32%),
-                radial-gradient(circle at 85% 12%, rgba(63, 113, 149, 0.20), transparent 28%),
-                radial-gradient(circle at 70% 78%, rgba(11, 118, 102, 0.18), transparent 26%),
-                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 50%, var(--bg-strong) 100%);
-            overflow-x: hidden;
-        }
+  /* Header */
+  .header {
+    margin-bottom: 64px;
+  }
 
-        body::before,
-        body::after {
-            content: "";
-            position: fixed;
-            inset: auto;
-            pointer-events: none;
-            z-index: 0;
-            border-radius: 999px;
-            filter: blur(16px);
-            opacity: 0.6;
-        }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
 
-        body::before {
-            width: 22rem;
-            height: 22rem;
-            top: 5rem;
-            right: -6rem;
-            background: rgba(216, 110, 64, 0.14);
-        }
+  .header p {
+    font-size: 14px;
+    color: #71717a;
+  }
 
-        body::after {
-            width: 28rem;
-            height: 28rem;
-            left: -10rem;
-            bottom: -8rem;
-            background: rgba(11, 118, 102, 0.12);
-        }
+  .rule {
+    border: none;
+    border-top: 1px solid #27272a;
+    margin-top: 24px;
+  }
 
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
+  /* Section labels */
+  .section-label {
+    font-size: 12px;
+    color: #71717a;
+    text-transform: lowercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 20px;
+  }
 
-        .frame {
-            position: relative;
-            z-index: 1;
-            width: min(1160px, calc(100% - 32px));
-            margin: 0 auto;
-            padding: 24px 0 72px;
-        }
+  section {
+    margin-bottom: 56px;
+  }
 
-        .site-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            padding: 12px 4px 36px;
-        }
+  .section-divider {
+    border: none;
+    border-top: 1px solid #27272a;
+    margin-bottom: 56px;
+  }
 
-        .brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 800;
-            letter-spacing: 0.02em;
-        }
+  /* Projects */
+  .project-list {
+    list-style: none;
+  }
 
-        .brand-mark {
-            display: inline-grid;
-            place-items: center;
-            width: 42px;
-            height: 42px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, rgba(11, 118, 102, 0.95), rgba(63, 113, 149, 0.95));
-            color: #fff;
-            box-shadow: 0 14px 30px rgba(11, 118, 102, 0.28);
-        }
+  .project-row {
+    border-bottom: 1px solid #27272a;
+  }
 
-        .top-link {
-            padding: 12px 18px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.62);
-            border: 1px solid rgba(34, 41, 37, 0.10);
-            color: var(--muted);
-            transition: transform 180ms ease, background 180ms ease;
-        }
+  .project-row:first-child {
+    border-top: 1px solid #27272a;
+  }
 
-        .top-link:hover,
-        .button:hover,
-        .card-link:hover {
-            transform: translateY(-2px);
-        }
+  .project-link {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 14px 12px;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transition: background 0.2s ease;
+  }
 
-        .hero {
-            display: grid;
-            grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.95fr);
-            gap: 24px;
-            align-items: stretch;
-        }
+  .project-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    right: 12px;
+    height: 1.5px;
+    transition: height 0.2s ease, opacity 0.2s ease;
+    opacity: 0.6;
+  }
 
-        .hero-copy,
-        .hero-panel,
-        .feature-card,
-        .shelf-card {
-            border: 1px solid var(--panel-border);
-            background: var(--panel);
-            backdrop-filter: blur(16px);
-            box-shadow: var(--shadow);
-        }
+  .project-row:nth-child(1) .project-link::after { background: #4ade80; }
+  .project-row:nth-child(2) .project-link::after { background: #38bdf8; }
+  .project-row:nth-child(3) .project-link::after { background: #c084fc; }
 
-        .hero-copy {
-            padding: clamp(28px, 4vw, 56px);
-            border-radius: var(--radius-xl);
-        }
+  .project-row:nth-child(1) .project-link:hover { background: rgba(74, 222, 128, 0.06); }
+  .project-row:nth-child(2) .project-link:hover { background: rgba(56, 189, 248, 0.06); }
+  .project-row:nth-child(3) .project-link:hover { background: rgba(192, 132, 252, 0.06); }
 
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0 0 18px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            font-size: 0.78rem;
-            font-weight: 800;
-        }
+  .project-link:hover::after {
+    height: 3px;
+    opacity: 1;
+  }
 
-        .eyebrow::before {
-            content: "";
-            width: 40px;
-            height: 1px;
-            background: currentColor;
-            opacity: 0.65;
-        }
+  .project-title {
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-        h1,
-        h2,
-        h3 {
-            font-family: "Fraunces", serif;
-            font-weight: 700;
-            line-height: 0.96;
-            letter-spacing: -0.03em;
-            margin: 0;
-        }
+  .project-tags {
+    font-size: 11px;
+    color: #71717a;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-        h1 {
-            font-size: clamp(3.1rem, 8vw, 6.4rem);
-            max-width: 9.5ch;
-        }
+  .project-tags span {
+    display: inline-block;
+    padding: 1px 6px;
+    border: 1px solid #3f3f46;
+    border-radius: 3px;
+    margin-right: 4px;
+  }
 
-        .lede {
-            max-width: 60ch;
-            margin: 24px 0 0;
-            font-size: 1.06rem;
-            line-height: 1.8;
-            color: var(--muted);
-        }
+  .project-desc {
+    font-size: 13px;
+    font-weight: 400;
+    color: #71717a;
+    text-align: right;
+    flex-grow: 1;
+    min-width: 0;
+  }
 
-        .hero-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            margin-top: 32px;
-        }
+  /* Archive */
+  .archive-links {
+    font-size: 14px;
+    line-height: 2;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
 
-        .button,
-        .card-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            min-height: 48px;
-            padding: 14px 20px;
-            border-radius: 999px;
-            border: 1px solid rgba(34, 41, 37, 0.12);
-            transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
-        }
+  .archive-links a {
+    color: #ededef;
+    text-decoration: none;
+    padding-bottom: 1px;
+    border-bottom: 1px solid transparent;
+    transition: color 0.15s ease, border-color 0.2s ease;
+  }
 
-        .button.primary {
-            background: linear-gradient(135deg, var(--accent), #185f8f);
-            color: #fff;
-            border-color: transparent;
-        }
+  .archive-links a:hover {
+    color: #fff;
+    border-bottom-color: #71717a;
+  }
 
-        .button.secondary {
-            background: rgba(255, 255, 255, 0.62);
-            color: var(--ink);
-        }
+  .archive-sep {
+    display: inline-block;
+    width: 1px;
+    height: 14px;
+    background: #3f3f46;
+    margin: 0 14px;
+    vertical-align: middle;
+    user-select: none;
+  }
 
-        .hero-panel {
-            position: relative;
-            padding: 26px;
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-        }
+  /* Elsewhere */
+  .elsewhere a {
+    font-size: 14px;
+    color: #ededef;
+    text-decoration: none;
+    padding-bottom: 1px;
+    border-bottom: 1px solid transparent;
+    transition: color 0.15s ease, border-color 0.2s ease;
+  }
 
-        .hero-panel::before {
-            content: "";
-            position: absolute;
-            inset: auto -40px -56px auto;
-            width: 220px;
-            height: 220px;
-            border-radius: 44px;
-            background: linear-gradient(180deg, rgba(216, 110, 64, 0.18), rgba(11, 118, 102, 0.16));
-            transform: rotate(16deg);
-        }
+  .elsewhere a:hover {
+    color: #fff;
+    border-bottom-color: #71717a;
+  }
 
-        .metrics {
-            position: relative;
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
-        }
+  /* Focus */
+  :focus-visible {
+    outline: 2px solid #71717a;
+    outline-offset: 2px;
+  }
 
-        .metric {
-            padding: 18px;
-            border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.75);
-            border: 1px solid rgba(34, 41, 37, 0.08);
-        }
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container {
+      padding: 48px 20px 80px;
+    }
 
-        .metric strong {
-            display: block;
-            font-size: 2.1rem;
-            line-height: 1;
-            margin-bottom: 8px;
-        }
+    .project-link {
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 12px 8px;
+    }
 
-        .metric span {
-            color: var(--muted);
-            font-size: 0.95rem;
-        }
+    .project-desc {
+      text-align: left;
+      width: 100%;
+      flex-basis: 100%;
+    }
 
-        .tag-bank {
-            position: relative;
-            margin-top: 22px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+    .archive-links {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
 
-        .tag-bank span {
-            padding: 10px 14px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.78);
-            border: 1px solid rgba(34, 41, 37, 0.08);
-            color: var(--muted);
-            font-size: 0.88rem;
-        }
-
-        .section-label {
-            margin: 72px 0 20px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            font-size: 0.78rem;
-            font-weight: 800;
-        }
-
-        .feature-grid,
-        .shelf-grid {
-            display: grid;
-            gap: 18px;
-        }
-
-        .feature-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .feature-card,
-        .shelf-card {
-            position: relative;
-            padding: 26px;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-        }
-
-        .feature-card::after,
-        .shelf-card::after {
-            content: "";
-            position: absolute;
-            inset: 0 auto auto 0;
-            width: 100%;
-            height: 6px;
-            background: linear-gradient(90deg, var(--accent), var(--accent-warm), var(--accent-cool));
-            opacity: 0.92;
-        }
-
-        .feature-card h2 {
-            font-size: clamp(2rem, 4vw, 3rem);
-            margin-top: 18px;
-        }
-
-        .feature-copy,
-        .shelf-copy {
-            margin: 16px 0 0;
-            line-height: 1.8;
-            color: var(--muted);
-        }
-
-        .pill-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .pill {
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(11, 118, 102, 0.08);
-            color: var(--accent);
-            font-size: 0.82rem;
-            font-weight: 700;
-        }
-
-        .card-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 24px;
-        }
-
-        .card-link {
-            background: rgba(255, 255, 255, 0.66);
-        }
-
-        .card-link.primary {
-            background: rgba(11, 118, 102, 0.10);
-            color: var(--accent);
-        }
-
-        .shelf-grid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-
-        .shelf-card h3 {
-            font-size: 1.85rem;
-        }
-
-        .footer-note {
-            margin-top: 64px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(34, 41, 37, 0.12);
-            color: var(--muted);
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .reveal {
-            opacity: 0;
-            transform: translateY(22px);
-            animation: rise 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-
-        .reveal-delay-1 { animation-delay: 100ms; }
-        .reveal-delay-2 { animation-delay: 180ms; }
-        .reveal-delay-3 { animation-delay: 260ms; }
-        .reveal-delay-4 { animation-delay: 340ms; }
-
-        @keyframes rise {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 980px) {
-            .hero,
-            .feature-grid,
-            .shelf-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .site-header {
-                padding-bottom: 26px;
-            }
-
-            .hero-panel::before {
-                width: 180px;
-                height: 180px;
-            }
-        }
-
-        @media (max-width: 680px) {
-            .frame {
-                width: min(100% - 22px, 1160px);
-                padding-top: 18px;
-            }
-
-            .site-header {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .hero-copy,
-            .hero-panel,
-            .feature-card,
-            .shelf-card {
-                padding: 22px;
-            }
-
-            .metrics {
-                grid-template-columns: 1fr;
-            }
-
-            h1 {
-                max-width: 11ch;
-            }
-        }
-    </style>
+    .archive-sep {
+      display: none;
+    }
+  }
+</style>
 </head>
 <body>
-<div class="frame">
-    <header class="site-header">
-        <a class="brand" href="#top">
-            <span class="brand-mark">KM</span>
-            <span>Knowledge Archive</span>
+<div class="container">
+
+  <header class="header">
+    <h1>Krzysztof Mazur</h1>
+    <p>software engineer, personal knowledge archive</p>
+    <hr class="rule">
+  </header>
+
+  <section>
+    <div class="section-label">projects</div>
+    <ul class="project-list">
+      <li class="project-row">
+        <a class="project-link" href="./experiments/web/jdk/">
+          <span class="project-title">JDK Explorer</span>
+          <span class="project-tags"><span>java</span><span>web</span></span>
+          <span class="project-desc">browse JDK versions, features, and API changes</span>
         </a>
-        <a class="top-link" href="https://github.com/kmazur/kmazur.github.io" target="_blank" rel="noreferrer">View Repository</a>
-    </header>
+      </li>
+      <li class="project-row">
+        <a class="project-link" href="./experiments/web/travel/">
+          <span class="project-title">Travel Checklist</span>
+          <span class="project-tags"><span>js</span><span>pwa</span></span>
+          <span class="project-desc">packing list generator for trips</span>
+        </a>
+      </li>
+      <li class="project-row">
+        <a class="project-link" href="./tools/cost-estimator/">
+          <span class="project-title">Cost Estimator</span>
+          <span class="project-tags"><span>js</span><span>tool</span></span>
+          <span class="project-desc">estimate Claude Code session costs</span>
+        </a>
+      </li>
+    </ul>
+  </section>
 
-    <main id="top">
-        <section class="hero">
-            <article class="hero-copy reveal">
-                <p class="eyebrow">Krzysztof Mazur</p>
-                <h1>Ideas kept sharp, not buried in scaffolding.</h1>
-                <p class="lede">
-                    A cleaned static archive of software drafts, lightweight browser prototypes, curated data, and one focused crawler tool.
-                    No generator shell, no theme layer, just the material worth keeping.
-                </p>
-                <div class="hero-actions">
-                    <a class="button primary" href="./experiments/web/jdk/">Open JDK Explorer</a>
-                    <a class="button secondary" href="./experiments/web/travel/">Open Travel Checklist</a>
-                    <a class="button secondary" href="./tools/cost-estimator/">Cost Estimator</a>
-                    <a class="button secondary" href="https://github.com/kmazur/kmazur.github.io/tree/master/content" target="_blank" rel="noreferrer">Browse Drafts</a>
-                </div>
-            </article>
+  <hr class="section-divider">
 
-            <aside class="hero-panel reveal reveal-delay-1">
-                <div class="metrics">
-                    <div class="metric">
-                        <strong>13</strong>
-                        <span>draft essays and notes</span>
-                    </div>
-                    <div class="metric">
-                        <strong>3</strong>
-                        <span>browser experiments</span>
-                    </div>
-                    <div class="metric">
-                        <strong>2</strong>
-                        <span>data files preserved</span>
-                    </div>
-                    <div class="metric">
-                        <strong>1</strong>
-                        <span>crawler tool retained</span>
-                    </div>
-                </div>
+  <section>
+    <div class="section-label">archive</div>
+    <div class="archive-links">
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">Drafts</a><span class="archive-sep"></span><a href="https://github.com/kmazur/kmazur.github.io/tree/master/data">Data</a><span class="archive-sep"></span><a href="https://github.com/kmazur/kmazur.github.io/tree/master/tools">Tools</a><span class="archive-sep"></span><a href="https://github.com/kmazur/kmazur.github.io/tree/master/references">References</a>
+    </div>
+  </section>
 
-                <div class="tag-bank" aria-label="topic highlights">
-                    <span>Java &amp; JDK</span>
-                    <span>System design</span>
-                    <span>Reactive systems</span>
-                    <span>Machine learning</span>
-                    <span>Travel tooling</span>
-                    <span>Personal research</span>
-                </div>
-            </aside>
-        </section>
+  <section>
+    <div class="section-label">elsewhere</div>
+    <div class="elsewhere">
+      <a href="https://github.com/kmazur/kmazur.github.io">GitHub</a>
+    </div>
+  </section>
 
-        <p class="section-label">Featured Work</p>
-        <section class="feature-grid">
-            <article class="feature-card reveal reveal-delay-2">
-                <span class="pill">Prototype</span>
-                <h2>JDK Explorer</h2>
-                <p class="feature-copy">
-                    A standalone React page that renders JEP data for JDK 8 through 12 from a generated JSON snapshot.
-                    It is the most polished interactive piece in the archive and still backed by a reusable crawler.
-                </p>
-                <div class="pill-row">
-                    <span class="pill">React</span>
-                    <span class="pill">Moment.js</span>
-                    <span class="pill">Generated data</span>
-                </div>
-                <div class="card-actions">
-                    <a class="card-link primary" href="./experiments/web/jdk/">Launch experiment</a>
-                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/tools/jdk-crawler" target="_blank" rel="noreferrer">Inspect crawler</a>
-                </div>
-            </article>
-
-            <article class="feature-card reveal reveal-delay-3">
-                <span class="pill" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);">Checklist</span>
-                <h2>Travel Packing Checklist</h2>
-                <p class="feature-copy">
-                    A frontend-only packing checklist backed by predefined JSON items.
-                    It shows the full pack list on the page and lets you tick what is already packed.
-                </p>
-                <div class="pill-row">
-                    <span class="pill" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);">Pack list</span>
-                    <span class="pill" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);">Tick packed items</span>
-                    <span class="pill" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);">Browser only</span>
-                </div>
-                <div class="card-actions">
-                    <a class="card-link primary" style="background: rgba(216, 110, 64, 0.10); color: var(--accent-warm);" href="./experiments/web/travel/">Open checklist</a>
-                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/experiments/web/travel" target="_blank" rel="noreferrer">View files</a>
-                </div>
-            </article>
-        </section>
-
-            <article class="feature-card reveal reveal-delay-4">
-                <span class="pill" style="background: rgba(63, 113, 149, 0.10); color: var(--accent-cool);">Tool</span>
-                <h2>Session Cost Estimator</h2>
-                <p class="feature-copy">
-                    A calculator for estimating Claude Code session costs based on model, context usage, and message patterns.
-                    Dark-themed standalone page with real-time cost breakdowns.
-                </p>
-                <div class="pill-row">
-                    <span class="pill" style="background: rgba(63, 113, 149, 0.10); color: var(--accent-cool);">Claude Code</span>
-                    <span class="pill" style="background: rgba(63, 113, 149, 0.10); color: var(--accent-cool);">Cost analysis</span>
-                    <span class="pill" style="background: rgba(63, 113, 149, 0.10); color: var(--accent-cool);">Browser only</span>
-                </div>
-                <div class="card-actions">
-                    <a class="card-link primary" style="background: rgba(63, 113, 149, 0.10); color: var(--accent-cool);" href="./tools/cost-estimator/">Open estimator</a>
-                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/tools/cost-estimator" target="_blank" rel="noreferrer">View source</a>
-                </div>
-            </article>
-        </section>
-
-        <p class="section-label">Archive Sections</p>
-        <section class="shelf-grid">
-            <article class="shelf-card reveal reveal-delay-1">
-                <h3>Drafts</h3>
-                <p class="shelf-copy">
-                    Long-form notes on code review, competitive programming, system design, software craftsmanship, and more.
-                </p>
-                <div class="card-actions">
-                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noreferrer">Browse drafts</a>
-                </div>
-            </article>
-
-            <article class="shelf-card reveal reveal-delay-2">
-                <h3>Data</h3>
-                <p class="shelf-copy">
-                    Small preserved datasets, including competitive programming history and the legacy tag catalog.
-                </p>
-                <div class="card-actions">
-                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/data" target="_blank" rel="noreferrer">Open data</a>
-                </div>
-            </article>
-
-            <article class="shelf-card reveal reveal-delay-3">
-                <h3>Tooling</h3>
-                <p class="shelf-copy">
-                    One focused Java utility remains: the OpenJDK crawler that refreshes the explorer data set.
-                </p>
-                <div class="card-actions">
-                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/tools" target="_blank" rel="noreferrer">Open tools</a>
-                </div>
-            </article>
-
-            <article class="shelf-card reveal reveal-delay-4">
-                <h3>References</h3>
-                <p class="shelf-copy">
-                    Source material, reading lists, and supporting notes kept alongside the active archive.
-                </p>
-                <div class="card-actions">
-                    <a class="card-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/references" target="_blank" rel="noreferrer">Open references</a>
-                </div>
-            </article>
-        </section>
-    </main>
-
-    <footer class="footer-note">
-        <span>Clean static archive. No generator dependency required.</span>
-        <span>Designed to foreground the work, not the framework.</span>
-    </footer>
 </div>
 </body>
 </html>
