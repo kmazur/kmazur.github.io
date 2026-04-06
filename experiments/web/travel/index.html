@@ -8,8 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260404-1">
-    <script defer src="./app.js?v=20260404-1"></script>
+    <link rel="stylesheet" href="./styles.css?v=20260406-1">
+    <script defer src="./app.js?v=20260406-1"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
 </head>
 <body>
@@ -26,8 +26,6 @@
                 <button class="btn" @click="clearChecks()">clear</button>
             </div>
         </div>
-
-        <!-- Progress -->
         <div class="progress-row">
             <div class="progress-track">
                 <div class="progress-fill" :style="`width: ${progressPercent()}%`"></div>
@@ -43,20 +41,22 @@
                 x-model="searchQuery" @input.debounce.150ms>
         </div>
 
-        <template x-for="group in tagGroups()" :key="group.label">
-            <div class="tag-section">
-                <div class="tag-group-label" x-text="group.label"></div>
-                <div class="tag-row">
-                    <template x-for="tag in group.tags" :key="tag">
-                        <button class="tag-pill"
-                            :style="isTagActive(tag) ? `border-color: ${tagColor(tag)}; color: ${tagColor(tag)}; background: ${tagColor(tag)}15` : ''"
-                            @click="toggleTag(tag)"
-                            x-text="tag">
-                        </button>
-                    </template>
+        <div class="tag-groups-row">
+            <template x-for="group in tagGroups()" :key="group.label">
+                <div class="tag-section">
+                    <span class="tag-group-label" x-text="group.label"></span>
+                    <div class="tag-row">
+                        <template x-for="tag in group.tags" :key="tag">
+                            <button class="tag-pill"
+                                :style="isTagActive(tag) ? `border-color: ${tagColor(tag)}; color: ${tagColor(tag)}; background: ${tagColor(tag)}15` : ''"
+                                @click="toggleTag(tag)"
+                                x-text="tag">
+                            </button>
+                        </template>
+                    </div>
                 </div>
-            </div>
-        </template>
+            </template>
+        </div>
 
         <div class="filter-status" x-show="hasActiveFilters()">
             <span x-text="`${filteredCount()} items match`"></span>
@@ -65,14 +65,12 @@
     </div>
 
     <!-- Loading State -->
-    <div class="state-msg" x-show="loading">loading checklist...</div>
+    <div class="state-msg" x-show="loading">loading...</div>
     <div class="state-msg" x-show="loadError" x-text="loadError"></div>
 
     <!-- Checklist -->
     <main x-show="!loading && !loadError">
-        <div class="state-msg" x-show="filteredGroups().length === 0">
-            no items match your filters
-        </div>
+        <div class="state-msg" x-show="filteredGroups().length === 0">no items match</div>
 
         <template x-for="group in filteredGroups()" :key="group.label">
             <section class="category-group">
@@ -92,16 +90,14 @@
                             <label class="item-row" :class="{ checked: isChecked(item.id) }">
                                 <input type="checkbox" :checked="isChecked(item.id)" @change="toggleChecked(item.id)">
                                 <div class="item-content">
-                                    <div class="item-top">
-                                        <span class="item-name" x-text="item.name"></span>
-                                        <span class="item-qty" x-show="item.qty" x-text="item.qty"></span>
-                                    </div>
-                                    <div class="item-note" x-text="item.note" x-show="item.note"></div>
-                                    <div class="item-tags" x-show="item.tags.length">
+                                    <span class="item-name" x-text="item.name"></span>
+                                    <span class="item-qty" x-show="item.qty" x-text="item.qty"></span>
+                                    <span class="item-note" x-text="item.note" x-show="item.note"></span>
+                                    <span class="item-tags" x-show="item.tags.length">
                                         <template x-for="tag in item.tags" :key="tag">
                                             <span class="item-tag" :style="`color: ${tagColor(tag)}`" x-text="tag"></span>
                                         </template>
-                                    </div>
+                                    </span>
                                 </div>
                             </label>
                         </li>
