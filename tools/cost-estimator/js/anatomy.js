@@ -1,13 +1,13 @@
-import { fmtCost, fmtTok } from './formatters.js';
+import { fmtCost, fmtTok, escHtml } from './formatters.js';
 
 export function showAnatomy(turnData) {
   const ov = document.getElementById('anatomy-overlay');
   ov.classList.add('open');
   const t = turnData;
   document.getElementById('anatomy-title').innerHTML =
-    `Turn ${t.turn} Anatomy <span class="badge ${t.warmAtStart ? 'warm' : 'cold'}">${t.warmAtStart ? 'WARM' : 'COLD'} cache</span>`;
+    `Turn ${escHtml(t.turn)} Anatomy <span class="badge ${t.warmAtStart ? 'warm' : 'cold'}">${t.warmAtStart ? 'WARM' : 'COLD'} cache</span>`;
   document.getElementById('anatomy-meta').innerHTML =
-    `Context: <span>${fmtTok(t.contextSize)}</span> | API calls: <span>${t.nCalls}</span> | Turn cost: <span>${fmtCost(t.turnCost)}</span>`
+    `Context: <span>${escHtml(fmtTok(t.contextSize))}</span> | API calls: <span>${escHtml(t.nCalls)}</span> | Turn cost: <span>${escHtml(fmtCost(t.turnCost))}</span>`
     + (t.compaction ? ' | <span style="color:#f59e0b">COMPACTION</span>' : '')
     + (t.cacheDrop ? ' | <span style="color:#f87171">CACHE DROP</span>' : '');
 

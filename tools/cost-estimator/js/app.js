@@ -23,13 +23,14 @@ function restoreUIFromConfig() {
     const el = document.getElementById(key); if (!el) continue;
     el.value = config[key];
     const d = document.getElementById('v-' + key);
-    if (d && SLIDER_FORMATTERS[key]) d.textContent = SLIDER_FORMATTERS[key](config[key]);
+    if (d && SLIDER_FORMATTERS[key]) {
+      const formatted = SLIDER_FORMATTERS[key](config[key]);
+      d.textContent = formatted;
+      el.setAttribute('aria-valuetext', String(formatted));
+    }
   }
   document.getElementById('autoCompact').checked = config.autoCompact;
 }
-
-// Expose shareURL globally for the onclick handler
-window.shareURL = shareURL;
 
 // Init
 const loaded = loadFromURL();

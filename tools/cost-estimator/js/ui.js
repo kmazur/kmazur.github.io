@@ -1,7 +1,7 @@
 import { MODELS, PRESETS, COMPACT_THRESHOLD, TOOL_CALL_OVERHEAD } from './constants.js';
 import { config, state } from './state.js';
 import { simulate, simulateNoCacheCost, computeSensitivity, getCacheTTLMinutes } from './simulation.js';
-import { fmtCost, fmtTok } from './formatters.js';
+import { fmtCost, fmtTok, escHtml } from './formatters.js';
 import { drawLine, drawStackedBars, drawCacheStrip, drawDonut, buildModelBars } from './charts.js';
 import { syncToURL } from './url-state.js';
 
@@ -34,13 +34,14 @@ export function updateSensitivityBadges() {
   const vals = Object.values(sens).filter(v => v > 0);
   if (vals.length === 0) return;
   vals.sort((a, b) => b - a);
-  const p33 = vals[Math.floor(vals.length * 0.33)] || 0;
-  const p66 = vals[Math.floor(vals.length * 0.66)] || 0;
+  // p33 = top-third boundary (high value), p66 = top-two-thirds boundary (lower value)
+  const highThreshold = vals[Math.floor(vals.length * 0.33)] || 0;
+  const medThreshold = vals[Math.floor(vals.length * 0.66)] || 0;
   for (const [key, val] of Object.entries(sens)) {
     const el = document.querySelector(`[data-sens="${key}"]`);
     if (!el) continue;
-    if (val >= p33) { el.className = 'sens-tag high'; el.textContent = 'HIGH'; }
-    else if (val >= p66) { el.className = 'sens-tag med'; el.textContent = 'MED'; }
+    if (val >= highThreshold) { el.className = 'sens-tag high'; el.textContent = 'HIGH'; }
+    else if (val >= medThreshold) { el.className = 'sens-tag med'; el.textContent = 'MED'; }
     else { el.className = 'sens-tag low'; el.textContent = 'LOW'; }
   }
 }
@@ -61,10 +62,10 @@ function updateCostDrivers(T) {
     const pct = (d.cost / total * 100).toFixed(0);
     const barW = (d.cost / mx * 100).toFixed(1);
     return `<div class="driver-row">
-      <span class="driver-label">${d.name}</span>
-      <div class="driver-bar-bg"><div class="driver-bar-fill" style="width:${barW}%;background:${d.color}"></div></div>
-      <span class="driver-value" style="color:${d.color}">${fmtCost(d.cost)}</span>
-      <span class="driver-pct">${pct}%</span>
+      <span class="driver-label">${escHtml(d.name)}</span>
+      <div class="driver-bar-bg"><div class="driver-bar-fill" style="width:${barW}%;background:${escHtml(d.color)}"></div></div>
+      <span class="driver-value" style="color:${escHtml(d.color)}">${escHtml(fmtCost(d.cost))}</span>
+      <span class="driver-pct">${escHtml(pct)}%</span>
     </div>`;
   }).join('');
 }
@@ -115,8 +116,9 @@ function updateProjections(cost) {
     document.getElementById('proj-budget-detail').textContent = '';
   }
   const rate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+  const minsPerTurn = parseFloat(document.getElementById('minsPerTurn').value) || 2;
   if (cost > 0 && rate > 0) {
-    const savedMins = config.turns * 2;
+    const savedMins = config.turns * minsPerTurn;
     const savedHrs = savedMins / 60;
     const devValue = savedHrs * rate;
     const roi = ((devValue - cost) / cost * 100).toFixed(0);
@@ -268,9 +270,9 @@ export function update() {
   ].filter(s => s.value > 0.0001);
   drawDonut(document.getElementById('chart-donut'), segs);
   document.getElementById('donut-legend').innerHTML = segs.map(s =>
-    `<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div>
-     <span class="legend-label">${s.label}</span>
-     <span class="legend-value" style="color:${s.color}">${fmtCost(s.value)}</span></div>`).join('');
+    `<div class="legend-item"><div class="legend-dot" style="background:${escHtml(s.color)}"></div>
+     <span class="legend-label">${escHtml(s.label)}</span>
+     <span class="legend-value" style="color:${escHtml(s.color)}">${escHtml(fmtCost(s.value))}</span></div>`).join('');
 
   buildModelBars('bar-comparison', config);
   updateProjections(t.cost);

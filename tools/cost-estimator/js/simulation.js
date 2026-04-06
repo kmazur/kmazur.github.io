@@ -13,16 +13,19 @@ function costOneCall(inputTok, outputTok, thinkTok, model, cwPrice, warm, cached
   const R = 1e6;
   let cr = 0, cw = 0, un = 0;
   if (warm && cachedPrefix > 0) {
+    // Cache hit: read cached prefix, write new tokens into cache
     cr = Math.min(cachedPrefix, inputTok);
     cw = Math.max(0, inputTok - cachedPrefix);
   } else {
-    cw = inputTok;
+    // Cold start: entire input is uncached, gets written into cache for next call
+    un = inputTok;
   }
   return {
     cr, cw, un, out: outputTok, think: thinkTok,
     crCost: cr * model.cacheRead / R,
     cwCost: cw * cwPrice / R,
     unCost: un * model.input / R,
+    // Thinking tokens are billed at the output rate per Anthropic pricing
     outCost: outputTok * model.output / R,
     thCost: thinkTok * model.output / R,
   };
@@ -115,33 +118,9 @@ export function simulate(cfg, modelOverride) {
 }
 
 export function simulateNoCacheCost(cfg) {
-  const m = MODELS[cfg.model];
-  const R = 1e6;
-  const ctxLimit = cfg.contextWindow;
-  let ctx = cfg.sysPrompt, total = 0;
-  const compSet = new Set();
-  if (cfg.compactions > 0 && cfg.turns > 1) {
-    const sp = cfg.turns / (cfg.compactions + 1);
-    for (let i = 1; i <= cfg.compactions; i++) compSet.add(Math.round(i * sp));
-  }
-  for (let t = 0; t < cfg.turns; t++) {
-    if (compSet.has(t) || (cfg.autoCompact && ctx >= ctxLimit * COMPACT_THRESHOLD)) {
-      const summ = Math.floor(ctx * cfg.compactRatio);
-      total += ctx * m.input / R + summ * m.output / R;
-      ctx = cfg.sysPrompt + summ;
-    }
-    const nC = 1 + cfg.toolRounds;
-    let curIn = ctx + cfg.userMsg;
-    for (let a = 0; a < nC; a++) {
-      const last = a === nC - 1;
-      const oT = last ? cfg.responseTokens : TOOL_CALL_OVERHEAD;
-      const thT = last ? cfg.thinkingTokens : 0;
-      total += curIn * m.input / R + oT * m.output / R + thT * m.output / R;
-      if (!last) curIn += oT + cfg.toolResult;
-    }
-    ctx += cfg.userMsg + cfg.toolRounds * (TOOL_CALL_OVERHEAD + cfg.toolResult) + cfg.responseTokens;
-  }
-  return total;
+  // Reuse simulate with cache disabled: no warm cache, no drops (everything uncached)
+  const noCacheCfg = { ...cfg, timeBetween: 9999, cacheDrops: 0 };
+  return simulate(noCacheCfg).T.cost;
 }
 
 export function computeSensitivity() {

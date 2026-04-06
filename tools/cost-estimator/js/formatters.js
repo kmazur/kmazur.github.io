@@ -17,6 +17,10 @@ export function fmtComma(n) {
   return (+n).toLocaleString('en-US');
 }
 
+export function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export const SLIDER_FORMATTERS = {
   turns: v => v,
   sysPrompt: v => fmtComma(+v),

@@ -15,7 +15,7 @@
   <div class="logo">C</div>
   <h1>Session Cost Estimator</h1>
   <span class="subtitle">Turn-by-turn API cost simulation</span>
-  <button class="share-btn" id="shareBtn" onclick="shareURL()">Share</button>
+  <button class="share-btn" id="shareBtn">Share</button>
 </header>
 
 <div class="app">
@@ -142,6 +142,7 @@
     <div class="proj-card">
       <div class="proj-title">Developer ROI</div>
       <div class="budget-input-row"><span style="color:var(--text-muted);font-size:13px;">$</span><input class="budget-input" id="hourlyRate" type="number" value="100" min="10" step="10"><span style="color:var(--text-muted);font-size:11px;">/ hr rate</span></div>
+      <div class="budget-input-row" style="margin-top:6px"><input class="budget-input" id="minsPerTurn" type="number" value="2" min="0.5" max="30" step="0.5" style="width:60px"><span style="color:var(--text-muted);font-size:11px;">min saved / turn</span></div>
       <div class="proj-result" id="roi-result">&mdash;</div>
       <div class="proj-detail" id="roi-detail"></div>
     </div>
@@ -161,25 +162,25 @@
   <div class="charts-grid">
     <div class="chart-card full-width">
       <div class="chart-title">Cumulative Cost<span class="chart-subtitle">auto-annotated spikes</span></div>
-      <div class="chart-canvas-wrap" style="height:200px"><canvas id="chart-cost"></canvas><div class="chart-tooltip" id="tip-cost"></div></div>
+      <div class="chart-canvas-wrap" style="height:200px"><canvas id="chart-cost" aria-label="Cumulative session cost over turns" role="img"></canvas><div class="chart-tooltip" id="tip-cost"></div></div>
     </div>
     <div class="chart-card full-width">
       <div class="chart-title">Per-Turn Stacked Cost<span class="chart-subtitle">click a bar for API-call anatomy</span></div>
-      <div class="chart-canvas-wrap" style="height:210px"><canvas id="chart-perturn"></canvas><div class="chart-tooltip" id="tip-perturn"></div></div>
+      <div class="chart-canvas-wrap" style="height:210px"><canvas id="chart-perturn" aria-label="Per-turn stacked cost breakdown" role="img"></canvas><div class="chart-tooltip" id="tip-perturn"></div></div>
     </div>
     <div class="chart-card full-width">
       <div class="chart-title">Cache State Timeline</div>
-      <div class="chart-canvas-wrap" style="height:36px"><canvas id="chart-cachestrip"></canvas></div>
+      <div class="chart-canvas-wrap" style="height:36px"><canvas id="chart-cachestrip" aria-label="Cache state timeline showing warm, cold, and compaction states" role="img"></canvas></div>
     </div>
     <div class="chart-card full-width">
       <div class="chart-title">Context Size per Turn</div>
-      <div class="chart-canvas-wrap" style="height:200px"><canvas id="chart-ctx"></canvas><div class="chart-tooltip" id="tip-ctx"></div></div>
+      <div class="chart-canvas-wrap" style="height:200px"><canvas id="chart-ctx" aria-label="Context size per turn" role="img"></canvas><div class="chart-tooltip" id="tip-ctx"></div></div>
     </div>
   </div>
   <div class="charts-grid">
     <div class="chart-card">
       <div class="chart-title">Cost Breakdown</div>
-      <div class="donut-container"><div class="donut-canvas-wrap"><canvas id="chart-donut"></canvas></div><div class="donut-legend" id="donut-legend"></div></div>
+      <div class="donut-container"><div class="donut-canvas-wrap"><canvas id="chart-donut" aria-label="Cost breakdown donut chart" role="img"></canvas></div><div class="donut-legend" id="donut-legend"></div></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Model Comparison</div>
@@ -191,7 +192,7 @@
 </div>
 
 <!-- Anatomy overlay -->
-<div class="anatomy-overlay" id="anatomy-overlay">
+<div class="anatomy-overlay" id="anatomy-overlay" role="dialog" aria-modal="true" aria-label="Turn cost anatomy">
   <div class="anatomy-panel" id="anatomy-panel">
     <div class="anatomy-header"><h3 id="anatomy-title">Turn Anatomy</h3><button class="anatomy-close" onclick="document.getElementById('anatomy-overlay').classList.remove('open')">&times;</button></div>
     <div class="anatomy-meta" id="anatomy-meta"></div>

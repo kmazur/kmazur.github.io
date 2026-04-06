@@ -4,6 +4,7 @@ import { SLIDER_FORMATTERS } from './formatters.js';
 import { fmtCost, fmtTok } from './formatters.js';
 import { showAnatomy, closeAnatomy } from './anatomy.js';
 import { update, updatePricingBox, updateIdleLabel } from './ui.js';
+import { shareURL } from './url-state.js';
 
 function mkTip(cvId, tipId, fmt) {
   const cv = document.getElementById(cvId), tip = document.getElementById(tipId);
@@ -25,6 +26,9 @@ function mkTip(cvId, tipId, fmt) {
 }
 
 export function bindEvents() {
+  // Share button
+  document.getElementById('shareBtn').addEventListener('click', shareURL);
+
   // Model buttons
   document.querySelectorAll('.model-btn').forEach(btn => btn.addEventListener('click', () => {
     document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
@@ -50,7 +54,11 @@ export function bindEvents() {
     el.addEventListener('input', () => {
       config[key] = parseFloat(el.value);
       const d = document.getElementById('v-' + key);
-      if (d && SLIDER_FORMATTERS[key]) d.textContent = SLIDER_FORMATTERS[key](el.value);
+      if (d && SLIDER_FORMATTERS[key]) {
+        const formatted = SLIDER_FORMATTERS[key](el.value);
+        d.textContent = formatted;
+        el.setAttribute('aria-valuetext', String(formatted));
+      }
       update();
     });
   }
@@ -59,6 +67,7 @@ export function bindEvents() {
   });
   document.getElementById('budgetInput').addEventListener('input', () => update());
   document.getElementById('hourlyRate').addEventListener('input', () => update());
+  document.getElementById('minsPerTurn').addEventListener('input', () => update());
   document.getElementById('autoCompact').addEventListener('change', e => { config.autoCompact = e.target.checked; update(); });
 
   // Presets

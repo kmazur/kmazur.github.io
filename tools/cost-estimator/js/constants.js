@@ -16,4 +16,5 @@ export const PRESETS = {
 };
 
 export const COMPACT_THRESHOLD = 0.70;
+// Approximate output tokens per tool-use call (function name, JSON schema, invocation boilerplate)
 export const TOOL_CALL_OVERHEAD = 180;
