@@ -4,120 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Packing Checklist</title>
-    <meta name="description" content="Minimal frontend-only packing checklist backed by predefined JSON items.">
+    <meta name="description" content="Interactive packing checklist with tag filtering, search, and progress tracking.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css?v=20260401-1">
-    <script defer src="./app.js?v=20260331-2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=20260404-1">
+    <script defer src="./app.js?v=20260404-1"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
 </head>
 <body>
-<div class="shell" x-data="travelChecklistApp()" x-cloak>
-    <header class="masthead">
-        <div class="masthead-bar">
-            <span class="section-tag">Travel / Pack</span>
-            <span class="storage-badge">Saved in this browser</span>
+<div class="container" x-data="travelChecklistApp()" x-cloak>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <h1>Packing Checklist <a href="../../..">mazur.km</a></h1>
+            <div class="header-actions">
+                <button class="btn" :class="{ 'btn-active': hidePackedMode }" @click="hidePackedMode = !hidePackedMode"
+                    x-text="hidePackedMode ? 'show all' : 'hide packed'"></button>
+                <button class="btn" @click="copyPacked()" x-text="copyState"></button>
+                <button class="btn" @click="clearChecks()">clear</button>
+            </div>
         </div>
 
-        <div class="masthead-main">
-            <div class="intro-copy">
-                <p class="eyebrow">Minimal Packing Tool</p>
-                <h1>Packing, kept strict.</h1>
-                <p class="lede">
-                    Every item stays visible. You just mark what is already packed.
-                    No planner flow, no hidden steps, no extra noise.
-                </p>
+        <!-- Progress -->
+        <div class="progress-row">
+            <div class="progress-track">
+                <div class="progress-fill" :style="`width: ${progressPercent()}%`"></div>
             </div>
-
-            <div class="header-actions">
-                <button class="button button-primary" type="button" @click="copyPacked()" x-text="copyState"></button>
-                <button class="button button-secondary" type="button" @click="clearChecks()">Clear all</button>
-            </div>
+            <span class="progress-label" x-text="`${packedCount()}/${totalCount()} packed`"></span>
         </div>
     </header>
 
-    <main class="layout">
-        <aside class="sidebar">
-            <section class="panel intro-panel">
-                <p class="panel-label">Checklist</p>
-                <h2 x-text="headline()"></h2>
-                <p class="panel-copy" x-text="summaryText()"></p>
-            </section>
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="search-row">
+            <input class="search-input" type="text" placeholder="search items..."
+                x-model="searchQuery" @input.debounce.150ms>
+        </div>
 
-            <section class="panel metrics-panel">
-                <div class="metric">
-                    <span>Total</span>
-                    <strong x-text="totalCount()"></strong>
+        <template x-for="group in tagGroups()" :key="group.label">
+            <div class="tag-section">
+                <div class="tag-group-label" x-text="group.label"></div>
+                <div class="tag-row">
+                    <template x-for="tag in group.tags" :key="tag">
+                        <button class="tag-pill"
+                            :style="isTagActive(tag) ? `border-color: ${tagColor(tag)}; color: ${tagColor(tag)}; background: ${tagColor(tag)}15` : ''"
+                            @click="toggleTag(tag)"
+                            x-text="tag">
+                        </button>
+                    </template>
                 </div>
-                <div class="metric">
-                    <span>Packed</span>
-                    <strong x-text="packedCount()"></strong>
-                </div>
-                <div class="metric">
-                    <span>Remaining</span>
-                    <strong x-text="remainingCount()"></strong>
-                </div>
-                <div class="metric">
-                    <span>Progress</span>
-                    <strong x-text="`${progressPercent()}%`"></strong>
-                </div>
-            </section>
+            </div>
+        </template>
 
-            <section class="panel progress-panel">
-                <div class="progress-header">
-                    <span>Progress</span>
-                    <strong x-text="progressLabel()"></strong>
+        <div class="filter-status" x-show="hasActiveFilters()">
+            <span x-text="`${filteredCount()} items match`"></span>
+            <button class="clear-filters" @click="clearFilters()">clear filters</button>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="state-msg" x-show="loading">loading checklist...</div>
+    <div class="state-msg" x-show="loadError" x-text="loadError"></div>
+
+    <!-- Checklist -->
+    <main x-show="!loading && !loadError">
+        <div class="state-msg" x-show="filteredGroups().length === 0">
+            no items match your filters
+        </div>
+
+        <template x-for="group in filteredGroups()" :key="group.label">
+            <section class="category-group">
+                <div class="category-header" @click="toggleGroup(group.label)">
+                    <div class="category-left">
+                        <span class="category-chevron" :class="{ collapsed: isGroupCollapsed(group.label) }">&#9660;</span>
+                        <span class="category-name" x-text="group.label"></span>
+                    </div>
+                    <span class="category-count">
+                        <span class="category-progress" x-text="groupPackedCount(group.entries)"></span>/<span x-text="group.entries.length"></span>
+                    </span>
                 </div>
-                <div class="progress-track" aria-hidden="true">
-                    <span :style="`width: ${progressPercent()}%`"></span>
-                </div>
-            </section>
-        </aside>
 
-        <section class="content">
-            <section class="panel state-panel" x-show="loading" x-transition.opacity>
-                <p class="panel-label">Loading</p>
-                <h3>Preparing checklist</h3>
-                <p class="panel-copy">Reading the predefined pack list from <code>data.json</code>.</p>
-            </section>
-
-            <section class="panel state-panel error" x-show="loadError" x-transition.opacity>
-                <p class="panel-label">Error</p>
-                <h3>Checklist unavailable</h3>
-                <p class="panel-copy" x-text="loadError"></p>
-            </section>
-
-            <section class="checklist-board" x-show="!loading && !loadError">
-                <template x-for="group in itemGroups()" :key="group.label">
-                    <section class="group">
-                        <header class="group-header">
-                            <div>
-                                <p class="group-kicker">Category</p>
-                                <h3 x-text="group.label"></h3>
-                            </div>
-                            <span class="group-count" x-text="`${group.entries.length} items`"></span>
-                        </header>
-
-                        <div class="item-list">
-                            <template x-for="item in group.entries" :key="item.id">
-                                <label class="item-row" :class="{ checked: isChecked(item.id) }">
-                                    <input type="checkbox" :checked="isChecked(item.id)" @change="toggleChecked(item.id)">
-                                    <div class="item-copy">
-                                        <div class="item-main">
-                                            <strong x-text="item.name"></strong>
-                                            <span class="item-qty" x-show="item.qty" x-text="item.qty"></span>
-                                        </div>
-                                        <p x-text="item.note"></p>
+                <ul class="item-list" x-show="!isGroupCollapsed(group.label)" x-transition.opacity>
+                    <template x-for="item in group.entries" :key="item.id">
+                        <li>
+                            <label class="item-row" :class="{ checked: isChecked(item.id) }">
+                                <input type="checkbox" :checked="isChecked(item.id)" @change="toggleChecked(item.id)">
+                                <div class="item-content">
+                                    <div class="item-top">
+                                        <span class="item-name" x-text="item.name"></span>
+                                        <span class="item-qty" x-show="item.qty" x-text="item.qty"></span>
                                     </div>
-                                </label>
-                            </template>
-                        </div>
-                    </section>
-                </template>
+                                    <div class="item-note" x-text="item.note" x-show="item.note"></div>
+                                    <div class="item-tags" x-show="item.tags.length">
+                                        <template x-for="tag in item.tags" :key="tag">
+                                            <span class="item-tag" :style="`color: ${tagColor(tag)}`" x-text="tag"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </label>
+                        </li>
+                    </template>
+                </ul>
             </section>
-        </section>
+        </template>
     </main>
+
+    <footer class="footer">
+        saved in this browser &middot; <span x-text="`${totalCount()} items`"></span>
+    </footer>
+
 </div>
 </body>
 </html>
