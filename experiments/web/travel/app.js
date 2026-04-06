@@ -1,7 +1,10 @@
 const STORAGE_KEY = "travel-packing-checklist-v2";
-const DATASET_URL = "./data.json?v=20260404-1";
+const DATASET_URL = "./data.json?v=20260406-1";
 
 const TAG_GROUPS = {
+    "Gender": ["woman", "man"],
+    "Season": ["summer", "winter"],
+    "Activity": ["hiking", "beach", "city", "skiing"],
     "Trip": ["international", "business", "swim"],
     "Weather": ["rain", "hot", "cold"],
     "Context": ["daily", "transit", "work", "comfort"],
@@ -9,6 +12,14 @@ const TAG_GROUPS = {
 };
 
 const TAG_COLORS = {
+    woman: "#f9a8d4",
+    man: "#7dd3fc",
+    summer: "#fbbf24",
+    winter: "#93c5fd",
+    hiking: "#4ade80",
+    beach: "#fcd34d",
+    city: "#c084fc",
+    skiing: "#7dd3fc",
     international: "#c084fc",
     business: "#f59e0b",
     swim: "#38bdf8",
@@ -28,6 +39,8 @@ const TAG_COLORS = {
     washbag: "#2dd4bf",
     clothes: "#818cf8",
     weather: "#60a5fa",
+    long: "#d4d4d8",
+    week: "#a1a1aa",
 };
 
 function normalizeEntry(entry) {

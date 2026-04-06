@@ -29,6 +29,14 @@
       "tags": ["daily", "tech"]
     },
     {
+      "id": "watch",
+      "name": "Watch",
+      "category": "Essentials",
+      "qty": "1",
+      "note": "Useful when you want to stay off the phone.",
+      "tags": ["daily"]
+    },
+    {
       "id": "passport",
       "name": "Passport",
       "category": "Documents",
@@ -67,6 +75,22 @@
       "qty": "1 envelope",
       "note": "Useful fallback when cards fail.",
       "tags": ["money", "international"]
+    },
+    {
+      "id": "visa-docs",
+      "name": "Visa or travel permit",
+      "category": "Documents",
+      "qty": "1",
+      "note": "Check requirements before departure.",
+      "tags": ["document", "international"]
+    },
+    {
+      "id": "drivers-license",
+      "name": "Driver's license",
+      "category": "Documents",
+      "qty": "1",
+      "note": "Needed if renting a car.",
+      "tags": ["document"]
     },
     {
       "id": "phone-charger",
@@ -117,6 +141,22 @@
       "tags": ["tech", "international"]
     },
     {
+      "id": "camera",
+      "name": "Camera",
+      "category": "Tech",
+      "qty": "1",
+      "note": "If phone camera is not enough.",
+      "tags": ["tech", "city", "hiking", "beach"]
+    },
+    {
+      "id": "e-reader",
+      "name": "E-reader or book",
+      "category": "Tech",
+      "qty": "1",
+      "note": "Great for flights and downtime.",
+      "tags": ["tech", "comfort", "transit"]
+    },
+    {
       "id": "toothbrush",
       "name": "Toothbrush",
       "category": "Wash Bag",
@@ -157,6 +197,86 @@
       "tags": ["washbag"]
     },
     {
+      "id": "razor",
+      "name": "Razor",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Don't forget the blades.",
+      "tags": ["washbag", "man"]
+    },
+    {
+      "id": "hair-ties",
+      "name": "Hair ties and clips",
+      "category": "Wash Bag",
+      "qty": "3-5",
+      "note": "Essential for keeping hair managed.",
+      "tags": ["washbag", "woman"]
+    },
+    {
+      "id": "makeup-bag",
+      "name": "Makeup essentials",
+      "category": "Wash Bag",
+      "qty": "1 set",
+      "note": "Foundation, mascara, concealer — keep it minimal.",
+      "tags": ["washbag", "woman"]
+    },
+    {
+      "id": "makeup-remover",
+      "name": "Makeup remover",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Wipes or micellar water for easy removal.",
+      "tags": ["washbag", "woman"]
+    },
+    {
+      "id": "moisturizer",
+      "name": "Moisturizer",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Travel size. Flights and AC dry out skin.",
+      "tags": ["washbag"]
+    },
+    {
+      "id": "perfume-cologne",
+      "name": "Perfume or cologne",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Travel-size or a sample vial.",
+      "tags": ["washbag"]
+    },
+    {
+      "id": "contact-lenses",
+      "name": "Contact lenses and solution",
+      "category": "Wash Bag",
+      "qty": "as needed",
+      "note": "Plus a backup pair of glasses.",
+      "tags": ["washbag", "daily", "important"]
+    },
+    {
+      "id": "shaving-cream",
+      "name": "Shaving cream",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Travel size for the bag.",
+      "tags": ["washbag", "man"]
+    },
+    {
+      "id": "hairbrush",
+      "name": "Hairbrush or comb",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Compact travel brush works fine.",
+      "tags": ["washbag", "woman"]
+    },
+    {
+      "id": "dry-shampoo",
+      "name": "Dry shampoo",
+      "category": "Wash Bag",
+      "qty": "1",
+      "note": "Quick refresh between washes.",
+      "tags": ["washbag", "woman"]
+    },
+    {
       "id": "painkillers",
       "name": "Painkillers",
       "category": "Health",
@@ -170,7 +290,7 @@
       "category": "Health",
       "qty": "1 pack",
       "note": "Good for blisters and minor cuts.",
-      "tags": ["health"]
+      "tags": ["health", "hiking"]
     },
     {
       "id": "prescription-meds",
@@ -179,6 +299,38 @@
       "qty": "as needed",
       "note": "Bring enough for the whole trip.",
       "tags": ["health", "important"]
+    },
+    {
+      "id": "allergy-meds",
+      "name": "Allergy medication",
+      "category": "Health",
+      "qty": "1 pack",
+      "note": "Antihistamines for seasonal or food allergies.",
+      "tags": ["health"]
+    },
+    {
+      "id": "insect-repellent",
+      "name": "Insect repellent",
+      "category": "Health",
+      "qty": "1",
+      "note": "Essential for tropical and hiking destinations.",
+      "tags": ["health", "hiking", "hot", "summer"]
+    },
+    {
+      "id": "hand-sanitizer",
+      "name": "Hand sanitizer",
+      "category": "Health",
+      "qty": "1",
+      "note": "Small bottle for transit and outdoors.",
+      "tags": ["health", "transit"]
+    },
+    {
+      "id": "menstrual-products",
+      "name": "Menstrual products",
+      "category": "Health",
+      "qty": "as needed",
+      "note": "Pads, tampons, or cup — pack extra.",
+      "tags": ["health", "woman", "important"]
     },
     {
       "id": "tshirts",
@@ -237,6 +389,70 @@
       "tags": ["clothes", "business"]
     },
     {
+      "id": "shorts",
+      "name": "Shorts",
+      "category": "Clothes",
+      "qty": "1-2",
+      "note": "For warm weather and casual days.",
+      "tags": ["clothes", "summer", "hot", "beach"]
+    },
+    {
+      "id": "sports-bra",
+      "name": "Sports bra",
+      "category": "Clothes",
+      "qty": "1-2",
+      "note": "For active days, hiking, or the gym.",
+      "tags": ["clothes", "woman", "hiking"]
+    },
+    {
+      "id": "bras",
+      "name": "Bras",
+      "category": "Clothes",
+      "qty": "2-3",
+      "note": "One per two days is usually fine.",
+      "tags": ["clothes", "woman", "daily"]
+    },
+    {
+      "id": "dress",
+      "name": "Dress or skirt",
+      "category": "Clothes",
+      "qty": "1-2",
+      "note": "Versatile for both casual and evening.",
+      "tags": ["clothes", "woman", "summer"]
+    },
+    {
+      "id": "hiking-boots",
+      "name": "Hiking boots",
+      "category": "Clothes",
+      "qty": "1 pair",
+      "note": "Break them in before the trip.",
+      "tags": ["clothes", "hiking"]
+    },
+    {
+      "id": "sandals",
+      "name": "Sandals or flip-flops",
+      "category": "Clothes",
+      "qty": "1 pair",
+      "note": "For the beach, pool, or hostel showers.",
+      "tags": ["clothes", "beach", "summer", "hot"]
+    },
+    {
+      "id": "thermal-base",
+      "name": "Thermal base layer",
+      "category": "Clothes",
+      "qty": "1 set",
+      "note": "Key for cold-weather layering.",
+      "tags": ["clothes", "winter", "cold", "skiing"]
+    },
+    {
+      "id": "fleece",
+      "name": "Fleece or mid-layer",
+      "category": "Clothes",
+      "qty": "1",
+      "note": "Warm without bulk.",
+      "tags": ["clothes", "winter", "cold", "hiking"]
+    },
+    {
       "id": "jacket",
       "name": "Jacket",
       "category": "Weather",
@@ -258,7 +474,7 @@
       "category": "Weather",
       "qty": "1",
       "note": "Better than an umbrella for long walks.",
-      "tags": ["weather", "rain"]
+      "tags": ["weather", "rain", "hiking"]
     },
     {
       "id": "sunglasses",
@@ -266,7 +482,7 @@
       "category": "Weather",
       "qty": "1",
       "note": "Strong sun and beach days.",
-      "tags": ["weather", "hot"]
+      "tags": ["weather", "hot", "summer", "beach", "skiing"]
     },
     {
       "id": "sunscreen",
@@ -274,7 +490,7 @@
       "category": "Weather",
       "qty": "1",
       "note": "Especially for summer and hiking trips.",
-      "tags": ["weather", "hot"]
+      "tags": ["weather", "hot", "summer", "beach", "hiking"]
     },
     {
       "id": "gloves",
@@ -282,7 +498,39 @@
       "category": "Weather",
       "qty": "1 pair",
       "note": "Cold-weather comfort item.",
-      "tags": ["weather", "cold"]
+      "tags": ["weather", "cold", "winter", "skiing"]
+    },
+    {
+      "id": "winter-hat",
+      "name": "Winter hat or beanie",
+      "category": "Weather",
+      "qty": "1",
+      "note": "You lose most heat through the head.",
+      "tags": ["weather", "cold", "winter", "skiing"]
+    },
+    {
+      "id": "sun-hat",
+      "name": "Sun hat",
+      "category": "Weather",
+      "qty": "1",
+      "note": "Wide brim for sun protection.",
+      "tags": ["weather", "hot", "summer", "beach", "hiking"]
+    },
+    {
+      "id": "scarf",
+      "name": "Scarf",
+      "category": "Weather",
+      "qty": "1",
+      "note": "Multi-purpose: warmth, sun cover, or fashion.",
+      "tags": ["weather", "cold", "winter"]
+    },
+    {
+      "id": "down-jacket",
+      "name": "Down or puffer jacket",
+      "category": "Weather",
+      "qty": "1",
+      "note": "Packable warmth for cold destinations.",
+      "tags": ["weather", "winter", "cold", "skiing"]
     },
     {
       "id": "water-bottle",
@@ -290,7 +538,7 @@
       "category": "Comfort",
       "qty": "1",
       "note": "Handy for transit and day walks.",
-      "tags": ["comfort", "daily"]
+      "tags": ["comfort", "daily", "hiking"]
     },
     {
       "id": "backpack",
@@ -298,7 +546,7 @@
       "category": "Comfort",
       "qty": "1",
       "note": "Useful as a day bag or personal item.",
-      "tags": ["comfort", "daily"]
+      "tags": ["comfort", "daily", "city", "hiking"]
     },
     {
       "id": "swimwear",
@@ -306,7 +554,7 @@
       "category": "Comfort",
       "qty": "1",
       "note": "Pool, spa, or beach trips.",
-      "tags": ["comfort", "swim"]
+      "tags": ["comfort", "swim", "beach", "summer"]
     },
     {
       "id": "slippers",
@@ -323,6 +571,110 @@
       "qty": "1 pack",
       "note": "Good for delays and long transfers.",
       "tags": ["comfort", "transit"]
+    },
+    {
+      "id": "travel-pillow",
+      "name": "Travel pillow",
+      "category": "Comfort",
+      "qty": "1",
+      "note": "Makes long flights and bus rides tolerable.",
+      "tags": ["comfort", "transit"]
+    },
+    {
+      "id": "sleep-mask",
+      "name": "Sleep mask and earplugs",
+      "category": "Comfort",
+      "qty": "1 set",
+      "note": "Especially helpful in hostels or shared rooms.",
+      "tags": ["comfort", "transit"]
+    },
+    {
+      "id": "packing-cubes",
+      "name": "Packing cubes",
+      "category": "Comfort",
+      "qty": "1 set",
+      "note": "Keep the bag organized through the trip.",
+      "tags": ["comfort"]
+    },
+    {
+      "id": "laundry-bag",
+      "name": "Laundry bag",
+      "category": "Comfort",
+      "qty": "1",
+      "note": "Separate dirty clothes from clean ones.",
+      "tags": ["comfort", "week", "long"]
+    },
+    {
+      "id": "towel",
+      "name": "Quick-dry towel",
+      "category": "Comfort",
+      "qty": "1",
+      "note": "Compact microfiber for hostels and beaches.",
+      "tags": ["comfort", "beach", "hiking"]
+    },
+    {
+      "id": "ski-goggles",
+      "name": "Ski goggles",
+      "category": "Activity Gear",
+      "qty": "1",
+      "note": "Required on the slopes.",
+      "tags": ["skiing"]
+    },
+    {
+      "id": "ski-gloves",
+      "name": "Ski gloves",
+      "category": "Activity Gear",
+      "qty": "1 pair",
+      "note": "Waterproof and insulated.",
+      "tags": ["skiing", "winter"]
+    },
+    {
+      "id": "ski-socks",
+      "name": "Ski socks",
+      "category": "Activity Gear",
+      "qty": "2-3 pairs",
+      "note": "Tall, padded, moisture-wicking.",
+      "tags": ["skiing", "winter"]
+    },
+    {
+      "id": "hiking-poles",
+      "name": "Trekking poles",
+      "category": "Activity Gear",
+      "qty": "1 pair",
+      "note": "Helpful on steep or long trails.",
+      "tags": ["hiking"]
+    },
+    {
+      "id": "daypack-hiking",
+      "name": "Hiking daypack",
+      "category": "Activity Gear",
+      "qty": "1",
+      "note": "Lightweight with water bladder support.",
+      "tags": ["hiking"]
+    },
+    {
+      "id": "beach-towel",
+      "name": "Beach towel",
+      "category": "Activity Gear",
+      "qty": "1",
+      "note": "Full-size for the sand.",
+      "tags": ["beach", "summer"]
+    },
+    {
+      "id": "snorkel-mask",
+      "name": "Snorkel or swim mask",
+      "category": "Activity Gear",
+      "qty": "1",
+      "note": "Own gear fits better than rentals.",
+      "tags": ["beach", "swim"]
+    },
+    {
+      "id": "city-map",
+      "name": "City map or guidebook",
+      "category": "Activity Gear",
+      "qty": "1",
+      "note": "Offline backup for navigation.",
+      "tags": ["city"]
     }
   ]
 }
