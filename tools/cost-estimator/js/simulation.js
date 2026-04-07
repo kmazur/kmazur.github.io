@@ -56,18 +56,69 @@ function getTaskPerformance(model, taskKey) {
   };
 }
 
+function getMinCacheableTokens(model) {
+  return Number.isFinite(model.minCacheable) ? model.minCacheable : 0;
+}
+
+function getReasoningSettings(model, effortKey, baseThinkingTokens) {
+  const mode = model.reasoningMode;
+  const profiles = {
+    'anthropic-effort': {
+      labels: { lean: 'low', balanced: 'medium', deep: 'high', max: 'max' },
+      multipliers: { lean: 0.25, balanced: 0.6, deep: 1, max: 1.35 },
+      floors: { lean: 0, balanced: 0, deep: 0, max: 0 },
+    },
+    'manual-thinking': {
+      labels: { lean: 'disabled', balanced: 'manual budget', deep: 'manual budget', max: 'manual budget' },
+      multipliers: { lean: 0, balanced: 0.55, deep: 1, max: 1.25 },
+      floors: { lean: 0, balanced: 0, deep: 0, max: 0 },
+    },
+    'openai-effort': {
+      labels: { lean: 'none', balanced: 'medium', deep: 'high', max: 'xhigh' },
+      multipliers: { lean: 0, balanced: 0.65, deep: 1, max: 1.35 },
+      floors: { lean: 0, balanced: 0, deep: 0, max: 0 },
+    },
+    'thinking-budget-required': {
+      labels: { lean: 'low budget', balanced: 'dynamic', deep: 'high budget', max: 'max budget' },
+      multipliers: { lean: 0.45, balanced: 0.75, deep: 1, max: 1.25 },
+      floors: { lean: 512, balanced: 1024, deep: 1024, max: 2048 },
+    },
+    'thinking-budget': {
+      labels: { lean: '0 budget', balanced: 'dynamic', deep: 'high budget', max: 'max budget' },
+      multipliers: { lean: 0, balanced: 0.65, deep: 1, max: 1.2 },
+      floors: { lean: 0, balanced: 0, deep: 512, max: 1024 },
+    },
+    'thinking-budget-optional': {
+      labels: { lean: '0 budget', balanced: 'small budget', deep: 'high budget', max: 'dynamic' },
+      multipliers: { lean: 0, balanced: 0.3, deep: 0.75, max: 1 },
+      floors: { lean: 0, balanced: 512, deep: 1024, max: 0 },
+    },
+  };
+  const profile = profiles[mode] || profiles['anthropic-effort'];
+  const multiplier = profile.multipliers[effortKey] ?? profile.multipliers.deep ?? 1;
+  const floor = profile.floors[effortKey] ?? 0;
+  let tokens = roundInt((baseThinkingTokens || 0) * multiplier, 0);
+  if (baseThinkingTokens > 0 && floor > 0 && tokens > 0) tokens = Math.max(tokens, floor);
+
+  return {
+    tokens,
+    label: `${model.reasoningApiLabel}: ${profile.labels[effortKey] || model.effortApiDefault}`,
+  };
+}
+
 function getCallPricing(model, cacheTTL, inputTokens) {
   const overLongContext = !!model.longContextThreshold && inputTokens > model.longContextThreshold;
   const inputMultiplier = overLongContext ? (model.longContextInputMultiplier || 1) : 1;
   const outputMultiplier = overLongContext ? (model.longContextOutputMultiplier || 1) : 1;
   const cacheMultiplier = overLongContext ? (model.longContextCacheMultiplier || inputMultiplier) : 1;
+  const storageMultiplier = overLongContext ? (model.longContextStorageMultiplier || 1) : 1;
 
   return {
     inputPrice: model.input * inputMultiplier,
     outputPrice: model.output * outputMultiplier,
     cachedInputPrice: (model.cachedInput ?? model.input) * cacheMultiplier,
     cacheWritePrice: cacheTTL === '1h' ? (model.cache1h || model.input) * cacheMultiplier : (model.cache5m || model.input) * cacheMultiplier,
-    cacheStoragePerHour: (model.cacheStoragePerHour || 0) * cacheMultiplier,
+    cacheStoragePerHour: (model.cacheStoragePerHour || 0) * storageMultiplier,
   };
 }
 
@@ -86,7 +137,8 @@ function costOneCall(inputTok, outputTok, thinkTok, cfg, model, warm, cachedPref
   let cr = 0;
   let cw = 0;
   let un = 0;
-  let cacheEligible = inputTok >= model.minCacheable;
+  const minCacheable = getMinCacheableTokens(model);
+  const cacheEligible = minCacheable <= 0 || inputTok >= minCacheable;
 
   if (noCache || !cacheEligible) {
     un = inputTok;
@@ -151,8 +203,13 @@ function getWorkflowMultiplier(cfg) {
 export function buildScenario(cfg, modelId = cfg.model, taskKey = cfg.taskProfile || 'feature') {
   const model = getModel(modelId);
   const provider = getProvider(model.provider);
-  const effort = getEffortProfile(cfg.effort || model.defaultEffort);
+  const sourceProvider = getProvider(cfg.provider || model.provider);
+  const effortKey = cfg.effort || model.defaultEffort;
+  const effort = getEffortProfile(effortKey);
   const taskPerf = getTaskPerformance(model, taskKey);
+  const reasoning = getReasoningSettings(model, effortKey, (cfg.thinkingTokens || 0) * taskPerf.thinking);
+  const backgroundUsesProviderDefault = !Number.isFinite(cfg.backgroundCost)
+    || Math.abs((cfg.backgroundCost || 0) - sourceProvider.defaultBackgroundCost) < 1e-9;
 
   const adjustedCfg = {
     ...cfg,
@@ -161,12 +218,13 @@ export function buildScenario(cfg, modelId = cfg.model, taskKey = cfg.taskProfil
     contextWindow: Math.min(cfg.contextWindow, model.maxContext),
     turns: roundInt((cfg.turns || 0) * taskPerf.turns, 1),
     responseTokens: roundInt((cfg.responseTokens || 0) * taskPerf.response * effort.responseMultiplier, 0),
-    thinkingTokens: roundInt((cfg.thinkingTokens || 0) * taskPerf.thinking * effort.thinkingMultiplier, 0),
+    thinkingTokens: reasoning.tokens,
     toolRounds: roundInt((cfg.toolRounds || 0) * taskPerf.toolRounds * effort.toolMultiplier, 0),
     toolResult: roundInt(cfg.toolResult || 0, 0),
-    backgroundCost: Number.isFinite(cfg.backgroundCost) ? cfg.backgroundCost : provider.defaultBackgroundCost,
-    webSearches: roundInt(cfg.webSearches || 0, 0),
-    execSessions: roundInt(cfg.execSessions || 0, 0),
+    autoCompact: !!cfg.autoCompact && !!model.autoCompact,
+    backgroundCost: backgroundUsesProviderDefault ? provider.defaultBackgroundCost : cfg.backgroundCost,
+    webSearches: model.searchSupported ? roundInt(cfg.webSearches || 0, 0) : 0,
+    execSessions: model.execFeeSupported ? roundInt(cfg.execSessions || 0, 0) : 0,
     retryRate: Math.max(0, (cfg.retryRate || 0) * taskPerf.retry * effort.retryMultiplier),
     timeSavedMins: Math.max(0, (cfg.timeSavedMins || 0) * taskPerf.timeSaved * effort.timeSavedMultiplier),
     _scenarioApplied: true,
@@ -184,11 +242,7 @@ export function buildScenario(cfg, modelId = cfg.model, taskKey = cfg.taskProfil
     adjustedCfg,
     successRate,
     timeToOutcomeMins,
-    effortApiLabel: model.provider === 'anthropic'
-      ? { lean: 'low', balanced: 'medium', deep: 'high', max: 'max' }[cfg.effort || model.defaultEffort]
-      : model.provider === 'openai'
-        ? { lean: 'low', balanced: 'medium', deep: 'high', max: 'high' }[cfg.effort || model.defaultEffort]
-        : { lean: 'low budget', balanced: 'medium budget', deep: 'high budget', max: 'max budget' }[cfg.effort || model.defaultEffort],
+    effortApiLabel: reasoning.label,
   };
 }
 
@@ -348,8 +402,8 @@ function simulateAdjusted(cfg, model) {
 
   const provider = getProvider(model.provider);
   T.backgroundCost = Math.max(0, Number(cfg.backgroundCost) || 0);
-  T.webCost = Math.max(0, Number(cfg.webSearches) || 0) * provider.webSearchCost;
-  T.execCost = Math.max(0, Number(cfg.execSessions) || 0) * provider.execSessionCost;
+  T.webCost = model.searchSupported ? Math.max(0, Number(cfg.webSearches) || 0) * provider.webSearchCost : 0;
+  T.execCost = model.execFeeSupported ? Math.max(0, Number(cfg.execSessions) || 0) * provider.execSessionCost : 0;
   T.cost += T.backgroundCost + T.webCost + T.execCost;
 
   return { T, turns };
@@ -518,8 +572,8 @@ export function computePlanning(cfg, modelId = cfg.model, taskKey = cfg.taskProf
     dominantMix,
     toolMix: rangeFactors.toolMix,
     uncertainty: rangeFactors.uncertainty,
-    directWebSearchCost: getProvider(current.model.provider).webSearchCost,
-    directExecSessionCost: getProvider(current.model.provider).execSessionCost,
+    directWebSearchCost: current.model.searchSupported ? getProvider(current.model.provider).webSearchCost : 0,
+    directExecSessionCost: current.model.execFeeSupported ? getProvider(current.model.provider).execSessionCost : 0,
     comparisonRows: allComparisons,
     bestRaw,
     bestOutcome,

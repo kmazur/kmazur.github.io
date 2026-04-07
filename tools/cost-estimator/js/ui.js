@@ -11,7 +11,7 @@ import {
 } from './constants.js';
 import { config, state } from './state.js';
 import { computePlanning, computeSensitivity, getCacheTTLMinutes, getModel, getProvider, simulate } from './simulation.js';
-import { fmtCost, fmtMins, fmtPct, fmtTok, escHtml } from './formatters.js';
+import { SLIDER_FORMATTERS, fmtCost, fmtMins, fmtPct, fmtTok, escHtml } from './formatters.js';
 import { drawDonut, drawLine, drawStackedBars, buildModelBars } from './charts.js';
 import { syncToURL } from './url-state.js';
 
@@ -54,6 +54,17 @@ function formatCount(value) {
   return value.toFixed(1);
 }
 
+function syncControlValue(key) {
+  const input = document.getElementById(key);
+  const display = document.getElementById(`v-${key}`);
+  if (input) input.value = config[key];
+  if (display && SLIDER_FORMATTERS[key]) {
+    const formatted = SLIDER_FORMATTERS[key](config[key]);
+    display.textContent = formatted;
+    if (input) input.setAttribute('aria-valuetext', String(formatted));
+  }
+}
+
 function renderProviderSelectors() {
   const providerBox = document.getElementById('provider-selector');
   const modelBox = document.getElementById('model-selector');
@@ -82,8 +93,18 @@ function renderTaskAndEffortToggles() {
 export function applyModelConstraints() {
   const model = getModel(config.model);
   const provider = getProvider(model.provider);
+  const contextChoices = [200000, 400000, 1000000].filter(value => value <= model.maxContext);
+  const cacheMinLabel = Number.isFinite(model.minCacheable) ? `${fmtTok(model.minCacheable)} tokens` : 'Not published';
+  const autoCompactAvailable = !!model.autoCompact;
+
   config.provider = model.provider;
   if (config.contextWindow > model.maxContext) config.contextWindow = model.maxContext;
+  if (!contextChoices.includes(config.contextWindow)) {
+    config.contextWindow = contextChoices[contextChoices.length - 1] || Math.min(model.maxContext, 200000);
+  }
+  if (!autoCompactAvailable) config.autoCompact = false;
+  if (!model.searchSupported) config.webSearches = 0;
+  if (!model.execFeeSupported) config.execSessions = 0;
 
   renderProviderSelectors();
   renderTaskAndEffortToggles();
@@ -106,26 +127,49 @@ export function applyModelConstraints() {
   document.getElementById('cache-ttl-label').textContent = provider.cacheTTLNote;
   document.getElementById('extras-hint').textContent = provider.extraHint;
   document.getElementById('background-label').textContent = provider.id === 'anthropic' ? 'Agent overhead (est.)' : 'Agent overhead override';
-  document.getElementById('websearch-label').textContent = provider.id === 'google' ? 'Grounded prompts / session' : 'Web searches / session';
-  document.getElementById('exec-label').textContent = provider.execSessionLabel;
+  document.getElementById('websearch-label').textContent = model.searchSupported
+    ? (provider.id === 'google' ? 'Grounded prompts / session' : 'Web searches / session')
+    : (provider.id === 'google' ? 'Grounded prompts / session (N/A)' : 'Web searches / session (N/A)');
+  document.getElementById('exec-label').textContent = model.execFeeSupported
+    ? provider.execSessionLabel
+    : `${provider.execSessionLabel} (N/A)`;
   document.getElementById('cache-hint').textContent =
     provider.id === 'anthropic'
       ? 'Anthropic uses explicit prompt-caching TTLs. Prompts below the per-model minimum do not get cached.'
       : provider.id === 'openai'
         ? 'OpenAI cached input is automatic. This estimator treats TTL as an effective reuse window for interactive sessions.'
-        : 'Gemini is modeled using explicit-cache style pricing and TTLs so cache economics are comparable across providers.';
+        : 'Gemini implicit cache hits are automatic but nondeterministic. This estimator uses published explicit-cache pricing so reuse and storage costs remain comparable.';
 
   const note = document.getElementById('model-cap-note');
-  const effort = EFFORT_LEVELS[config.effort];
   const longCtx = model.longContextThreshold
     ? `Long-context pricing changes after about ${fmtTok(model.longContextThreshold)} input tokens.`
-    : model.maxContext >= 1000000
+      : model.maxContext >= 1000000
       ? 'No long-context surcharge is modeled for this selection.'
       : `Context is capped at ${fmtTok(model.maxContext)}.`;
-  note.textContent = `${provider.name} • ${model.name}. ${longCtx} Cache minimum: ${fmtTok(model.minCacheable)} tokens. Effort mode: ${effort.label} (${effort.description}).`;
+  const supportBits = [
+    autoCompactAvailable ? 'Provider auto-compaction supported.' : 'Provider auto-compaction unavailable; only manual compactions are modeled.',
+    model.searchSupported ? `Search / grounding supported at ${fmtCost(provider.webSearchCost)} each.` : 'Search / grounding not supported on this model.',
+    model.execFeeSupported ? `${provider.execSessionLabel} billed at ${fmtCost(provider.execSessionCost)} each.` : `${provider.execSessionLabel} not supported or not separately billed.`,
+  ];
+  note.textContent = `${provider.name} • ${model.name}. ${longCtx} Cache minimum: ${cacheMinLabel}. Reasoning API: ${model.reasoningApiLabel} (provider default: ${model.effortApiDefault}). ${supportBits.join(' ')}`;
 
   const bgSlider = document.getElementById('backgroundCost');
   bgSlider.max = provider.id === 'anthropic' ? '0.04' : '0.10';
+  document.getElementById('webSearches').disabled = !model.searchSupported;
+  document.getElementById('execSessions').disabled = !model.execFeeSupported;
+  syncControlValue('backgroundCost');
+  syncControlValue('webSearches');
+  syncControlValue('execSessions');
+
+  const autoCompactInput = document.getElementById('autoCompact');
+  autoCompactInput.disabled = !autoCompactAvailable;
+  autoCompactInput.checked = !!config.autoCompact;
+  const autoCompactLabel = document.getElementById('autoCompact-label');
+  if (autoCompactLabel) {
+    autoCompactLabel.textContent = autoCompactAvailable
+      ? 'Auto-compact at ~95% context'
+      : 'Auto-compact unavailable for this model';
+  }
 }
 
 export function updateSensitivityBadges() {
@@ -308,8 +352,10 @@ function updateProjections(planning) {
 
   document.getElementById('proj-marginal').textContent =
     planning.marginalTurnCost > 0 ? `+${fmtCost(planning.marginalTurnCost)} / turn` : '\u2014';
+  const searchCostLabel = planning.directWebSearchCost > 0 ? fmtCost(planning.directWebSearchCost) : 'n/a';
+  const execCostLabel = planning.directExecSessionCost > 0 ? fmtCost(planning.directExecSessionCost) : 'n/a';
   document.getElementById('proj-marginal-detail').textContent =
-    `Extra cache miss: ${fmtSignedCost(planning.cacheMissCost)}. Search call: ${fmtCost(planning.directWebSearchCost)}. Exec session: ${fmtCost(planning.directExecSessionCost)}.`;
+    `Extra cache miss: ${fmtSignedCost(planning.cacheMissCost)}. Search call: ${searchCostLabel}. Exec session: ${execCostLabel}.`;
 
   const best = planning.bestValue;
   const currentRow = planning.comparisonRows.find(row => row.modelId === config.model);
@@ -333,6 +379,7 @@ function updateSummarySentence(res, planning) {
   html += `Raw session cost: <span class="hl">${escHtml(fmtCost(res.T.cost))}</span>. `;
   html += `Expected good-result cost: <span class="hl">${escHtml(fmtCost(planning.costPerSuccessfulOutcome))}</span> at <span class="hl">${escHtml(fmtPct(planning.successRate * 100, 0))}</span> success odds and about <span class="hl">${escHtml(fmtMins(planning.timeToGoodOutcomeMins))}</span> to a good result. `;
   html += `Monthly blended spend is <span class="hl">${escHtml(fmtCost(planning.monthlyBlended))}</span>.`;
+  html += ` Reasoning maps to <span class="hl">${escHtml(planning.effortApiLabel)}</span>.`;
   if (planning.perSessionLaborValue > 0 && config.hourlyRate > 0) {
     html += ` Break-even arrives at <span class="hl">${escHtml(fmtMins(planning.breakEvenMins))}</span> saved per session.`;
   }
@@ -354,6 +401,12 @@ export function updatePresetCosts() {
 export function updatePricingBox() {
   const model = getModel(config.model);
   const provider = getProvider(model.provider);
+  const cacheMinLabel = Number.isFinite(model.minCacheable) ? fmtTok(model.minCacheable) : 'Not published';
+  const cacheLineLabel = provider.cacheStrategy === 'write-read'
+    ? 'Cache write'
+    : provider.cacheStrategy === 'explicit-cache'
+      ? 'Cached tokens'
+      : 'Cached input';
   const cacheRate = config.cacheTTL === '1h'
     ? (model.cache1h ?? model.cachedInput)
     : (model.cache5m ?? model.cachedInput);
@@ -361,9 +414,9 @@ export function updatePricingBox() {
     `<div class="price-item"><span class="pl">Provider</span><span class="pv">${escHtml(provider.name)}</span></div>`,
     `<div class="price-item"><span class="pl">Input</span><span class="pv">$${escHtml(model.input)}/MTok</span></div>`,
     `<div class="price-item"><span class="pl">Output</span><span class="pv">$${escHtml(model.output)}/MTok</span></div>`,
-    `<div class="price-item"><span class="pl">${escHtml(provider.cacheStrategy === 'write-read' ? 'Cache write' : 'Cached input')}</span><span class="pv">$${escHtml(cacheRate ?? 0)}/MTok</span></div>`,
+    `<div class="price-item"><span class="pl">${escHtml(cacheLineLabel)}</span><span class="pv">$${escHtml(cacheRate ?? 0)}/MTok</span></div>`,
     `<div class="price-item"><span class="pl">Max context</span><span class="pv">${escHtml(fmtTok(model.maxContext))}</span></div>`,
-    `<div class="price-item"><span class="pl">Min cacheable</span><span class="pv">${escHtml(fmtTok(model.minCacheable))}</span></div>`,
+    `<div class="price-item"><span class="pl">Min cacheable</span><span class="pv">${escHtml(cacheMinLabel)}</span></div>`,
   ];
   if (model.cacheStoragePerHour) {
     extraLines.push(`<div class="price-item"><span class="pl">Cache storage</span><span class="pv">$${escHtml(model.cacheStoragePerHour)}/MTok-hr</span></div>`);
@@ -371,6 +424,7 @@ export function updatePricingBox() {
   if (model.longContextThreshold) {
     extraLines.push(`<div class="price-item"><span class="pl">Long-context</span><span class="pv">&gt;${escHtml(fmtTok(model.longContextThreshold))}</span></div>`);
   }
+  extraLines.push(`<div class="price-item"><span class="pl">Reasoning API</span><span class="pv">${escHtml(model.reasoningApiLabel)}</span></div>`);
   document.getElementById('pricing-box').innerHTML = extraLines.join('');
 }
 
@@ -416,6 +470,7 @@ export function update() {
   applyModelConstraints();
   const res = simulate(config, config.model, config.taskProfile);
   const planning = computePlanning(config, config.model, config.taskProfile);
+  const currentModel = getModel(config.model);
   state.lastResult = res;
 
   animateEl('sum-total', res.T.cost, fmtCost);
@@ -467,7 +522,7 @@ export function update() {
     limitY: res.scenario.adjustedCfg.contextWindow,
     limitLabel: `${fmtTok(res.scenario.adjustedCfg.contextWindow)} limit`,
     thresholdY: res.scenario.adjustedCfg.contextWindow * AUTO_COMPACT_THRESHOLD,
-    thresholdLabel: '95% compact',
+    thresholdLabel: currentModel.autoCompact ? '95% compact' : '95% context',
   });
 
   const segments = getCostSegments(res.T).filter(segment => segment.value > 0.0001);

@@ -74,6 +74,7 @@
         <span class="toggle-label">Context window</span>
         <div class="toggle-group" id="tg-ctx">
           <button class="toggle-btn active" data-val="200000">200K</button>
+          <button class="toggle-btn" data-val="400000">400K</button>
           <button class="toggle-btn" data-val="1000000">1M</button>
         </div>
       </div>
@@ -174,10 +175,10 @@
   <div class="section" id="sec-compact">
     <div class="section-header"><span class="chv">&#9660;</span> Compaction</div>
     <div class="section-body">
-      <div class="section-hint">Long interactive sessions may compact or summarize prior context near the context limit. This estimator treats compaction as one extra API call plus a fresh cache prefix.</div>
+      <div class="section-hint">Manual compactions model explicit summarization on any provider. Auto-compaction is only available when the selected model exposes it natively.</div>
       <div class="control"><div class="control-header"><label title="Use this to model manual compactions or extra summarization checkpoints beyond the simulator's automatic behavior.">Manual compactions</label><span class="sens-tag" data-sens="compactions"></span><span class="control-value" id="v-compactions">0</span></div><input type="range" id="compactions" min="0" max="10" value="0"></div>
       <div class="control"><div class="control-header"><label title="What fraction of the conversation is kept after compaction. Lower = more aggressive summarization.">Compaction ratio (kept)</label><span class="sens-tag" data-sens="compactRatio"></span><span class="control-value" id="v-compactRatio">25%</span></div><input type="range" id="compactRatio" min="0.1" max="0.5" value="0.25" step="0.05"></div>
-      <label class="checkbox-row"><input type="checkbox" id="autoCompact" checked>Auto-compact at ~95% context</label>
+      <label class="checkbox-row"><input type="checkbox" id="autoCompact" checked><span id="autoCompact-label">Auto-compact at ~95% context</span></label>
     </div>
   </div>
 

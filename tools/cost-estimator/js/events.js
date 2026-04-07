@@ -1,4 +1,4 @@
-import { MODEL_ORDER, PRESETS, PROVIDERS, SLIDER_KEYS } from './constants.js';
+import { INTEGER_SLIDER_KEYS, MODEL_ORDER, PRESETS, PROVIDERS, SLIDER_KEYS } from './constants.js';
 import { config, state } from './state.js';
 import { SLIDER_FORMATTERS, fmtCost, fmtTok } from './formatters.js';
 import { showAnatomy, closeAnatomy } from './anatomy.js';
@@ -7,7 +7,7 @@ import { shareURL } from './url-state.js';
 
 function parseControlValue(key, rawValue) {
   const value = parseFloat(rawValue);
-  if (['turns', 'sysPrompt', 'userMsg', 'responseTokens', 'thinkingTokens', 'toolRounds', 'toolResult', 'cacheDrops', 'compactions', 'webSearches', 'execSessions', 'hourlyRate', 'timeSavedMins', 'workdaysPerMonth', 'interruptions', 'retryRate', 'parallelAgents', 'mixQuickFix', 'mixFeature', 'mixReview', 'mixRefactor', 'mixExploration', 'mixVibe'].includes(key)) {
+  if (INTEGER_SLIDER_KEYS.has(key)) {
     return Math.round(value);
   }
   return value;
