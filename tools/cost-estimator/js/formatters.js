@@ -23,6 +23,7 @@ export function fmtPct(v, digits = 0) {
 
 export function fmtMins(v) {
   if (v >= 60) return (v / 60).toFixed(v % 60 === 0 ? 0 : 1) + ' hr';
+  if (v > 0 && v < 0.5) return '<1 min';
   return Math.round(v) + ' min';
 }
 

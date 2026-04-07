@@ -557,8 +557,22 @@ export function update() {
   animateEl('sum-output', res.T.outCost + res.T.thCost, fmtCost);
   animateEl('sum-calls', res.T.apiCalls, v => Math.round(v).toLocaleString());
 
-  const avgCost = res.scenario.adjustedCfg.turns > 0 ? res.T.cost / res.scenario.adjustedCfg.turns : 0;
+  const adjTurns = res.scenario.adjustedCfg.turns;
+  const avgCost = adjTurns > 0 ? res.T.cost / adjTurns : 0;
   animateEl('sum-avg', avgCost, fmtCost);
+
+  const half = Math.floor(res.turns.length / 2);
+  if (half > 0 && res.turns.length > 2) {
+    const firstHalf = res.turns.slice(0, half).reduce((s, d) => s + d.turnCost, 0) / half;
+    const secondHalf = res.turns.slice(half).reduce((s, d) => s + d.turnCost, 0) / (res.turns.length - half);
+    const ratio = secondHalf / Math.max(firstHalf, 0.001);
+    const arrow = ratio > 1.15 ? '<span class="trend-arrow up">&#9650;</span> rising'
+      : ratio < 0.85 ? '<span class="trend-arrow down">&#9660;</span> falling'
+      : '<span class="trend-arrow flat">&#9654;</span> stable';
+    document.getElementById('sum-avg-detail').innerHTML = arrow;
+  } else {
+    document.getElementById('sum-avg-detail').textContent = '\u2014';
+  }
 
   const totalTok = res.T.crTok + res.T.cwTok + res.T.unTok + res.T.outTok + res.T.thTok;
   document.getElementById('sum-tokens').textContent = fmtTok(totalTok);
