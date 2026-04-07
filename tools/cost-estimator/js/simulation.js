@@ -2,6 +2,7 @@ import {
   AUTO_COMPACT_THRESHOLD,
   EFFORT_LEVELS,
   INTEGER_SLIDER_KEYS,
+  MODEL_MIGRATIONS,
   MODELS,
   MODEL_ORDER,
   PRESETS,
@@ -24,7 +25,7 @@ function roundInt(value, min = 0) {
 }
 
 export function getModel(modelId = config.model) {
-  return MODELS[modelId] || MODELS['claude-sonnet-4.6'];
+  return MODELS[MODEL_MIGRATIONS[modelId] || modelId] || MODELS['claude-sonnet-4.6'];
 }
 
 export function getProvider(providerId) {
@@ -57,9 +58,20 @@ function getTaskPerformance(model, taskKey) {
 }
 
 function getMinCacheableTokens(model) {
+  if (model.cacheUnavailable) return Number.POSITIVE_INFINITY;
   if (Number.isFinite(model.minCacheable)) return model.minCacheable;
   if (Number.isFinite(model.cacheMinEstimate)) return model.cacheMinEstimate;
   return Number.POSITIVE_INFINITY;
+}
+
+export function getWebSearchUnitCost(modelOrId = config.model) {
+  const model = typeof modelOrId === 'string' ? getModel(modelOrId) : modelOrId;
+  return model.searchSupported ? (model.webSearchCost ?? getProvider(model.provider).webSearchCost ?? 0) : 0;
+}
+
+export function getExecSessionUnitCost(modelOrId = config.model) {
+  const model = typeof modelOrId === 'string' ? getModel(modelOrId) : modelOrId;
+  return model.execFeeSupported ? (model.execSessionCost ?? getProvider(model.provider).execSessionCost ?? 0) : 0;
 }
 
 function getReasoningSettings(model, effortKey, baseThinkingTokens) {
@@ -80,6 +92,11 @@ function getReasoningSettings(model, effortKey, baseThinkingTokens) {
       multipliers: { lean: 0, balanced: 0.65, deep: 1, max: 1.35 },
       floors: { lean: 0, balanced: 0, deep: 0, max: 0 },
     },
+    'openai-effort-pro': {
+      labels: { lean: 'medium', balanced: 'high', deep: 'high', max: 'xhigh' },
+      multipliers: { lean: 0.45, balanced: 0.85, deep: 1, max: 1.35 },
+      floors: { lean: 512, balanced: 1024, deep: 1024, max: 2048 },
+    },
     'thinking-budget-required': {
       labels: { lean: 'low budget', balanced: 'dynamic', deep: 'high budget', max: 'max budget' },
       multipliers: { lean: 0.45, balanced: 0.75, deep: 1, max: 1.25 },
@@ -95,12 +112,28 @@ function getReasoningSettings(model, effortKey, baseThinkingTokens) {
       multipliers: { lean: 0, balanced: 0.3, deep: 0.75, max: 1 },
       floors: { lean: 0, balanced: 512, deep: 1024, max: 0 },
     },
+    'thinking-level': {
+      labels: { lean: 'minimal', balanced: 'medium', deep: 'high', max: 'high' },
+      multipliers: { lean: 0.18, balanced: 0.55, deep: 1, max: 1.2 },
+      floors: { lean: 128, balanced: 384, deep: 768, max: 1024 },
+    },
+    'thinking-level-pro': {
+      labels: { lean: 'low', balanced: 'medium', deep: 'high', max: 'high' },
+      multipliers: { lean: 0.3, balanced: 0.65, deep: 1, max: 1.22 },
+      floors: { lean: 256, balanced: 512, deep: 1024, max: 1536 },
+    },
   };
   const profile = profiles[mode] || profiles['anthropic-effort'];
   const multiplier = profile.multipliers[effortKey] ?? profile.multipliers.deep ?? 1;
   const floor = profile.floors[effortKey] ?? 0;
+  const requiresReasoningFloor = new Set([
+    'thinking-budget-required',
+    'openai-effort-pro',
+    'thinking-level',
+    'thinking-level-pro',
+  ]).has(mode);
   let tokens = roundInt((baseThinkingTokens || 0) * multiplier, 0);
-  if (floor > 0 && (baseThinkingTokens > 0 || mode === 'thinking-budget-required')) {
+  if (floor > 0 && (baseThinkingTokens > 0 || requiresReasoningFloor)) {
     tokens = Math.max(tokens, floor);
   }
 
@@ -412,10 +445,9 @@ function simulateAdjusted(cfg, model) {
     });
   }
 
-  const provider = getProvider(model.provider);
   T.backgroundCost = Math.max(0, Number(cfg.backgroundCost) || 0);
-  T.webCost = model.searchSupported ? Math.max(0, Number(cfg.webSearches) || 0) * provider.webSearchCost : 0;
-  T.execCost = model.execFeeSupported ? Math.max(0, Number(cfg.execSessions) || 0) * provider.execSessionCost : 0;
+  T.webCost = model.searchSupported ? Math.max(0, Number(cfg.webSearches) || 0) * getWebSearchUnitCost(model) : 0;
+  T.execCost = model.execFeeSupported ? Math.max(0, Number(cfg.execSessions) || 0) * getExecSessionUnitCost(model) : 0;
   T.cost += T.backgroundCost + T.webCost + T.execCost;
 
   return { T, turns };
@@ -584,8 +616,8 @@ export function computePlanning(cfg, modelId = cfg.model, taskKey = cfg.taskProf
     dominantMix,
     toolMix: rangeFactors.toolMix,
     uncertainty: rangeFactors.uncertainty,
-    directWebSearchCost: current.model.searchSupported ? getProvider(current.model.provider).webSearchCost : 0,
-    directExecSessionCost: current.model.execFeeSupported ? getProvider(current.model.provider).execSessionCost : 0,
+    directWebSearchCost: getWebSearchUnitCost(current.model),
+    directExecSessionCost: getExecSessionUnitCost(current.model),
     comparisonRows: allComparisons,
     bestRaw,
     bestOutcome,

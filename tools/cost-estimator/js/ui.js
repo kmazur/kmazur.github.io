@@ -10,7 +10,16 @@ import {
   TOOL_CALL_OVERHEAD,
 } from './constants.js';
 import { config, state } from './state.js';
-import { computePlanning, computeSensitivity, getCacheTTLMinutes, getModel, getProvider, simulate } from './simulation.js';
+import {
+  computePlanning,
+  computeSensitivity,
+  getCacheTTLMinutes,
+  getExecSessionUnitCost,
+  getModel,
+  getProvider,
+  getWebSearchUnitCost,
+  simulate,
+} from './simulation.js';
 import { SLIDER_FORMATTERS, fmtCost, fmtMins, fmtPct, fmtTok, escHtml } from './formatters.js';
 import { drawDonut, drawLine, drawStackedBars, buildModelBars } from './charts.js';
 import { syncToURL } from './url-state.js';
@@ -65,19 +74,64 @@ function syncControlValue(key) {
   }
 }
 
+function getVisibleModels(providerId = config.provider) {
+  return MODEL_ORDER.map(id => MODELS[id]).filter(model => model?.provider === providerId);
+}
+
+function getCacheMinLabel(model) {
+  if (model.cacheUnavailable) return 'No cache discount';
+  if (Number.isFinite(model.minCacheable)) return `${fmtTok(model.minCacheable)} tokens`;
+  if (Number.isFinite(model.cacheMinEstimate)) return `Not published; using ~${fmtTok(model.cacheMinEstimate)} token estimate`;
+  return 'Not published';
+}
+
+function getCacheBadge(model) {
+  if (model.cacheUnavailable) return 'cache n/a';
+  if (Number.isFinite(model.minCacheable)) return `cache ${fmtTok(model.minCacheable)}+`;
+  if (Number.isFinite(model.cacheMinEstimate)) return `cache ~${fmtTok(model.cacheMinEstimate)}+`;
+  return 'cache varies';
+}
+
+function getReasoningBadge(model) {
+  const labels = {
+    'adaptive thinking + effort': 'adaptive',
+    'manual thinking budget': 'manual budget',
+    'reasoning.effort': 'effort',
+    thinkingLevel: 'thinking level',
+    thinkingBudget: 'budget',
+  };
+  return labels[model.reasoningApiLabel] || model.reasoningApiLabel;
+}
+
 function renderProviderSelectors() {
   const providerBox = document.getElementById('provider-selector');
   const modelBox = document.getElementById('model-selector');
   providerBox.innerHTML = Object.values(PROVIDERS).map(provider =>
     `<button class="provider-btn ${provider.id === config.provider ? 'active' : ''}" data-provider="${provider.id}" style="--provider-color:${provider.color}">
-      <span>${escHtml(provider.name)}</span>
+      <span class="provider-title">${escHtml(provider.name)}</span>
+      <small>${escHtml(`${getVisibleModels(provider.id).length} current model${getVisibleModels(provider.id).length === 1 ? '' : 's'}`)}</small>
     </button>`).join('');
 
-  const models = MODEL_ORDER.map(id => MODELS[id]).filter(model => model.provider === config.provider);
+  const models = getVisibleModels(config.provider);
   modelBox.innerHTML = models.map(model =>
-    `<button class="model-btn ${model.id === config.model ? 'active' : ''}" data-model="${model.id}">
-      ${escHtml(model.shortName)}
-      <small>$${escHtml(model.input)} / $${escHtml(model.output)}</small>
+    `<button class="model-btn model-card ${model.id === config.model ? 'active' : ''}" data-model="${model.id}" style="--model-color:${model.color}">
+      <div class="model-card-top">
+        <div>
+          <div class="model-card-name">${escHtml(model.shortName)}</div>
+          <div class="model-card-sub">${escHtml(`${fmtCost(model.input)}/MTok in · ${fmtCost(model.output)}/MTok out`)}</div>
+        </div>
+        ${model.selectorBadge ? `<span class="model-badge ${escHtml(model.selectorTone || 'current')}">${escHtml(model.selectorBadge)}</span>` : ''}
+      </div>
+      <div class="model-card-blurb">${escHtml(model.selectorBlurb || model.name)}</div>
+      <div class="model-card-meta">
+        <span>${escHtml(fmtTok(model.maxContext))} ctx</span>
+        ${model.maxOutputTokens ? `<span>${escHtml(fmtTok(model.maxOutputTokens))} out</span>` : ''}
+        <span>${escHtml(getReasoningBadge(model))}</span>
+        <span>${escHtml(getCacheBadge(model))}</span>
+      </div>
+      <div class="model-chip-row">
+        ${(model.selectorFeatures || []).map(feature => `<span class="model-chip">${escHtml(feature)}</span>`).join('')}
+      </div>
     </button>`).join('');
 }
 
@@ -91,15 +145,23 @@ function renderTaskAndEffortToggles() {
 }
 
 export function applyModelConstraints() {
+  const requestedModel = getModel(config.model);
+  const providerChoices = getVisibleModels(requestedModel.provider);
+  const providerDefaultModel = PROVIDERS[requestedModel.provider]?.defaultModel;
+  const visibleModelId = providerChoices.some(model => model.id === requestedModel.id)
+    ? requestedModel.id
+    : (providerDefaultModel && providerChoices.some(model => model.id === providerDefaultModel)
+      ? providerDefaultModel
+      : providerChoices[0]?.id || MODEL_ORDER[0]);
+  if (config.model !== visibleModelId) config.model = visibleModelId;
+
   const model = getModel(config.model);
   const provider = getProvider(model.provider);
   const contextChoices = [200000, 400000, 1000000].filter(value => value <= model.maxContext);
-  const cacheMinLabel = Number.isFinite(model.minCacheable)
-    ? `${fmtTok(model.minCacheable)} tokens`
-    : Number.isFinite(model.cacheMinEstimate)
-      ? `Not published; using ~${fmtTok(model.cacheMinEstimate)} token estimate`
-      : 'Not published';
+  const cacheMinLabel = getCacheMinLabel(model);
   const autoCompactAvailable = !!model.autoCompact;
+  const searchUnitCost = getWebSearchUnitCost(model);
+  const execUnitCost = getExecSessionUnitCost(model);
 
   config.provider = model.provider;
   if (config.contextWindow > model.maxContext) config.contextWindow = model.maxContext;
@@ -138,7 +200,9 @@ export function applyModelConstraints() {
     ? provider.execSessionLabel
     : `${provider.execSessionLabel} (N/A)`;
   document.getElementById('cache-hint').textContent =
-    provider.id === 'anthropic'
+    model.cacheUnavailable
+      ? 'This model does not publish a discounted cache-input rate, so the estimator treats cache reuse as unavailable.'
+      : provider.id === 'anthropic'
       ? 'Anthropic uses explicit prompt-caching TTLs. Prompts below the per-model minimum do not get cached.'
       : provider.id === 'openai'
         ? 'OpenAI cached input is automatic. This estimator treats TTL as an effective reuse window for interactive sessions.'
@@ -152,8 +216,8 @@ export function applyModelConstraints() {
       : `Context is capped at ${fmtTok(model.maxContext)}.`;
   const supportBits = [
     autoCompactAvailable ? 'Provider auto-compaction supported.' : 'Provider auto-compaction unavailable; only manual compactions are modeled.',
-    model.searchSupported ? `Search / grounding supported at ${fmtCost(provider.webSearchCost)} each.` : 'Search / grounding not supported on this model.',
-    model.execFeeSupported ? `${provider.execSessionLabel} billed at ${fmtCost(provider.execSessionCost)} each.` : `${provider.execSessionLabel} not supported or not separately billed.`,
+    model.searchSupported ? `Search / grounding supported at ${fmtCost(searchUnitCost)} each.` : 'Search / grounding not supported on this model.',
+    model.execFeeSupported ? `${provider.execSessionLabel} billed at ${fmtCost(execUnitCost)} each.` : `${provider.execSessionLabel} not supported or not separately billed.`,
   ];
   note.textContent = `${provider.name} • ${model.name}. ${longCtx} Cache minimum: ${cacheMinLabel}. Reasoning API: ${model.reasoningApiLabel} (provider default: ${model.effortApiDefault}). ${supportBits.join(' ')}`;
 
@@ -405,25 +469,32 @@ export function updatePresetCosts() {
 export function updatePricingBox() {
   const model = getModel(config.model);
   const provider = getProvider(model.provider);
-  const cacheMinLabel = Number.isFinite(model.minCacheable)
-    ? fmtTok(model.minCacheable)
-    : Number.isFinite(model.cacheMinEstimate)
-      ? `~${fmtTok(model.cacheMinEstimate)} est.`
-      : 'Not published';
+  const cacheMinLabel = model.cacheUnavailable
+    ? 'Unavailable'
+    : Number.isFinite(model.minCacheable)
+      ? fmtTok(model.minCacheable)
+      : Number.isFinite(model.cacheMinEstimate)
+        ? `~${fmtTok(model.cacheMinEstimate)} est.`
+        : 'Not published';
   const cacheLineLabel = provider.cacheStrategy === 'write-read'
     ? 'Cache write'
     : provider.cacheStrategy === 'explicit-cache'
       ? 'Cached tokens'
       : 'Cached input';
-  const cacheRate = config.cacheTTL === '1h'
-    ? (model.cache1h ?? model.cachedInput)
-    : (model.cache5m ?? model.cachedInput);
+  const cacheRate = model.cacheUnavailable
+    ? null
+    : config.cacheTTL === '1h'
+      ? (model.cache1h ?? model.cachedInput)
+      : (model.cache5m ?? model.cachedInput);
   const extraLines = [
     `<div class="price-item"><span class="pl">Provider</span><span class="pv">${escHtml(provider.name)}</span></div>`,
+    `<div class="price-item"><span class="pl">Status</span><span class="pv">${escHtml(model.selectorBadge || 'Current')}</span></div>`,
     `<div class="price-item"><span class="pl">Input</span><span class="pv">$${escHtml(model.input)}/MTok</span></div>`,
     `<div class="price-item"><span class="pl">Output</span><span class="pv">$${escHtml(model.output)}/MTok</span></div>`,
-    `<div class="price-item"><span class="pl">${escHtml(cacheLineLabel)}</span><span class="pv">$${escHtml(cacheRate ?? 0)}/MTok</span></div>`,
+    `<div class="price-item"><span class="pl">${escHtml(cacheLineLabel)}</span><span class="pv">${cacheRate == null ? 'n/a' : '$' + escHtml(cacheRate) + '/MTok'}</span></div>`,
+    `<div class="price-item"><span class="pl">Search fee</span><span class="pv">${model.searchSupported ? escHtml(fmtCost(getWebSearchUnitCost(model))) + '/call' : 'n/a'}</span></div>`,
     `<div class="price-item"><span class="pl">Max context</span><span class="pv">${escHtml(fmtTok(model.maxContext))}</span></div>`,
+    model.maxOutputTokens ? `<div class="price-item"><span class="pl">Max output</span><span class="pv">${escHtml(fmtTok(model.maxOutputTokens))}</span></div>` : '',
     `<div class="price-item"><span class="pl">Min cacheable</span><span class="pv">${escHtml(cacheMinLabel)}</span></div>`,
   ];
   if (model.cacheStoragePerHour) {

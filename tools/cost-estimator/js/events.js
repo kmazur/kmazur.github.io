@@ -26,7 +26,7 @@ function setProvider(providerId) {
   const provider = PROVIDERS[providerId];
   if (!provider) return;
   config.provider = providerId;
-  const firstModel = MODEL_ORDER.find(id => id.startsWith(providerId === 'google' ? 'gemini' : providerId === 'openai' ? 'gpt' : 'claude'));
+  const firstModel = provider.defaultModel || MODEL_ORDER.find(id => id.startsWith(providerId === 'google' ? 'gemini' : providerId === 'openai' ? 'gpt' : 'claude'));
   if (firstModel) config.model = firstModel;
   config.backgroundCost = provider.defaultBackgroundCost;
   config.execSessions = 0;
@@ -81,7 +81,7 @@ export function bindEvents() {
     const modelBtn = e.target.closest('.model-btn');
     if (modelBtn && modelBtn.dataset.model) {
       config.model = modelBtn.dataset.model;
-      config.provider = MODEL_ORDER.find(id => id === config.model)?.startsWith('gpt') ? 'openai'
+      config.provider = config.model.startsWith('gpt') ? 'openai'
         : config.model.startsWith('gemini') ? 'google' : 'anthropic';
       applyModelConstraints();
       updatePricingBox();
