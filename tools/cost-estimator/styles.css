@@ -72,7 +72,7 @@ header .subtitle { font-size:11px; color:var(--text-muted); margin-left:auto; fo
 .section-header::after { content:''; flex:1; height:1px; background:var(--border); }
 .section-header .chv { font-size:10px; transition:transform 0.2s; }
 .section.collapsed .section-header .chv { transform:rotate(-90deg); }
-.section-body { overflow:hidden; max-height:600px; transition:max-height 0.3s ease; }
+.section-body { overflow:hidden; max-height:2000px; transition:max-height 0.3s ease; }
 .section.collapsed .section-body { max-height:0 !important; }
 .section-hint { font-size:12px; color:var(--text-muted); margin-bottom:10px; line-height:1.45; }
 
@@ -126,23 +126,23 @@ header .subtitle { font-size:11px; color:var(--text-muted); margin-left:auto; fo
   box-shadow:0 0 16px color-mix(in srgb, var(--model-color, var(--primary)) 18%, transparent);
 }
 .model-card {
-  min-height:172px; padding:11px 12px 12px;
-  display:flex; flex-direction:column; gap:9px;
+  padding:10px 12px;
+  display:flex; flex-direction:column; gap:6px;
 }
-.model-card-top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
-.model-card-name { font-size:13px; font-weight:700; color:var(--text); line-height:1.25; }
-.model-card-sub { margin-top:4px; font-size:10px; color:var(--text-muted); font-family:var(--font-mono); line-height:1.35; }
-.model-card-blurb { font-size:11px; color:var(--text-secondary); line-height:1.45; min-height:46px; }
-.model-card-meta { display:flex; flex-wrap:wrap; gap:6px; }
+.model-card-top { display:flex; justify-content:space-between; gap:8px; align-items:center; }
+.model-card-name { font-size:12px; font-weight:700; color:var(--text); line-height:1.25; }
+.model-card-sub { font-size:9.5px; color:var(--text-muted); font-family:var(--font-mono); line-height:1.3; }
+.model-card-blurb { display:none; }
+.model-card-meta { display:none; }
+.model-chip-row { display:flex; flex-wrap:wrap; gap:4px; }
 .model-card-meta span,
 .model-chip {
   display:inline-flex; align-items:center;
-  padding:3px 7px; border-radius:999px;
+  padding:2px 6px; border-radius:999px;
   background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.05);
-  font-size:9px; line-height:1; letter-spacing:0.02em;
+  font-size:8px; line-height:1; letter-spacing:0.02em;
 }
 .model-card-meta span { color:var(--text-secondary); }
-.model-chip-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; }
 .model-chip { color:var(--text-muted); }
 .model-badge {
   display:inline-flex; align-items:center; justify-content:center;
