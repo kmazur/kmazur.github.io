@@ -11,4 +11,5 @@ export const state = {
   lastResult: null,
   lastPreset: null,
   animState: {},
+  sessPerDay: 4,
 };

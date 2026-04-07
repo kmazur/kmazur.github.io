@@ -1,8 +1,8 @@
 import { MODELS, PRESETS, COMPACT_THRESHOLD, TOOL_CALL_OVERHEAD } from './constants.js';
 import { config, state } from './state.js';
-import { simulate, simulateNoCacheCost, computeSensitivity, getCacheTTLMinutes } from './simulation.js';
+import { simulate, computeSensitivity, getCacheTTLMinutes } from './simulation.js';
 import { fmtCost, fmtTok, escHtml } from './formatters.js';
-import { drawLine, drawStackedBars, drawCacheStrip, drawDonut, buildModelBars } from './charts.js';
+import { drawLine, drawStackedBars, drawDonut, buildModelBars } from './charts.js';
 import { syncToURL } from './url-state.js';
 
 function animateEl(id, target, formatter) {
@@ -101,11 +101,13 @@ function updateContextProjection(turns) {
 }
 
 function updateProjections(cost) {
-  const spd = +document.getElementById('sessPerDay').value;
+  // Monthly cost in summary card
+  const spd = state.sessPerDay || 4;
   const mo = cost * spd * 30;
-  animateEl('proj-monthly', mo, fmtCost);
-  document.getElementById('proj-monthly-detail').textContent =
-    spd + ' sessions/day x 30 days x ' + fmtCost(cost) + '/session';
+  animateEl('sum-monthly', mo, fmtCost);
+  document.getElementById('sess-count').textContent = spd;
+
+  // Budget calculator
   const budget = parseFloat(document.getElementById('budgetInput').value) || 0;
   if (cost > 0 && budget > 0) {
     const sess = Math.floor(budget / cost);
@@ -115,20 +117,26 @@ function updateProjections(cost) {
     document.getElementById('proj-budget').textContent = '\u2014';
     document.getElementById('proj-budget-detail').textContent = '';
   }
-  const rate = parseFloat(document.getElementById('hourlyRate').value) || 0;
-  const minsPerTurn = parseFloat(document.getElementById('minsPerTurn').value) || 2;
-  if (cost > 0 && rate > 0) {
-    const savedMins = config.turns * minsPerTurn;
-    const savedHrs = savedMins / 60;
-    const devValue = savedHrs * rate;
-    const roi = ((devValue - cost) / cost * 100).toFixed(0);
-    document.getElementById('roi-result').textContent = roi + '% ROI';
-    document.getElementById('roi-detail').textContent =
-      `~${savedMins} min saved (${fmtCost(devValue)} value) vs ${fmtCost(cost)} API cost`;
+
+  // Cost per hour
+  const sessionMins = config.timeBetween * config.turns;
+  if (cost > 0 && sessionMins > 0) {
+    const costPerHr = cost / (sessionMins / 60);
+    document.getElementById('cost-per-hour').textContent = fmtCost(costPerHr) + ' / hr';
+    document.getElementById('cost-per-hour-detail').textContent =
+      `${config.turns} turns x ${config.timeBetween} min = ${Math.round(sessionMins)} min session`;
   } else {
-    document.getElementById('roi-result').textContent = '\u2014';
-    document.getElementById('roi-detail').textContent = '';
+    document.getElementById('cost-per-hour').textContent = '\u2014';
+    document.getElementById('cost-per-hour-detail').textContent = '';
   }
+}
+
+function updateSummarySentence(cost) {
+  const m = MODELS[config.model];
+  const spd = state.sessPerDay || 4;
+  const mo = cost * spd * 30;
+  const el = document.getElementById('summary-sentence');
+  el.innerHTML = `This <strong>${escHtml(config.turns)}-turn ${escHtml(m.name)}</strong> session costs <span class="hl">${escHtml(fmtCost(cost))}</span>, or <span class="hl">${escHtml(fmtCost(mo))}/mo</span> at ${escHtml(spd)} sessions/day`;
 }
 
 export function updatePresetCosts() {
@@ -191,15 +199,11 @@ export function updateDangerZone() {
 export function update() {
   const res = simulate(config);
   state.lastResult = res;
-  const noCache = simulateNoCacheCost(config);
   const t = res.T;
-  const saved = noCache - t.cost;
 
   animateEl('sum-total', t.cost, fmtCost);
   animateEl('sum-input', t.crCost + t.cwCost + t.unCost, fmtCost);
   animateEl('sum-output', t.outCost + t.thCost, fmtCost);
-  animateEl('sum-saved', saved, v => v >= 0 ? fmtCost(v) : '-' + fmtCost(Math.abs(v)));
-  document.getElementById('sum-saved').style.color = saved >= 0 ? 'var(--green)' : 'var(--red)';
   animateEl('sum-calls', t.apiCalls, v => Math.round(v).toLocaleString());
 
   const avgCost = config.turns > 0 ? t.cost / config.turns : 0;
@@ -220,8 +224,6 @@ export function update() {
   document.getElementById('sum-tokens').textContent = fmtTok(totTok);
   document.getElementById('sum-thinking-pct').textContent =
     (t.outCost + t.thCost) > 0 ? ((t.thCost / (t.outCost + t.thCost)) * 100).toFixed(0) + '%' : '0%';
-  document.getElementById('sum-saved-pct').textContent =
-    noCache > 0 ? (saved >= 0 ? ((saved / noCache) * 100).toFixed(0) + '% saved' : 'caching costs more!') : '0%';
   document.getElementById('sum-calls-detail').textContent =
     (1 + config.toolRounds) + ' calls/turn x ' + config.turns + ' turns'
     + (t.apiCalls > config.turns * (1 + config.toolRounds) ? ' + compactions' : '');
@@ -231,14 +233,6 @@ export function update() {
   document.getElementById('cache-eff-bar').style.width = eff.toFixed(1) + '%';
   document.getElementById('cache-eff-pct').textContent = eff.toFixed(0) + '% cache hits';
   document.getElementById('cache-eff-ratio').textContent = fmtTok(t.crTok) + ' / ' + fmtTok(totIn) + ' input';
-
-  const avgTurnCost = t.cost / Math.max(config.turns, 1);
-  const costD = res.turns.map(d => ({
-    x: d.turn, y: d.cumulativeCost, compaction: d.compaction, cacheDrop: d.cacheDrop,
-    spike: d.turnCost > avgTurnCost * 2 ? d.turnCost : 0,
-  }));
-  drawLine(document.getElementById('chart-cost'), [{ data: costD, color: '#a78bfa' }],
-    { height: 200, yFmt: fmtCost, annotate: true });
 
   const stackData = res.turns.map(d => ({
     x: d.turn, compaction: d.compaction, cacheDrop: d.cacheDrop,
@@ -251,8 +245,6 @@ export function update() {
     ],
   }));
   drawStackedBars(document.getElementById('chart-perturn'), stackData, { height: 200, yFmt: fmtCost });
-
-  drawCacheStrip(document.getElementById('chart-cachestrip'), res.turns);
 
   const ctxD = res.turns.map(d => ({ x: d.turn, y: d.contextSize, compaction: d.compaction, cacheDrop: d.cacheDrop }));
   drawLine(document.getElementById('chart-ctx'), [{ data: ctxD, color: '#60a5fa' }],
@@ -276,6 +268,7 @@ export function update() {
 
   buildModelBars('bar-comparison', config);
   updateProjections(t.cost);
+  updateSummarySentence(t.cost);
   updatePresetCosts();
   updateCostDrivers(t);
   updateContextProjection(res.turns);

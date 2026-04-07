@@ -47,7 +47,7 @@
         <button class="model-btn" data-model="haiku-4.5">Haiku 4.5<small>$1 / $5</small></button>
       </div>
       <div class="toggle-row">
-        <span class="toggle-label">Cache TTL</span>
+        <span class="toggle-label" title="How long the API caches your conversation. Calls within this window are much cheaper.">Cache TTL</span>
         <div class="toggle-group" id="tg-cache">
           <button class="toggle-btn active" data-val="5m">5 min</button>
           <button class="toggle-btn" data-val="1h">1 hour</button>
@@ -69,10 +69,10 @@
     <div class="section-header"><span class="chv">&#9660;</span> Session Shape</div>
     <div class="section-body">
       <div class="control"><div class="control-header"><label>Number of turns</label><span class="sens-tag" data-sens="turns"></span><span class="control-value" id="v-turns">25</span></div><input type="range" id="turns" min="1" max="200" value="25"></div>
-      <div class="control"><div class="control-header"><label>System prompt + CLAUDE.md</label><span class="sens-tag" data-sens="sysPrompt"></span><span class="control-value" id="v-sysPrompt">20,000</span></div><input type="range" id="sysPrompt" min="2000" max="100000" value="20000" step="1000"></div>
+      <div class="control"><div class="control-header"><label title="Total tokens in your system instructions, CLAUDE.md files, and tool definitions. Sent with every API call.">System prompt + CLAUDE.md</label><span class="sens-tag" data-sens="sysPrompt"></span><span class="control-value" id="v-sysPrompt">20,000</span></div><input type="range" id="sysPrompt" min="2000" max="100000" value="20000" step="1000"></div>
       <div class="control"><div class="control-header"><label>Avg user message (tokens)</label><span class="sens-tag" data-sens="userMsg"></span><span class="control-value" id="v-userMsg">300</span></div><input type="range" id="userMsg" min="30" max="5000" value="300" step="10"></div>
       <div class="control"><div class="control-header"><label>Avg response (tokens)</label><span class="sens-tag" data-sens="responseTokens"></span><span class="control-value" id="v-responseTokens">1,200</span></div><input type="range" id="responseTokens" min="50" max="16000" value="1200" step="50"></div>
-      <div class="control"><div class="control-header"><label>Avg thinking tokens</label><span class="sens-tag" data-sens="thinkingTokens"></span><span class="control-value" id="v-thinkingTokens">4,000</span></div><input type="range" id="thinkingTokens" min="0" max="32000" value="4000" step="200"></div>
+      <div class="control"><div class="control-header"><label title="Internal reasoning tokens Claude uses before responding. Billed at output rate but not visible to you.">Avg thinking tokens</label><span class="sens-tag" data-sens="thinkingTokens"></span><span class="control-value" id="v-thinkingTokens">4,000</span></div><input type="range" id="thinkingTokens" min="0" max="32000" value="4000" step="200"></div>
     </div>
   </div>
 
@@ -81,8 +81,8 @@
     <div class="section-header"><span class="chv">&#9660;</span> Tool Usage</div>
     <div class="section-body">
       <div class="section-hint">Each tool round = one extra API call resending the growing context.</div>
-      <div class="control"><div class="control-header"><label>Tool rounds / turn</label><span class="sens-tag" data-sens="toolRounds"></span><span class="control-value" id="v-toolRounds">3</span></div><input type="range" id="toolRounds" min="0" max="15" value="3"></div>
-      <div class="control"><div class="control-header"><label>Avg tool result (tokens)</label><span class="sens-tag" data-sens="toolResult"></span><span class="control-value" id="v-toolResult">800</span></div><input type="range" id="toolResult" min="50" max="6000" value="800" step="50"></div>
+      <div class="control"><div class="control-header"><label title="How many tool calls (file reads, searches, edits) Claude makes before responding. Each resends the full conversation.">Tool rounds / turn</label><span class="sens-tag" data-sens="toolRounds"></span><span class="control-value" id="v-toolRounds">3</span></div><input type="range" id="toolRounds" min="0" max="15" value="3"></div>
+      <div class="control"><div class="control-header"><label title="Average size of data returned by each tool call (file contents, search results, etc.)">Avg tool result (tokens)</label><span class="sens-tag" data-sens="toolResult"></span><span class="control-value" id="v-toolResult">800</span></div><input type="range" id="toolResult" min="50" max="6000" value="800" step="50"></div>
     </div>
   </div>
 
@@ -92,7 +92,7 @@
     <div class="section-body">
       <div class="section-hint">When cache expires, the next call pays full input price for the entire context.</div>
       <div class="control"><div class="control-header"><label>Avg time between turns</label><span class="sens-tag" data-sens="timeBetween"></span><span class="control-value" id="v-timeBetween">1.5 min</span></div><input type="range" id="timeBetween" min="0.5" max="90" value="1.5" step="0.5" class="danger-zone"></div>
-      <div class="control"><div class="control-header"><label id="lbl-cacheDrops">Idle breaks (&gt;5 min gaps)</label><span class="sens-tag" data-sens="cacheDrops"></span><span class="control-value" id="v-cacheDrops">0</span></div><input type="range" id="cacheDrops" min="0" max="15" value="0"></div>
+      <div class="control"><div class="control-header"><label id="lbl-cacheDrops" title="Number of times you pause longer than the cache TTL during the session.">Idle breaks (&gt;5 min gaps)</label><span class="sens-tag" data-sens="cacheDrops"></span><span class="control-value" id="v-cacheDrops">0</span></div><input type="range" id="cacheDrops" min="0" max="15" value="0"></div>
       <div class="efficiency-bar-container">
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Cache efficiency</div>
         <div class="efficiency-bar-bg"><div class="efficiency-bar-fill" id="cache-eff-bar" style="width:0%"></div></div>
@@ -106,8 +106,8 @@
     <div class="section-header"><span class="chv">&#9660;</span> Compaction</div>
     <div class="section-body">
       <div class="section-hint">Compaction summarizes conversation. Costs one API call + cold-cache restart.</div>
-      <div class="control"><div class="control-header"><label>Manual compactions</label><span class="sens-tag" data-sens="compactions"></span><span class="control-value" id="v-compactions">0</span></div><input type="range" id="compactions" min="0" max="10" value="0"></div>
-      <div class="control"><div class="control-header"><label>Compaction ratio (kept)</label><span class="sens-tag" data-sens="compactRatio"></span><span class="control-value" id="v-compactRatio">25%</span></div><input type="range" id="compactRatio" min="0.1" max="0.5" value="0.25" step="0.05"></div>
+      <div class="control"><div class="control-header"><label title="When context gets too large, Claude summarizes the conversation to free space. Costs one extra API call.">Manual compactions</label><span class="sens-tag" data-sens="compactions"></span><span class="control-value" id="v-compactions">0</span></div><input type="range" id="compactions" min="0" max="10" value="0"></div>
+      <div class="control"><div class="control-header"><label title="What fraction of the conversation is kept after compaction. Lower = more aggressive summarization.">Compaction ratio (kept)</label><span class="sens-tag" data-sens="compactRatio"></span><span class="control-value" id="v-compactRatio">25%</span></div><input type="range" id="compactRatio" min="0.1" max="0.5" value="0.25" step="0.05"></div>
       <label class="checkbox-row"><input type="checkbox" id="autoCompact" checked>Auto-compact at ~70% context</label>
     </div>
   </div>
@@ -121,32 +121,12 @@
     <div class="summary-card sc-total"><div class="card-label">Total Session Cost</div><div class="card-value" id="sum-total">&mdash;</div><div class="card-detail"><span id="sum-tokens">&mdash;</span> total tokens</div></div>
     <div class="summary-card sc-input"><div class="card-label">Input Cost</div><div class="card-value" id="sum-input">&mdash;</div><div class="card-detail">cache read + write + uncached</div></div>
     <div class="summary-card sc-output"><div class="card-label">Output + Thinking</div><div class="card-value" id="sum-output">&mdash;</div><div class="card-detail"><span id="sum-thinking-pct">&mdash;</span> from thinking</div></div>
-    <div class="summary-card sc-saved"><div class="card-label">Cache Savings</div><div class="card-value" id="sum-saved">&mdash;</div><div class="card-detail"><span id="sum-saved-pct">&mdash;</span> saved vs no caching</div></div>
+    <div class="summary-card sc-monthly"><div class="card-label">Monthly Cost</div><div class="card-value" id="sum-monthly">&mdash;</div><div class="card-detail"><div class="stepper"><button class="stepper-btn" id="sess-down">-</button><span id="sess-count">4</span><span class="stepper-label">sessions/day</span><button class="stepper-btn" id="sess-up">+</button></div></div></div>
     <div class="summary-card sc-calls"><div class="card-label">Total API Calls</div><div class="card-value" id="sum-calls">&mdash;</div><div class="card-detail"><span id="sum-calls-detail">&mdash;</span></div></div>
     <div class="summary-card sc-avg"><div class="card-label">Avg Cost / Turn</div><div class="card-value" id="sum-avg">&mdash;</div><div class="card-detail" id="sum-avg-detail">&mdash;</div></div>
   </div>
 
-  <div class="projections">
-    <div class="proj-card">
-      <div class="proj-title">Monthly Projection</div>
-      <div class="control"><div class="control-header"><label>Sessions per day</label><span class="control-value" id="v-sessPerDay">4</span></div><input type="range" id="sessPerDay" min="1" max="30" value="4"></div>
-      <div class="proj-result" id="proj-monthly">&mdash;</div>
-      <div class="proj-detail" id="proj-monthly-detail"></div>
-    </div>
-    <div class="proj-card">
-      <div class="proj-title">Budget Calculator</div>
-      <div class="budget-input-row"><span style="color:var(--text-muted);font-size:13px;">$</span><input class="budget-input" id="budgetInput" type="number" value="100" min="1" step="10"><span style="color:var(--text-muted);font-size:11px;">/ month</span></div>
-      <div class="proj-result" id="proj-budget">&mdash;</div>
-      <div class="proj-detail" id="proj-budget-detail"></div>
-    </div>
-    <div class="proj-card">
-      <div class="proj-title">Developer ROI</div>
-      <div class="budget-input-row"><span style="color:var(--text-muted);font-size:13px;">$</span><input class="budget-input" id="hourlyRate" type="number" value="100" min="10" step="10"><span style="color:var(--text-muted);font-size:11px;">/ hr rate</span></div>
-      <div class="budget-input-row" style="margin-top:6px"><input class="budget-input" id="minsPerTurn" type="number" value="2" min="0.5" max="30" step="0.5" style="width:60px"><span style="color:var(--text-muted);font-size:11px;">min saved / turn</span></div>
-      <div class="proj-result" id="roi-result">&mdash;</div>
-      <div class="proj-detail" id="roi-detail"></div>
-    </div>
-  </div>
+  <div class="summary-sentence" id="summary-sentence"></div>
 
   <div class="insights-row">
     <div class="insight-card">
@@ -159,18 +139,24 @@
     </div>
   </div>
 
+  <div class="projections">
+    <div class="proj-card">
+      <div class="proj-title">Budget Calculator</div>
+      <div class="budget-input-row"><span style="color:var(--text-muted);font-size:13px;">$</span><input class="budget-input" id="budgetInput" type="number" value="100" min="1" step="10"><span style="color:var(--text-muted);font-size:11px;">/ month</span></div>
+      <div class="proj-result" id="proj-budget">&mdash;</div>
+      <div class="proj-detail" id="proj-budget-detail"></div>
+    </div>
+    <div class="proj-card">
+      <div class="proj-title">Cost per Hour</div>
+      <div class="proj-result" id="cost-per-hour">&mdash;</div>
+      <div class="proj-detail" id="cost-per-hour-detail"></div>
+    </div>
+  </div>
+
   <div class="charts-grid">
     <div class="chart-card full-width">
-      <div class="chart-title">Cumulative Cost<span class="chart-subtitle">auto-annotated spikes</span></div>
-      <div class="chart-canvas-wrap" style="height:200px"><canvas id="chart-cost" aria-label="Cumulative session cost over turns" role="img"></canvas><div class="chart-tooltip" id="tip-cost"></div></div>
-    </div>
-    <div class="chart-card full-width">
-      <div class="chart-title">Per-Turn Stacked Cost<span class="chart-subtitle">click a bar for API-call anatomy</span></div>
+      <div class="chart-title">Per-Turn Cost<span class="chart-subtitle">click a bar for API-call anatomy</span></div>
       <div class="chart-canvas-wrap" style="height:210px"><canvas id="chart-perturn" aria-label="Per-turn stacked cost breakdown" role="img"></canvas><div class="chart-tooltip" id="tip-perturn"></div></div>
-    </div>
-    <div class="chart-card full-width">
-      <div class="chart-title">Cache State Timeline</div>
-      <div class="chart-canvas-wrap" style="height:36px"><canvas id="chart-cachestrip" aria-label="Cache state timeline showing warm, cold, and compaction states" role="img"></canvas></div>
     </div>
     <div class="chart-card full-width">
       <div class="chart-title">Context Size per Turn</div>

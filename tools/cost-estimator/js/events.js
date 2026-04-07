@@ -61,12 +61,14 @@ export function bindEvents() {
       update();
     });
   }
-  document.getElementById('sessPerDay').addEventListener('input', e => {
-    document.getElementById('v-sessPerDay').textContent = e.target.value; update();
+  // Sessions/day stepper
+  document.getElementById('sess-up').addEventListener('click', () => {
+    state.sessPerDay = Math.min(30, (state.sessPerDay || 4) + 1); update();
+  });
+  document.getElementById('sess-down').addEventListener('click', () => {
+    state.sessPerDay = Math.max(1, (state.sessPerDay || 4) - 1); update();
   });
   document.getElementById('budgetInput').addEventListener('input', () => update());
-  document.getElementById('hourlyRate').addEventListener('input', () => update());
-  document.getElementById('minsPerTurn').addEventListener('input', () => update());
   document.getElementById('autoCompact').addEventListener('change', e => { config.autoCompact = e.target.checked; update(); });
 
   // Presets
@@ -98,9 +100,6 @@ export function bindEvents() {
     .observe(document.querySelector('.main'));
 
   // Tooltips
-  mkTip('chart-cost', 'tip-cost', d =>
-    `Turn ${d.turn}  |  cumulative: ${fmtCost(d.cumulativeCost)}  |  this turn: ${fmtCost(d.turnCost)}`
-    + (d.compaction ? ' [COMPACTION]' : '') + (d.cacheDrop ? ' [CACHE DROP]' : ''));
   mkTip('chart-ctx', 'tip-ctx', d =>
     `Turn ${d.turn}  |  context: ${fmtTok(d.contextSize)} tokens`
     + (d.compaction ? ' [COMPACTED]' : ''));
