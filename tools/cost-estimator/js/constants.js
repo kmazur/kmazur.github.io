@@ -18,3 +18,17 @@ export const PRESETS = {
 export const COMPACT_THRESHOLD = 0.70;
 // Approximate output tokens per tool-use call (function name, JSON schema, invocation boilerplate)
 export const TOOL_CALL_OVERHEAD = 180;
+
+export const SLIDER_RANGES = {
+  turns:           { min: 1,    max: 200 },
+  sysPrompt:       { min: 2000, max: 100000 },
+  userMsg:         { min: 30,   max: 5000 },
+  responseTokens:  { min: 50,   max: 16000 },
+  thinkingTokens:  { min: 0,    max: 32000 },
+  toolRounds:      { min: 0,    max: 15 },
+  toolResult:      { min: 50,   max: 6000 },
+  timeBetween:     { min: 0.5,  max: 90 },
+  cacheDrops:      { min: 0,    max: 15 },
+  compactions:     { min: 0,    max: 10 },
+  compactRatio:    { min: 0.1,  max: 0.5 },
+};

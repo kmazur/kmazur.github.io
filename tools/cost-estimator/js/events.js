@@ -1,7 +1,6 @@
 import { PRESETS } from './constants.js';
 import { config, state } from './state.js';
-import { SLIDER_FORMATTERS } from './formatters.js';
-import { fmtCost, fmtTok } from './formatters.js';
+import { SLIDER_FORMATTERS, fmtCost, fmtTok } from './formatters.js';
 import { showAnatomy, closeAnatomy } from './anatomy.js';
 import { update, updatePricingBox, updateIdleLabel } from './ui.js';
 import { shareURL } from './url-state.js';
@@ -14,8 +13,8 @@ function mkTip(cvId, tipId, fmt) {
     if (x < pad || x > pad + cw) { tip.classList.remove('visible'); return; }
     if (!state.lastResult) { tip.classList.remove('visible'); return; }
     const d = state.lastResult.turns; if (!d.length) { tip.classList.remove('visible'); return; }
-    const mT = d[d.length - 1].turn;
-    const cl = d[Math.min(Math.max(Math.round(((x - pad) / cw) * mT), 0), d.length - 1)];
+    const idx = Math.min(Math.max(Math.floor(((x - pad) / cw) * d.length), 0), d.length - 1);
+    const cl = d[idx];
     if (!cl) { tip.classList.remove('visible'); return; }
     tip.innerHTML = fmt(cl); tip.classList.add('visible');
     const tw = tip.offsetWidth;
@@ -77,7 +76,15 @@ export function bindEvents() {
     for (const [k, v] of Object.entries(p)) {
       config[k] = v;
       const el = document.getElementById(k);
-      if (el) { el.value = v; const d = document.getElementById('v-' + k); if (d && SLIDER_FORMATTERS[k]) d.textContent = SLIDER_FORMATTERS[k](v); }
+      if (el) {
+        el.value = v;
+        const d = document.getElementById('v-' + k);
+        if (d && SLIDER_FORMATTERS[k]) {
+          const formatted = SLIDER_FORMATTERS[k](v);
+          d.textContent = formatted;
+          el.setAttribute('aria-valuetext', String(formatted));
+        }
+      }
     }
     update();
   }));
@@ -135,7 +142,8 @@ export function bindEvents() {
   });
   ptCv.style.cursor = 'pointer';
 
-  // Close anatomy on overlay click
+  // Close anatomy on overlay click or close button
+  document.getElementById('anatomy-close-btn').addEventListener('click', closeAnatomy);
   document.getElementById('anatomy-overlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeAnatomy();
   });

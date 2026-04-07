@@ -1,4 +1,4 @@
-import { MODELS, COMPACT_THRESHOLD, TOOL_CALL_OVERHEAD } from './constants.js';
+import { MODELS, COMPACT_THRESHOLD, TOOL_CALL_OVERHEAD, SLIDER_RANGES } from './constants.js';
 import { config } from './state.js';
 
 function getCacheWritePrice(m, ttl) {
@@ -9,16 +9,19 @@ export function getCacheTTLMinutes(ttl) {
   return ttl === '1h' ? 60 : 5;
 }
 
-function costOneCall(inputTok, outputTok, thinkTok, model, cwPrice, warm, cachedPrefix) {
+function costOneCall(inputTok, outputTok, thinkTok, model, cwPrice, warm, cachedPrefix, noCache) {
   const R = 1e6;
   let cr = 0, cw = 0, un = 0;
-  if (warm && cachedPrefix > 0) {
+  if (noCache) {
+    // No caching at all: pay full base input rate
+    un = inputTok;
+  } else if (warm && cachedPrefix > 0) {
     // Cache hit: read cached prefix, write new tokens into cache
     cr = Math.min(cachedPrefix, inputTok);
     cw = Math.max(0, inputTok - cachedPrefix);
   } else {
-    // Cold start: entire input is uncached, gets written into cache for next call
-    un = inputTok;
+    // Cold start: entire input written to cache for future reads
+    cw = inputTok;
   }
   return {
     cr, cw, un, out: outputTok, think: thinkTok,
@@ -36,9 +39,10 @@ export function simulate(cfg, modelOverride) {
   const cwPrice = getCacheWritePrice(m, cfg.cacheTTL);
   const ttlMin = getCacheTTLMinutes(cfg.cacheTTL);
   const ctxLimit = cfg.contextWindow;
+  const noCache = !!cfg._noCache;
 
   const dropSet = new Set();
-  if (cfg.cacheDrops > 0 && cfg.turns > 1) {
+  if (!noCache && cfg.cacheDrops > 0 && cfg.turns > 1) {
     const sp = cfg.turns / (cfg.cacheDrops + 1);
     for (let i = 1; i <= cfg.cacheDrops; i++) dropSet.add(Math.round(i * sp));
   }
@@ -56,7 +60,7 @@ export function simulate(cfg, modelOverride) {
   const turns = [];
 
   for (let t = 0; t < cfg.turns; t++) {
-    const isDrop = dropSet.has(t) || cfg.timeBetween >= ttlMin;
+    const isDrop = !noCache && (dropSet.has(t) || cfg.timeBetween >= ttlMin);
     const wasWarm = warm;
     if (isDrop) { warm = false; cached = 0; }
 
@@ -64,7 +68,7 @@ export function simulate(cfg, modelOverride) {
     let compCost = 0, compDetail = null;
     if (needComp) {
       const summ = Math.floor(ctx * cfg.compactRatio);
-      const c = costOneCall(ctx, summ, 0, m, cwPrice, warm, cached);
+      const c = costOneCall(ctx, summ, 0, m, cwPrice, warm, cached, noCache);
       compCost = c.crCost + c.cwCost + c.unCost + c.outCost;
       compDetail = { inputTokens: ctx, outputTokens: summ, ...c, totalCost: compCost };
       T.compCost += compCost; T.cost += compCost; T.apiCalls++;
@@ -82,7 +86,7 @@ export function simulate(cfg, modelOverride) {
       const last = a === nCalls - 1;
       const oTok = last ? cfg.responseTokens : TOOL_CALL_OVERHEAD;
       const thTok = last ? cfg.thinkingTokens : 0;
-      const c = costOneCall(curIn, oTok, thTok, m, cwPrice, warm, cached);
+      const c = costOneCall(curIn, oTok, thTok, m, cwPrice, warm, cached, noCache);
 
       callDetails.push({
         callIndex: a, isLast: last, inputTokens: curIn,
@@ -94,7 +98,7 @@ export function simulate(cfg, modelOverride) {
       tCR += c.cr; tCRc += c.crCost; tCW += c.cw; tCWc += c.cwCost;
       tUN += c.un; tUNc += c.unCost; tOut += oTok; tOc += c.outCost;
       tTh += thTok; tThc += c.thCost;
-      cached = curIn; warm = true;
+      if (!noCache) { cached = curIn; warm = true; }
       if (!last) curIn += oTok + cfg.toolResult;
     }
 
@@ -118,26 +122,18 @@ export function simulate(cfg, modelOverride) {
 }
 
 export function simulateNoCacheCost(cfg) {
-  // Reuse simulate with cache disabled: no warm cache, no drops (everything uncached)
-  const noCacheCfg = { ...cfg, timeBetween: 9999, cacheDrops: 0 };
-  return simulate(noCacheCfg).T.cost;
+  // Reuse simulate with caching fully disabled: every call pays base input rate
+  return simulate({ ...cfg, _noCache: true }).T.cost;
 }
 
 export function computeSensitivity() {
   const base = simulate(config).T.cost;
   if (base === 0) return {};
-  const keys = [
-    'turns', 'sysPrompt', 'userMsg', 'responseTokens', 'thinkingTokens',
-    'toolRounds', 'toolResult', 'timeBetween', 'cacheDrops', 'compactions', 'compactRatio',
-  ];
   const results = {};
-  for (const key of keys) {
-    const el = document.getElementById(key);
-    if (!el) continue;
-    const range = +el.max - +el.min;
-    const delta = range * 0.10;
-    const up = { ...config, [key]: Math.min(+el.max, config[key] + delta) };
-    const dn = { ...config, [key]: Math.max(+el.min, config[key] - delta) };
+  for (const [key, { min, max }] of Object.entries(SLIDER_RANGES)) {
+    const delta = (max - min) * 0.10;
+    const up = { ...config, [key]: Math.min(max, config[key] + delta) };
+    const dn = { ...config, [key]: Math.max(min, config[key] - delta) };
     const costUp = simulate(up).T.cost;
     const costDn = simulate(dn).T.cost;
     results[key] = Math.abs(costUp - costDn) / base;

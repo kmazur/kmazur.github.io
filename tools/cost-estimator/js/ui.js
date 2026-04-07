@@ -80,23 +80,23 @@ function updateContextProjection(turns) {
   const firstComp = turns.find(t => t.compaction);
   const lastTurn = turns[turns.length - 1];
 
-  let html = `<div style="margin-bottom:8px">Growth: <strong>${fmtTok(growthPerTurn)}</strong> tokens/turn</div>`;
+  let html = `<div style="margin-bottom:8px">Growth: <strong>${escHtml(fmtTok(growthPerTurn))}</strong> tokens/turn</div>`;
 
   if (firstComp) {
-    html += `Auto-compact triggers at <strong>turn ${firstComp.turn}</strong> (context reaches <span class="highlight">${fmtTok(Math.round(threshold))}</span>)`;
+    html += `Auto-compact triggers at <strong>turn ${escHtml(firstComp.turn)}</strong> (context reaches <span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>)`;
   } else if (turnsToThreshold <= config.turns * 1.5) {
-    html += `At current rate, 70% threshold (<span class="highlight">${fmtTok(Math.round(threshold))}</span>) reached around <strong>turn ${turnsToThreshold}</strong>`;
+    html += `At current rate, 70% threshold (<span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>) reached around <strong>turn ${escHtml(turnsToThreshold)}</strong>`;
   } else {
-    html += `Context stays well within limits. Final size: <span class="highlight">${fmtTok(lastTurn?.contextSize || 0)}</span> of ${fmtTok(limit)}`;
+    html += `Context stays well within limits. Final size: <span class="highlight">${escHtml(fmtTok(lastTurn?.contextSize || 0))}</span> of ${escHtml(fmtTok(limit))}`;
   }
 
   const compCount = turns.filter(t => t.compaction).length;
   if (compCount > 0) {
-    html += `<div style="margin-top:6px">Total compactions in session: <strong>${compCount}</strong></div>`;
+    html += `<div style="margin-top:6px">Total compactions in session: <strong>${escHtml(compCount)}</strong></div>`;
   }
 
   const usage = lastTurn ? (lastTurn.contextSize / limit * 100).toFixed(0) : 0;
-  html += `<div style="margin-top:6px">Final context usage: <strong>${usage}%</strong></div>`;
+  html += `<div style="margin-top:6px">Final context usage: <strong>${escHtml(usage)}%</strong></div>`;
   el.innerHTML = html;
 }
 
@@ -144,10 +144,10 @@ export function updatePricingBox() {
   const m = MODELS[config.model];
   const cw = config.cacheTTL === '1h' ? m.cache1h : m.cache5m;
   document.getElementById('pricing-box').innerHTML =
-    `<div class="price-item"><span class="pl">Input</span><span class="pv">$${m.input}/MTok</span></div>
-     <div class="price-item"><span class="pl">Output</span><span class="pv">$${m.output}/MTok</span></div>
-     <div class="price-item"><span class="pl">Cache write</span><span class="pv">$${cw}/MTok</span></div>
-     <div class="price-item"><span class="pl">Cache read</span><span class="pv">$${m.cacheRead}/MTok</span></div>`;
+    `<div class="price-item"><span class="pl">Input</span><span class="pv">$${escHtml(m.input)}/MTok</span></div>
+     <div class="price-item"><span class="pl">Output</span><span class="pv">$${escHtml(m.output)}/MTok</span></div>
+     <div class="price-item"><span class="pl">Cache write</span><span class="pv">$${escHtml(cw)}/MTok</span></div>
+     <div class="price-item"><span class="pl">Cache read</span><span class="pv">$${escHtml(m.cacheRead)}/MTok</span></div>`;
 }
 
 export function updateIdleLabel() {

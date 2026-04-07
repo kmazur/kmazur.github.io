@@ -1,6 +1,6 @@
 import { MODELS } from './constants.js';
 import { simulate } from './simulation.js';
-import { fmtCost, fmtTok } from './formatters.js';
+import { fmtCost, fmtTok, escHtml } from './formatters.js';
 
 function setupCanvas(cv, h) {
   const dpr = devicePixelRatio || 1;
@@ -206,9 +206,9 @@ export function buildModelBars(id, currentCfg) {
   for (const b of bars) {
     const it = document.createElement('div'); it.className = 'bar-item';
     const pct = (b.value / mx) * 130;
-    it.innerHTML = `<div class="bar-amount" style="color:${b.color}">${fmtCost(b.value)}</div>
-      <div class="bar-fill" style="height:${pct}px;background:${b.color}40;border:1.5px solid ${b.color}"></div>
-      <div class="bar-label">${b.label}</div>`;
+    it.innerHTML = `<div class="bar-amount" style="color:${escHtml(b.color)}">${escHtml(fmtCost(b.value))}</div>
+      <div class="bar-fill" style="height:${pct}px;background:${escHtml(b.color)}40;border:1.5px solid ${escHtml(b.color)}"></div>
+      <div class="bar-label">${escHtml(b.label)}</div>`;
     el.appendChild(it);
   }
 }

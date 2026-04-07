@@ -72,7 +72,7 @@ header .subtitle { font-size:11px; color:var(--text-muted); margin-left:auto; fo
 .section-header::after { content:''; flex:1; height:1px; background:var(--border); }
 .section-header .chv { font-size:10px; transition:transform 0.2s; }
 .section.collapsed .section-header .chv { transform:rotate(-90deg); }
-.section-body { overflow:hidden; transition:max-height 0.3s ease; }
+.section-body { overflow:hidden; max-height:600px; transition:max-height 0.3s ease; }
 .section.collapsed .section-body { max-height:0 !important; }
 .section-hint { font-size:12px; color:var(--text-muted); margin-bottom:10px; line-height:1.45; }
 
@@ -335,4 +335,7 @@ input[type="range"].danger-zone { background:linear-gradient(to right, var(--bor
   .main { overflow-y:visible; }
   .summary-row { grid-template-columns:1fr 1fr; }
   .projections { grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
 }
