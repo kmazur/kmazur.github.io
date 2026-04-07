@@ -1,6 +1,4 @@
-import { MODELS } from './constants.js';
-import { simulate } from './simulation.js';
-import { fmtCost, fmtTok, escHtml } from './formatters.js';
+import { fmtCost, fmtMins, fmtTok, escHtml } from './formatters.js';
 
 function setupCanvas(cv, h) {
   const dpr = devicePixelRatio || 1;
@@ -194,21 +192,25 @@ export function drawDonut(cv, segs) {
   c.font = '10px "Outfit"'; c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillText('total', cx, cy + 12);
 }
 
-export function buildModelBars(id, currentCfg) {
+export function buildModelBars(id, rows) {
   const el = document.getElementById(id);
-  const show = Object.keys(MODELS);
-  const bars = show.map(k => {
-    const r = simulate(currentCfg, k);
-    return { label: MODELS[k].name, value: r.T.cost, color: MODELS[k].color };
-  });
+  const bars = rows.slice(0, 6).map(row => ({
+    label: row.model.shortName,
+    value: row.costPerSuccessfulOutcome,
+    raw: row.rawSession,
+    time: row.timeToGoodOutcomeMins,
+    color: row.model.color,
+  }));
   const mx = Math.max(...bars.map(b => b.value), 0.01);
   el.innerHTML = '';
   for (const b of bars) {
-    const it = document.createElement('div'); it.className = 'bar-item';
+    const it = document.createElement('div');
+    it.className = 'bar-item';
     const pct = (b.value / mx) * 130;
     it.innerHTML = `<div class="bar-amount" style="color:${escHtml(b.color)}">${escHtml(fmtCost(b.value))}</div>
       <div class="bar-fill" style="height:${pct}px;background:${escHtml(b.color)}40;border:1.5px solid ${escHtml(b.color)}"></div>
-      <div class="bar-label">${escHtml(b.label)}</div>`;
+      <div class="bar-label">${escHtml(b.label)}</div>
+      <div class="bar-sub">${escHtml(fmtMins(b.time))}</div>`;
     el.appendChild(it);
   }
 }

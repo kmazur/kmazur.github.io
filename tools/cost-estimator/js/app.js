@@ -6,32 +6,14 @@ import { applyModelConstraints, update, updatePricingBox, updateIdleLabel } from
 import { bindEvents } from './events.js';
 
 function restoreUIFromConfig() {
-  // Model
-  document.querySelectorAll('.model-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.model === config.model);
-  });
-  // TTL
-  document.querySelectorAll('#tg-cache .toggle-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.val === config.cacheTTL);
-  });
-  // Context window
-  document.querySelectorAll('#tg-ctx .toggle-btn').forEach(b => {
-    b.classList.toggle('active', +b.dataset.val === config.contextWindow);
-  });
-  document.querySelectorAll('#tg-toolmix .toggle-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.val === config.toolMix);
-  });
-  document.querySelectorAll('#tg-uncertainty .toggle-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.val === config.uncertainty);
-  });
-  // Sliders
   for (const key of SLIDER_KEYS) {
-    const el = document.getElementById(key); if (!el) continue;
+    const el = document.getElementById(key);
+    if (!el) continue;
     el.value = config[key];
-    const d = document.getElementById('v-' + key);
-    if (d && SLIDER_FORMATTERS[key]) {
+    const display = document.getElementById(`v-${key}`);
+    if (display && SLIDER_FORMATTERS[key]) {
       const formatted = SLIDER_FORMATTERS[key](config[key]);
-      d.textContent = formatted;
+      display.textContent = formatted;
       el.setAttribute('aria-valuetext', String(formatted));
     }
   }
@@ -40,11 +22,11 @@ function restoreUIFromConfig() {
   document.getElementById('autoCompact').checked = config.autoCompact;
 }
 
-// Init in browser contexts only so modules remain importable in Node-based checks.
 if (typeof document !== 'undefined') {
   const loaded = loadFromURL();
-  applyModelConstraints();
   if (loaded) restoreUIFromConfig();
+  applyModelConstraints();
+  restoreUIFromConfig();
   bindEvents();
   updatePricingBox();
   updateIdleLabel();

@@ -97,7 +97,16 @@ header .subtitle { font-size:11px; color:var(--text-muted); margin-left:auto; fo
 .preset-cost { font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--accent); margin-top:3px; }
 
 /* ── Model selector ── */
+.provider-selector { display:flex; gap:6px; margin-bottom:8px; }
+.provider-btn {
+  flex:1; padding:8px 10px; border:1.5px solid var(--border-strong);
+  border-radius:var(--radius-sm); background:transparent; color:var(--text-secondary);
+  font-family:var(--font-body); font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s;
+}
+.provider-btn.active { border-color:var(--provider-color, var(--primary)); color:var(--provider-color, var(--primary)); background:color-mix(in srgb, var(--provider-color, var(--primary)) 12%, transparent); }
+.provider-btn:hover { border-color:var(--provider-color, var(--primary)); color:var(--text); }
 .model-selector { display:flex; gap:6px; margin-bottom:12px; }
+.model-selector-grid { display:grid; grid-template-columns:repeat(3,1fr); }
 .model-btn {
   flex:1; padding:10px 6px; border:1.5px solid var(--border-strong);
   border-radius:var(--radius-sm); background:transparent;
@@ -112,6 +121,7 @@ header .subtitle { font-size:11px; color:var(--text-muted); margin-left:auto; fo
 .toggle-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .toggle-label { font-size:12px; color:var(--text-secondary); font-weight:500; }
 .toggle-group { display:flex; border:1px solid var(--border-strong); border-radius:8px; overflow:hidden; }
+.toggle-group-wrap { flex-wrap:wrap; max-width:230px; gap:6px; border:none; overflow:visible; }
 .toggle-btn {
   padding:5px 14px; border:none; background:transparent;
   color:var(--text-muted); font-family:var(--font-body); font-size:11px; font-weight:600;
@@ -120,6 +130,7 @@ header .subtitle { font-size:11px; color:var(--text-muted); margin-left:auto; fo
 .toggle-btn:last-child { border-right:none; }
 .toggle-btn.active { background:var(--primary-soft); color:var(--primary); }
 .toggle-btn:hover:not(.active) { color:var(--text-secondary); }
+.toggle-group-wrap .toggle-btn { border:1px solid var(--border-strong); border-radius:8px; border-right:1px solid var(--border-strong); }
 .toggle-btn:disabled {
   color:rgba(122,131,159,0.45); cursor:not-allowed; background:rgba(255,255,255,0.01);
 }
@@ -301,6 +312,18 @@ input[type="range"].danger-zone { background:linear-gradient(to right, var(--bor
 .bar-fill { width:100%; border-radius:6px 6px 0 0; transition:height 0.4s; min-height:4px; }
 .bar-label { font-size:10px; font-weight:600; margin-top:8px; color:var(--text-secondary); text-align:center; }
 .bar-amount { font-family:var(--font-mono); font-size:11px; font-weight:700; margin-bottom:5px; }
+.bar-sub { font-size:10px; color:var(--text-muted); margin-top:3px; text-align:center; }
+.compare-table { margin-top:16px; display:grid; gap:6px; }
+.compare-head, .compare-row {
+  display:grid; grid-template-columns:1.6fr 0.8fr 0.9fr 0.8fr 0.9fr; gap:10px; align-items:center;
+}
+.compare-head { font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
+.compare-row {
+  font-size:11px; color:var(--text-secondary); padding:8px 10px; border-radius:10px; background:rgba(255,255,255,0.02);
+}
+.compare-row.current { border:1px solid var(--primary-glow); background:var(--primary-soft); }
+.compare-model { display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text); }
+.compare-dot { width:8px; height:8px; border-radius:999px; flex-shrink:0; }
 
 /* ── Anatomy Panel ── */
 .anatomy-overlay {
@@ -367,6 +390,8 @@ input[type="range"].danger-zone { background:linear-gradient(to right, var(--bor
   .projections { grid-template-columns:1fr; }
   .mix-row { grid-template-columns:70px 1fr; }
   .mix-row-meta { grid-column:1 / -1; }
+  .model-selector-grid { grid-template-columns:1fr 1fr; }
+  .compare-head, .compare-row { grid-template-columns:1.6fr 0.8fr 0.9fr 0.8fr 0.9fr; font-size:10px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }

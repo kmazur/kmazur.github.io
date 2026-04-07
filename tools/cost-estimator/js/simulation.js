@@ -1,23 +1,74 @@
 import {
+  AUTO_COMPACT_THRESHOLD,
+  EFFORT_LEVELS,
   INTEGER_SLIDER_KEYS,
   MODELS,
-  AUTO_COMPACT_THRESHOLD,
+  MODEL_ORDER,
   PRESETS,
+  PROVIDERS,
   SESSION_MIX,
+  SLIDER_RANGES,
+  TASK_PROFILES,
   TOOL_CALL_OVERHEAD,
   TOOL_MIX_OPTIONS,
   UNCERTAINTY_OPTIONS,
-  WEB_SEARCH_COST_PER_REQUEST,
-  SLIDER_RANGES,
 } from './constants.js';
 import { config } from './state.js';
 
-function getCacheWritePrice(m, ttl) {
-  return ttl === '1h' ? m.cache1h : m.cache5m;
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function roundInt(value, min = 0) {
+  return Math.max(min, Math.round(value));
+}
+
+export function getModel(modelId = config.model) {
+  return MODELS[modelId] || MODELS['claude-sonnet-4.6'];
+}
+
+export function getProvider(providerId) {
+  return PROVIDERS[providerId] || PROVIDERS.anthropic;
 }
 
 export function getCacheTTLMinutes(ttl) {
   return ttl === '1h' ? 60 : 5;
+}
+
+function getCacheTTLHours(ttl) {
+  return getCacheTTLMinutes(ttl) / 60;
+}
+
+function getEffortProfile(effort = 'deep') {
+  return EFFORT_LEVELS[effort] || EFFORT_LEVELS.deep;
+}
+
+function getTaskPerformance(model, taskKey) {
+  return model.performance?.[taskKey] || model.performance?.feature || {
+    turns: 1,
+    retry: 1,
+    success: 0.95,
+    timeSaved: 1,
+    latency: 1,
+    toolRounds: 1,
+    thinking: 1,
+    response: 1,
+  };
+}
+
+function getCallPricing(model, cacheTTL, inputTokens) {
+  const overLongContext = !!model.longContextThreshold && inputTokens > model.longContextThreshold;
+  const inputMultiplier = overLongContext ? (model.longContextInputMultiplier || 1) : 1;
+  const outputMultiplier = overLongContext ? (model.longContextOutputMultiplier || 1) : 1;
+  const cacheMultiplier = overLongContext ? (model.longContextCacheMultiplier || inputMultiplier) : 1;
+
+  return {
+    inputPrice: model.input * inputMultiplier,
+    outputPrice: model.output * outputMultiplier,
+    cachedInputPrice: (model.cachedInput ?? model.input) * cacheMultiplier,
+    cacheWritePrice: cacheTTL === '1h' ? (model.cache1h || model.input) * cacheMultiplier : (model.cache5m || model.input) * cacheMultiplier,
+    cacheStoragePerHour: (model.cacheStoragePerHour || 0) * cacheMultiplier,
+  };
 }
 
 function buildThinkingPlan(totalThink, nCalls) {
@@ -28,138 +79,60 @@ function buildThinkingPlan(totalThink, nCalls) {
   return plan;
 }
 
-function costOneCall(inputTok, outputTok, thinkTok, model, cwPrice, warm, cachedPrefix, noCache) {
+function costOneCall(inputTok, outputTok, thinkTok, cfg, model, warm, cachedPrefix, noCache) {
   const R = 1e6;
-  let cr = 0, cw = 0, un = 0;
-  const canCache = inputTok >= model.minCacheable;
-  if (noCache) {
-    // No caching at all: pay full base input rate
+  const provider = getProvider(model.provider);
+  const prices = getCallPricing(model, cfg.cacheTTL, inputTok);
+  let cr = 0;
+  let cw = 0;
+  let un = 0;
+  let cacheEligible = inputTok >= model.minCacheable;
+
+  if (noCache || !cacheEligible) {
     un = inputTok;
-  } else if (!canCache) {
-    // Anthropic silently skips caching for prompts below the per-model minimum.
-    un = inputTok;
-  } else if (warm && cachedPrefix > 0) {
-    // Cache hit: read cached prefix, write new tokens into cache
-    cr = Math.min(cachedPrefix, inputTok);
-    cw = Math.max(0, inputTok - cachedPrefix);
+  } else if (provider.cacheStrategy === 'write-read') {
+    if (warm && cachedPrefix > 0) {
+      cr = Math.min(cachedPrefix, inputTok);
+      cw = Math.max(0, inputTok - cachedPrefix);
+    } else {
+      cw = inputTok;
+    }
   } else {
-    // Cold start: entire input written to cache for future reads
-    cw = inputTok;
+    if (warm && cachedPrefix > 0) {
+      cr = Math.min(cachedPrefix, inputTok);
+      un = Math.max(0, inputTok - cachedPrefix);
+      if (provider.cacheStrategy === 'explicit-cache') {
+        cw = Math.max(0, inputTok - cachedPrefix);
+      }
+    } else {
+      un = inputTok;
+      if (provider.cacheStrategy === 'explicit-cache') {
+        cw = inputTok;
+      }
+    }
   }
+
+  const storageCost = provider.cacheStrategy === 'explicit-cache' && cw > 0
+    ? cw * prices.cacheStoragePerHour * getCacheTTLHours(cfg.cacheTTL) / R
+    : 0;
+  const cacheSetupCost = provider.cacheStrategy === 'explicit-cache'
+    ? storageCost
+    : cw * prices.cacheWritePrice / R + storageCost;
+
   return {
-    cr, cw, un, out: outputTok, think: thinkTok, cacheEligible: canCache,
-    crCost: cr * model.cacheRead / R,
-    cwCost: cw * cwPrice / R,
-    unCost: un * model.input / R,
-    // Thinking tokens are billed at the output rate per Anthropic pricing
-    outCost: outputTok * model.output / R,
-    thCost: thinkTok * model.output / R,
+    cr,
+    cw,
+    un,
+    out: outputTok,
+    think: thinkTok,
+    cacheEligible,
+    crCost: cr * prices.cachedInputPrice / R,
+    cwCost: cacheSetupCost,
+    unCost: un * prices.inputPrice / R,
+    outCost: outputTok * prices.outputPrice / R,
+    thCost: thinkTok * prices.outputPrice / R,
+    storageCost,
   };
-}
-
-export function simulate(cfg, modelOverride) {
-  const m = MODELS[modelOverride || cfg.model];
-  const cwPrice = getCacheWritePrice(m, cfg.cacheTTL);
-  const ttlMin = getCacheTTLMinutes(cfg.cacheTTL);
-  const ctxLimit = Math.min(cfg.contextWindow, m.maxContext);
-  const noCache = !!cfg._noCache;
-
-  const dropSet = new Set();
-  if (!noCache && cfg.cacheDrops > 0 && cfg.turns > 1) {
-    const sp = cfg.turns / (cfg.cacheDrops + 1);
-    for (let i = 1; i <= cfg.cacheDrops; i++) dropSet.add(Math.round(i * sp));
-  }
-  const compSet = new Set();
-  if (cfg.compactions > 0 && cfg.turns > 1) {
-    const sp = cfg.turns / (cfg.compactions + 1);
-    for (let i = 1; i <= cfg.compactions; i++) compSet.add(Math.round(i * sp));
-  }
-
-  let ctx = cfg.sysPrompt, warm = false, cached = 0;
-  const T = {
-    cost: 0, crCost: 0, cwCost: 0, unCost: 0, outCost: 0, thCost: 0, compCost: 0,
-    backgroundCost: 0, webCost: 0,
-    crTok: 0, cwTok: 0, unTok: 0, outTok: 0, thTok: 0, apiCalls: 0,
-  };
-  const turns = [];
-
-  for (let t = 0; t < cfg.turns; t++) {
-    const isDrop = !noCache && (dropSet.has(t) || cfg.timeBetween >= ttlMin);
-    const wasWarm = warm;
-    if (isDrop) { warm = false; cached = 0; }
-
-    const turnInput = ctx + cfg.userMsg;
-    const needComp = compSet.has(t) || (cfg.autoCompact && turnInput >= ctxLimit * AUTO_COMPACT_THRESHOLD);
-    let compCost = 0, compDetail = null;
-    if (needComp) {
-      const summ = Math.floor(ctx * cfg.compactRatio);
-      const c = costOneCall(ctx, summ, 0, m, cwPrice, warm, cached, noCache);
-      compCost = c.crCost + c.cwCost + c.unCost + c.outCost;
-      compDetail = { inputTokens: ctx, outputTokens: summ, ...c, totalCost: compCost };
-      T.compCost += compCost; T.cost += compCost; T.apiCalls++;
-      ctx = cfg.sysPrompt + summ;
-      warm = false; cached = 0;
-    }
-
-    const nCalls = 1 + cfg.toolRounds;
-    const thinkingPlan = buildThinkingPlan(cfg.thinkingTokens, nCalls);
-    let curIn = ctx + cfg.userMsg;
-    let tCR = 0, tCW = 0, tUN = 0, tOut = 0, tTh = 0;
-    let tCRc = 0, tCWc = 0, tUNc = 0, tOc = 0, tThc = 0;
-    const callDetails = [];
-
-    for (let a = 0; a < nCalls; a++) {
-      const last = a === nCalls - 1;
-      const oTok = last ? cfg.responseTokens : TOOL_CALL_OVERHEAD;
-      const thTok = thinkingPlan[a] || 0;
-      const c = costOneCall(curIn, oTok, thTok, m, cwPrice, warm, cached, noCache);
-
-      callDetails.push({
-        callIndex: a, isLast: last, inputTokens: curIn,
-        outputTokens: oTok, thinkingTokens: thTok,
-        warm, cachedPrefix: cached,
-        ...c, totalCost: c.crCost + c.cwCost + c.unCost + c.outCost + c.thCost,
-      });
-
-      tCR += c.cr; tCRc += c.crCost; tCW += c.cw; tCWc += c.cwCost;
-      tUN += c.un; tUNc += c.unCost; tOut += oTok; tOc += c.outCost;
-      tTh += thTok; tThc += c.thCost;
-      if (!noCache && c.cacheEligible) { cached = curIn; warm = true; }
-      else if (!noCache) { cached = 0; warm = false; }
-      if (!last) curIn += oTok + thTok + cfg.toolResult;
-    }
-
-    T.apiCalls += nCalls;
-    const turnAPI = tCRc + tCWc + tUNc + tOc + tThc;
-    T.crCost += tCRc; T.cwCost += tCWc; T.unCost += tUNc;
-    T.outCost += tOc; T.thCost += tThc; T.cost += turnAPI;
-    T.crTok += tCR; T.cwTok += tCW; T.unTok += tUN; T.outTok += tOut; T.thTok += tTh;
-
-    ctx += cfg.userMsg + cfg.toolRounds * (TOOL_CALL_OVERHEAD + cfg.toolResult) + cfg.responseTokens;
-
-    turns.push({
-      turn: t, contextSize: ctx,
-      turnCost: turnAPI + compCost, cumulativeCost: T.cost,
-      compaction: needComp, cacheDrop: isDrop, warmAtStart: wasWarm && !isDrop,
-      crCost: tCRc, cwCost: tCWc, unCost: tUNc, outCost: tOc, thCost: tThc, compCost,
-      apiCalls: callDetails, compDetail, nCalls,
-    });
-  }
-
-  T.backgroundCost = Math.max(0, Number(cfg.backgroundCost) || 0);
-  T.webCost = Math.max(0, Number(cfg.webSearches) || 0) * WEB_SEARCH_COST_PER_REQUEST;
-  T.cost += T.backgroundCost + T.webCost;
-
-  return { T, turns };
-}
-
-export function simulateNoCacheCost(cfg) {
-  // Reuse simulate with caching fully disabled: every call pays base input rate
-  return simulate({ ...cfg, _noCache: true }).T.cost;
-}
-
-function getWorkflowMultiplier(cfg) {
-  return (1 + (cfg.retryRate || 0) / 100) * (1 + (cfg.parallelAgents || 0) * (cfg.parallelAgentCostRatio || 0));
 }
 
 function getInterruptedCfg(cfg) {
@@ -171,18 +144,232 @@ function getInterruptedCfg(cfg) {
   };
 }
 
-function getEffectiveSessionCost(cfg, modelOverride) {
-  const interrupted = simulate(getInterruptedCfg(cfg), modelOverride).T.cost;
-  return interrupted * getWorkflowMultiplier(cfg);
+function getWorkflowMultiplier(cfg) {
+  return (1 + (cfg.retryRate || 0) / 100) * (1 + (cfg.parallelAgents || 0) * (cfg.parallelAgentCostRatio || 0));
 }
 
-function getMixEntries(cfg) {
-  return SESSION_MIX.map(meta => {
-    const weight = Math.max(0, Math.round(cfg[meta.key] || 0));
-    const sessionCfg = { ...cfg, ...PRESETS[meta.preset] };
-    const cost = getEffectiveSessionCost(sessionCfg);
-    return { ...meta, weight, cost };
-  });
+export function buildScenario(cfg, modelId = cfg.model, taskKey = cfg.taskProfile || 'feature') {
+  const model = getModel(modelId);
+  const provider = getProvider(model.provider);
+  const effort = getEffortProfile(cfg.effort || model.defaultEffort);
+  const taskPerf = getTaskPerformance(model, taskKey);
+
+  const adjustedCfg = {
+    ...cfg,
+    provider: model.provider,
+    model: model.id,
+    contextWindow: Math.min(cfg.contextWindow, model.maxContext),
+    turns: roundInt((cfg.turns || 0) * taskPerf.turns, 1),
+    responseTokens: roundInt((cfg.responseTokens || 0) * taskPerf.response * effort.responseMultiplier, 0),
+    thinkingTokens: roundInt((cfg.thinkingTokens || 0) * taskPerf.thinking * effort.thinkingMultiplier, 0),
+    toolRounds: roundInt((cfg.toolRounds || 0) * taskPerf.toolRounds * effort.toolMultiplier, 0),
+    toolResult: roundInt(cfg.toolResult || 0, 0),
+    backgroundCost: Number.isFinite(cfg.backgroundCost) ? cfg.backgroundCost : provider.defaultBackgroundCost,
+    webSearches: roundInt(cfg.webSearches || 0, 0),
+    execSessions: roundInt(cfg.execSessions || 0, 0),
+    retryRate: Math.max(0, (cfg.retryRate || 0) * taskPerf.retry * effort.retryMultiplier),
+    timeSavedMins: Math.max(0, (cfg.timeSavedMins || 0) * taskPerf.timeSaved * effort.timeSavedMultiplier),
+    _scenarioApplied: true,
+  };
+
+  const baseDuration = adjustedCfg.turns * Math.max(0.1, cfg.timeBetween || 0);
+  const timeToOutcomeMins = baseDuration * taskPerf.latency * effort.latencyMultiplier * (1 + adjustedCfg.retryRate / 100);
+  const successRate = clamp(taskPerf.success * effort.successMultiplier, 0.55, 0.995);
+
+  return {
+    model,
+    provider,
+    effort,
+    taskKey,
+    adjustedCfg,
+    successRate,
+    timeToOutcomeMins,
+    effortApiLabel: model.provider === 'anthropic'
+      ? { lean: 'low', balanced: 'medium', deep: 'high', max: 'max' }[cfg.effort || model.defaultEffort]
+      : model.provider === 'openai'
+        ? { lean: 'low', balanced: 'medium', deep: 'high', max: 'high' }[cfg.effort || model.defaultEffort]
+        : { lean: 'low budget', balanced: 'medium budget', deep: 'high budget', max: 'max budget' }[cfg.effort || model.defaultEffort],
+  };
+}
+
+function simulateAdjusted(cfg, model) {
+  const ttlMin = getCacheTTLMinutes(cfg.cacheTTL);
+  const ctxLimit = Math.min(cfg.contextWindow, model.maxContext);
+  const noCache = !!cfg._noCache;
+
+  const dropSet = new Set();
+  if (!noCache && cfg.cacheDrops > 0 && cfg.turns > 1) {
+    const spacing = cfg.turns / (cfg.cacheDrops + 1);
+    for (let i = 1; i <= cfg.cacheDrops; i++) dropSet.add(Math.round(i * spacing));
+  }
+  const compSet = new Set();
+  if (cfg.compactions > 0 && cfg.turns > 1) {
+    const spacing = cfg.turns / (cfg.compactions + 1);
+    for (let i = 1; i <= cfg.compactions; i++) compSet.add(Math.round(i * spacing));
+  }
+
+  let ctx = cfg.sysPrompt;
+  let warm = false;
+  let cached = 0;
+  const T = {
+    cost: 0,
+    crCost: 0,
+    cwCost: 0,
+    unCost: 0,
+    outCost: 0,
+    thCost: 0,
+    compCost: 0,
+    backgroundCost: 0,
+    webCost: 0,
+    execCost: 0,
+    crTok: 0,
+    cwTok: 0,
+    unTok: 0,
+    outTok: 0,
+    thTok: 0,
+    apiCalls: 0,
+  };
+  const turns = [];
+
+  for (let t = 0; t < cfg.turns; t++) {
+    const isDrop = !noCache && (dropSet.has(t) || cfg.timeBetween >= ttlMin);
+    const wasWarm = warm;
+    if (isDrop) {
+      warm = false;
+      cached = 0;
+    }
+
+    const turnInput = ctx + cfg.userMsg;
+    const needComp = compSet.has(t) || (cfg.autoCompact && turnInput >= ctxLimit * AUTO_COMPACT_THRESHOLD);
+    let compCost = 0;
+    let compDetail = null;
+    if (needComp) {
+      const summaryTokens = Math.floor(ctx * cfg.compactRatio);
+      const c = costOneCall(ctx, summaryTokens, 0, cfg, model, warm, cached, noCache);
+      compCost = c.crCost + c.cwCost + c.unCost + c.outCost;
+      compDetail = { inputTokens: ctx, outputTokens: summaryTokens, ...c, totalCost: compCost };
+      T.compCost += compCost;
+      T.cost += compCost;
+      T.apiCalls++;
+      ctx = cfg.sysPrompt + summaryTokens;
+      warm = false;
+      cached = 0;
+    }
+
+    const nCalls = 1 + cfg.toolRounds;
+    const thinkingPlan = buildThinkingPlan(cfg.thinkingTokens, nCalls);
+    let curIn = ctx + cfg.userMsg;
+    let tCR = 0;
+    let tCW = 0;
+    let tUN = 0;
+    let tOut = 0;
+    let tTh = 0;
+    let tCRc = 0;
+    let tCWc = 0;
+    let tUNc = 0;
+    let tOc = 0;
+    let tThc = 0;
+    const callDetails = [];
+
+    for (let a = 0; a < nCalls; a++) {
+      const last = a === nCalls - 1;
+      const outTok = last ? cfg.responseTokens : TOOL_CALL_OVERHEAD;
+      const thinkTok = thinkingPlan[a] || 0;
+      const c = costOneCall(curIn, outTok, thinkTok, cfg, model, warm, cached, noCache);
+
+      callDetails.push({
+        callIndex: a,
+        isLast: last,
+        inputTokens: curIn,
+        outputTokens: outTok,
+        thinkingTokens: thinkTok,
+        warm,
+        cachedPrefix: cached,
+        ...c,
+        totalCost: c.crCost + c.cwCost + c.unCost + c.outCost + c.thCost,
+      });
+
+      tCR += c.cr;
+      tCW += c.cw;
+      tUN += c.un;
+      tOut += outTok;
+      tTh += thinkTok;
+      tCRc += c.crCost;
+      tCWc += c.cwCost;
+      tUNc += c.unCost;
+      tOc += c.outCost;
+      tThc += c.thCost;
+
+      if (!noCache && c.cacheEligible) {
+        cached = curIn;
+        warm = true;
+      } else if (!noCache) {
+        cached = 0;
+        warm = false;
+      }
+      if (!last) curIn += outTok + thinkTok + cfg.toolResult;
+    }
+
+    T.apiCalls += nCalls;
+    const turnApiCost = tCRc + tCWc + tUNc + tOc + tThc;
+    T.crCost += tCRc;
+    T.cwCost += tCWc;
+    T.unCost += tUNc;
+    T.outCost += tOc;
+    T.thCost += tThc;
+    T.cost += turnApiCost;
+    T.crTok += tCR;
+    T.cwTok += tCW;
+    T.unTok += tUN;
+    T.outTok += tOut;
+    T.thTok += tTh;
+
+    ctx += cfg.userMsg + cfg.toolRounds * (TOOL_CALL_OVERHEAD + cfg.toolResult) + cfg.responseTokens;
+
+    turns.push({
+      turn: t,
+      contextSize: ctx,
+      turnCost: turnApiCost + compCost,
+      cumulativeCost: T.cost,
+      compaction: needComp,
+      cacheDrop: isDrop,
+      warmAtStart: wasWarm && !isDrop,
+      crCost: tCRc,
+      cwCost: tCWc,
+      unCost: tUNc,
+      outCost: tOc,
+      thCost: tThc,
+      compCost,
+      apiCalls: callDetails,
+      compDetail,
+      nCalls,
+    });
+  }
+
+  const provider = getProvider(model.provider);
+  T.backgroundCost = Math.max(0, Number(cfg.backgroundCost) || 0);
+  T.webCost = Math.max(0, Number(cfg.webSearches) || 0) * provider.webSearchCost;
+  T.execCost = Math.max(0, Number(cfg.execSessions) || 0) * provider.execSessionCost;
+  T.cost += T.backgroundCost + T.webCost + T.execCost;
+
+  return { T, turns };
+}
+
+export function simulate(cfg, modelId = cfg.model, taskKey = cfg.taskProfile || 'feature') {
+  const scenario = cfg._scenarioApplied ? {
+    model: getModel(modelId),
+    adjustedCfg: cfg,
+    successRate: 0.95,
+    timeToOutcomeMins: cfg.turns * cfg.timeBetween,
+    effortApiLabel: '',
+  } : buildScenario(cfg, modelId, taskKey);
+  const res = simulateAdjusted(scenario.adjustedCfg, scenario.model);
+  return { ...res, scenario };
+}
+
+export function simulateNoCacheCost(cfg, modelId = cfg.model, taskKey = cfg.taskProfile || 'feature') {
+  const scenario = buildScenario(cfg, modelId, taskKey);
+  return simulateAdjusted({ ...scenario.adjustedCfg, _noCache: true }, scenario.model).T.cost;
 }
 
 function getRangeFactors(cfg) {
@@ -191,40 +378,92 @@ function getRangeFactors(cfg) {
   const retryLift = Math.min(0.18, (cfg.retryRate || 0) / 250);
   const interruptionLift = Math.min(0.08, (cfg.interruptions || 0) * 0.0125);
   const helperLift = Math.min(0.12, (cfg.parallelAgents || 0) * 0.025);
-  const lean = uncertainty.rangeDown * toolMix.rangeDown;
-  const heavy = uncertainty.rangeUp * toolMix.rangeUp * (1 + retryLift + interruptionLift + helperLift);
-  return { lean, heavy, toolMix, uncertainty };
+  return {
+    lean: uncertainty.rangeDown * toolMix.rangeDown,
+    heavy: uncertainty.rangeUp * toolMix.rangeUp * (1 + retryLift + interruptionLift + helperLift),
+    uncertainty,
+    toolMix,
+  };
 }
 
-export function computePlanning(cfg) {
-  const baseSession = simulate(cfg).T.cost;
-  const interruptedSession = simulate(getInterruptedCfg(cfg)).T.cost;
-  const effectiveSession = interruptedSession * getWorkflowMultiplier(cfg);
-  const perSessionLaborValue = (cfg.hourlyRate || 0) * ((cfg.timeSavedMins || 0) / 60);
-  const breakEvenMins = (cfg.hourlyRate || 0) > 0 ? (effectiveSession / cfg.hourlyRate) * 60 : 0;
+function computePlanningForTask(cfg, modelId = cfg.model, taskKey = cfg.taskProfile || 'feature') {
+  const scenario = buildScenario(cfg, modelId, taskKey);
+  const baseRes = simulateAdjusted(scenario.adjustedCfg, scenario.model);
+  const interruptedCfg = getInterruptedCfg(scenario.adjustedCfg);
+  const interruptedRes = simulateAdjusted(interruptedCfg, scenario.model);
 
-  const mixEntries = getMixEntries(cfg);
+  const effectiveSession = interruptedRes.T.cost * getWorkflowMultiplier(interruptedCfg);
+  const laborValue = (cfg.hourlyRate || 0) * ((scenario.adjustedCfg.timeSavedMins || 0) / 60) * scenario.successRate;
+  const breakEvenMins = (cfg.hourlyRate || 0) > 0 ? (effectiveSession / cfg.hourlyRate) * 60 : 0;
+  const timeToGoodOutcomeMins = scenario.timeToOutcomeMins / scenario.successRate;
+
+  return {
+    model: scenario.model,
+    provider: scenario.provider,
+    taskKey,
+    adjustedCfg: scenario.adjustedCfg,
+    baseSession: baseRes.T.cost,
+    interruptedSession: interruptedRes.T.cost,
+    effectiveSession,
+    successRate: scenario.successRate,
+    costPerSuccessfulOutcome: effectiveSession / scenario.successRate,
+    perSessionLaborValue: laborValue,
+    breakEvenMins,
+    timeToOutcomeMins: scenario.timeToOutcomeMins,
+    timeToGoodOutcomeMins,
+    netValuePerSession: laborValue - effectiveSession,
+    marginalTurnCost: scenario.adjustedCfg.turns < 200
+      ? simulateAdjusted({ ...scenario.adjustedCfg, turns: Math.round(scenario.adjustedCfg.turns) + 1 }, scenario.model).T.cost - baseRes.T.cost
+      : 0,
+    cacheMissCost: scenario.adjustedCfg.turns > 1
+      ? simulateAdjusted({
+        ...scenario.adjustedCfg,
+        cacheDrops: Math.min(Math.round(scenario.adjustedCfg.turns) - 1, Math.round(scenario.adjustedCfg.cacheDrops || 0) + 1),
+      }, scenario.model).T.cost - baseRes.T.cost
+      : 0,
+    effortApiLabel: scenario.effortApiLabel,
+    raw: baseRes,
+    interrupted: interruptedRes,
+  };
+}
+
+function getMixEntries(cfg, modelId = cfg.model) {
+  return SESSION_MIX.map(meta => {
+    const weight = Math.max(0, Math.round(cfg[meta.key] || 0));
+    const planning = computePlanningForTask({ ...cfg, ...PRESETS[meta.preset] }, modelId, meta.preset);
+    return {
+      ...meta,
+      weight,
+      cost: planning.effectiveSession,
+      successRate: planning.successRate,
+      timeToGoodOutcomeMins: planning.timeToGoodOutcomeMins,
+      planning,
+    };
+  });
+}
+
+export function computePlanning(cfg, modelId = cfg.model, taskKey = cfg.taskProfile || 'feature') {
+  const current = computePlanningForTask(cfg, modelId, taskKey);
+  const mixEntries = getMixEntries(cfg, modelId);
   const totalWeight = mixEntries.reduce((sum, entry) => sum + entry.weight, 0);
   const blendedSession = totalWeight > 0
     ? mixEntries.reduce((sum, entry) => sum + entry.cost * entry.weight, 0) / totalWeight
-    : effectiveSession;
+    : current.effectiveSession;
+  const blendedSuccessRate = totalWeight > 0
+    ? mixEntries.reduce((sum, entry) => sum + entry.successRate * entry.weight, 0) / totalWeight
+    : current.successRate;
+  const blendedTimeToGoodOutcomeMins = totalWeight > 0
+    ? mixEntries.reduce((sum, entry) => sum + entry.timeToGoodOutcomeMins * entry.weight, 0) / totalWeight
+    : current.timeToGoodOutcomeMins;
+  const blendedLaborValue = totalWeight > 0
+    ? mixEntries.reduce((sum, entry) => sum + entry.planning.perSessionLaborValue * entry.weight, 0) / totalWeight
+    : current.perSessionLaborValue;
 
   const sessionsPerMonth = (cfg.sessPerDay || 0) * (cfg.workdaysPerMonth || 0);
-  const monthlyCurrent = effectiveSession * sessionsPerMonth;
+  const monthlyCurrent = current.effectiveSession * sessionsPerMonth;
   const monthlyBlended = blendedSession * sessionsPerMonth;
-  const monthlyLaborValue = perSessionLaborValue * sessionsPerMonth;
+  const monthlyLaborValue = blendedLaborValue * sessionsPerMonth;
   const monthlyNetValue = monthlyLaborValue - monthlyBlended;
-
-  const marginalTurnCost = (cfg.turns || 0) < 200
-    ? simulate({ ...cfg, turns: Math.round(cfg.turns) + 1 }).T.cost - baseSession
-    : 0;
-  const cacheMissCost = (cfg.turns || 0) > 1
-    ? simulate({ ...cfg, cacheDrops: Math.min(Math.round(cfg.turns) - 1, Math.round(cfg.cacheDrops || 0) + 1) }).T.cost - baseSession
-    : 0;
-
-  const sonnetCost = getEffectiveSessionCost(cfg, 'sonnet-4.6');
-  const opusCost = getEffectiveSessionCost(cfg, 'opus-4.6');
-  const currentModelCost = getEffectiveSessionCost(cfg);
 
   const rangeFactors = getRangeFactors(cfg);
   const monthlyLean = monthlyBlended * rangeFactors.lean;
@@ -236,45 +475,60 @@ export function computePlanning(cfg) {
     : 0;
   const sessionsWithinBudget = blendedSession > 0 ? Math.floor(budget / blendedSession) : 0;
 
-  const presetBudgetView = SESSION_MIX.map(meta => {
-    const monthly = getEffectiveSessionCost({ ...cfg, ...PRESETS[meta.preset] }) * sessionsPerMonth;
-    return { label: meta.label, monthly, fits: budget > 0 ? monthly <= budget : false };
-  }).sort((a, b) => a.monthly - b.monthly);
-
   const dominantMix = [...mixEntries].sort((a, b) => b.weight - a.weight)[0] || null;
 
+  const allComparisons = MODEL_ORDER.map(otherModelId => {
+    const other = computePlanningForTask(cfg, otherModelId, taskKey);
+    return {
+      modelId: otherModelId,
+      provider: other.provider,
+      model: other.model,
+      effectiveSession: other.effectiveSession,
+      rawSession: other.baseSession,
+      costPerSuccessfulOutcome: other.costPerSuccessfulOutcome,
+      successRate: other.successRate,
+      timeToGoodOutcomeMins: other.timeToGoodOutcomeMins,
+      perSessionLaborValue: other.perSessionLaborValue,
+      netValuePerSession: other.netValuePerSession,
+    };
+  });
+
+  const bestRaw = [...allComparisons].sort((a, b) => a.rawSession - b.rawSession)[0];
+  const bestOutcome = [...allComparisons].sort((a, b) => a.costPerSuccessfulOutcome - b.costPerSuccessfulOutcome)[0];
+  const bestValue = [...allComparisons].sort((a, b) => b.netValuePerSession - a.netValuePerSession)[0];
+  const fastest = [...allComparisons].sort((a, b) => a.timeToGoodOutcomeMins - b.timeToGoodOutcomeMins)[0];
+
   return {
-    baseSession,
-    interruptedSession,
-    effectiveSession,
+    ...current,
     blendedSession,
-    perSessionLaborValue,
-    breakEvenMins,
-    costPctOfLabor: perSessionLaborValue > 0 ? (effectiveSession / perSessionLaborValue) * 100 : null,
-    netValuePerSession: perSessionLaborValue - effectiveSession,
+    blendedSuccessRate,
+    blendedTimeToGoodOutcomeMins,
     sessionsPerMonth,
     monthlyCurrent,
     monthlyBlended,
     monthlyLaborValue,
     monthlyNetValue,
-    marginalTurnCost,
-    cacheMissCost,
-    directWebSearchCost: WEB_SEARCH_COST_PER_REQUEST,
-    currentModelCost,
-    sonnetCost,
-    opusCost,
-    currentVsSonnet: currentModelCost - sonnetCost,
-    currentVsOpus: currentModelCost - opusCost,
     monthlyLean,
     monthlyHeavy,
     safeSessionsPerDay,
     sessionsWithinBudget,
     budgetUtilization: budget > 0 ? monthlyBlended / budget : 0,
+    costPctOfLabor: current.perSessionLaborValue > 0 ? (current.effectiveSession / current.perSessionLaborValue) * 100 : null,
     mixEntries,
     dominantMix,
-    presetBudgetView,
     toolMix: rangeFactors.toolMix,
     uncertainty: rangeFactors.uncertainty,
+    directWebSearchCost: getProvider(current.model.provider).webSearchCost,
+    directExecSessionCost: getProvider(current.model.provider).execSessionCost,
+    comparisonRows: allComparisons,
+    bestRaw,
+    bestOutcome,
+    bestValue,
+    fastest,
+    presetBudgetView: SESSION_MIX.map(meta => {
+      const monthly = computePlanningForTask({ ...cfg, ...PRESETS[meta.preset] }, modelId, meta.preset).effectiveSession * sessionsPerMonth;
+      return { label: meta.label, monthly, fits: budget > 0 ? monthly <= budget : false };
+    }).sort((a, b) => a.monthly - b.monthly),
   };
 }
 
@@ -284,16 +538,16 @@ function normalizeSensitivityValue(key, value, range) {
 }
 
 export function computeSensitivity() {
-  const base = simulate(config).T.cost;
+  const base = computePlanning(config).effectiveSession;
   if (base === 0) return {};
   const results = {};
   for (const [key, { min, max }] of Object.entries(SLIDER_RANGES)) {
-    const delta = (max - min) * 0.10;
+    const delta = (max - min) * 0.1;
     const range = { min, max };
     const up = { ...config, [key]: normalizeSensitivityValue(key, config[key] + delta, range) };
     const dn = { ...config, [key]: normalizeSensitivityValue(key, config[key] - delta, range) };
-    const costUp = simulate(up).T.cost;
-    const costDn = simulate(dn).T.cost;
+    const costUp = computePlanning(up).effectiveSession;
+    const costDn = computePlanning(dn).effectiveSession;
     results[key] = Math.abs(costUp - costDn) / base;
   }
   return results;

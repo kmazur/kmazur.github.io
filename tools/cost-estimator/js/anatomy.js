@@ -11,7 +11,7 @@ export function showAnatomy(turnData) {
     + (t.compaction ? ' | <span style="color:#f59e0b">COMPACTION</span>' : '')
     + (t.cacheDrop ? ' | <span style="color:#f87171">CACHE DROP</span>' : '');
 
-  let html = '<table class="anatomy-table"><thead><tr><th>Call</th><th>Input</th><th>Cache Read</th><th>Cache Write</th><th>Uncached</th><th>Output</th><th>Think</th><th>Total</th></tr></thead><tbody>';
+  let html = '<table class="anatomy-table"><thead><tr><th>Call</th><th>Input</th><th>Cached</th><th>Cache setup</th><th>Uncached</th><th>Output</th><th>Think</th><th>Total</th></tr></thead><tbody>';
   if (t.compDetail) {
     const d = t.compDetail;
     html += `<tr style="background:rgba(245,158,11,0.05)"><td>Compact</td><td>${fmtTok(d.inputTokens)}</td>

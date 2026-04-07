@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Code — Session Cost Estimator</title>
+<title>AI Session Cost Estimator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -12,9 +12,9 @@
 <body>
 
 <header>
-  <div class="logo">C</div>
-  <h1>Session Cost Estimator</h1>
-  <span class="subtitle">Turn-by-turn API cost simulation</span>
+  <div class="logo">A</div>
+  <h1>AI Session Cost Estimator</h1>
+  <span class="subtitle">Cross-provider agent cost, speed, and ROI simulator</span>
   <button class="share-btn" id="shareBtn">Share</button>
 </header>
 
@@ -41,13 +41,30 @@
   <div class="section" id="sec-model">
     <div class="section-header"><span class="chv">&#9660;</span> Model &amp; Pricing</div>
     <div class="section-body">
-      <div class="model-selector">
-        <button class="model-btn active" data-model="opus-4.6">Opus 4.6<small>$5 / $25</small></button>
-        <button class="model-btn" data-model="sonnet-4.6">Sonnet 4.6<small>$3 / $15</small></button>
-        <button class="model-btn" data-model="haiku-4.5">Haiku 4.5<small>$1 / $5</small></button>
+      <div class="provider-selector" id="provider-selector"></div>
+      <div class="model-selector model-selector-grid" id="model-selector"></div>
+      <div class="toggle-row">
+        <span class="toggle-label" title="Used for model-performance heuristics and comparisons.">Primary task</span>
+        <div class="toggle-group toggle-group-wrap" id="tg-task">
+          <button class="toggle-btn" data-val="quickFix">Fix</button>
+          <button class="toggle-btn active" data-val="feature">Build</button>
+          <button class="toggle-btn" data-val="review">Review</button>
+          <button class="toggle-btn" data-val="refactor">Refactor</button>
+          <button class="toggle-btn" data-val="exploration">Explore</button>
+          <button class="toggle-btn" data-val="vibe">Vibe</button>
+        </div>
       </div>
       <div class="toggle-row">
-        <span class="toggle-label" title="How long the API caches your conversation. Calls within this window are much cheaper.">Cache TTL</span>
+        <span class="toggle-label" title="Normalized reasoning depth mapped onto each provider's controls.">Reasoning effort</span>
+        <div class="toggle-group" id="tg-effort">
+          <button class="toggle-btn" data-val="lean">Lean</button>
+          <button class="toggle-btn active" data-val="balanced">Balanced</button>
+          <button class="toggle-btn" data-val="deep">Deep</button>
+          <button class="toggle-btn" data-val="max">Max</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label" id="cache-ttl-label" title="How long the estimator assumes cached prefixes stay reusable.">Cache TTL</span>
         <div class="toggle-group" id="tg-cache">
           <button class="toggle-btn active" data-val="5m">5 min</button>
           <button class="toggle-btn" data-val="1h">1 hour</button>
@@ -71,7 +88,7 @@
     <div class="section-body">
       <div class="section-hint">Translate token spend into developer economics. These inputs power break-even time, net value, and monthly ROI.</div>
       <div class="control"><div class="control-header"><label title="Fully loaded engineering rate or the rate you want to compare against.">Developer hourly rate</label><span class="control-value" id="v-hourlyRate">$120/hr</span></div><input type="range" id="hourlyRate" min="25" max="400" value="120" step="5"></div>
-      <div class="control"><div class="control-header"><label title="How much time Claude Code saves you on a typical session.">Time saved / session</label><span class="control-value" id="v-timeSavedMins">20 min</span></div><input type="range" id="timeSavedMins" min="0" max="180" value="20" step="5"></div>
+      <div class="control"><div class="control-header"><label title="How much engineering time the AI workflow saves you on a typical session.">Time saved / session</label><span class="control-value" id="v-timeSavedMins">20 min</span></div><input type="range" id="timeSavedMins" min="0" max="180" value="20" step="5"></div>
       <div class="control"><div class="control-header"><label>Workdays / month</label><span class="control-value" id="v-workdaysPerMonth">20 days</span></div><input type="range" id="workdaysPerMonth" min="10" max="31" value="20" step="1"></div>
     </div>
   </div>
@@ -81,10 +98,10 @@
     <div class="section-header"><span class="chv">&#9660;</span> Session Shape</div>
     <div class="section-body">
       <div class="control"><div class="control-header"><label>Number of turns</label><span class="sens-tag" data-sens="turns"></span><span class="control-value" id="v-turns">25</span></div><input type="range" id="turns" min="1" max="200" value="25"></div>
-      <div class="control"><div class="control-header"><label title="Total tokens in your system instructions, CLAUDE.md files, and tool definitions. Sent with every API call.">System prompt + CLAUDE.md</label><span class="sens-tag" data-sens="sysPrompt"></span><span class="control-value" id="v-sysPrompt">20,000</span></div><input type="range" id="sysPrompt" min="2000" max="100000" value="20000" step="1000"></div>
+      <div class="control"><div class="control-header"><label title="Total reusable instructions, memory files, and tool definitions sent with every API call.">System prompt + memory</label><span class="sens-tag" data-sens="sysPrompt"></span><span class="control-value" id="v-sysPrompt">20,000</span></div><input type="range" id="sysPrompt" min="2000" max="100000" value="20000" step="1000"></div>
       <div class="control"><div class="control-header"><label>Avg user message (tokens)</label><span class="sens-tag" data-sens="userMsg"></span><span class="control-value" id="v-userMsg">300</span></div><input type="range" id="userMsg" min="30" max="5000" value="300" step="10"></div>
       <div class="control"><div class="control-header"><label>Avg response (tokens)</label><span class="sens-tag" data-sens="responseTokens"></span><span class="control-value" id="v-responseTokens">1,200</span></div><input type="range" id="responseTokens" min="50" max="16000" value="1200" step="50"></div>
-      <div class="control"><div class="control-header"><label title="Internal reasoning tokens Claude uses before responding. Billed at output rate but not visible to you.">Avg thinking tokens</label><span class="sens-tag" data-sens="thinkingTokens"></span><span class="control-value" id="v-thinkingTokens">4,000</span></div><input type="range" id="thinkingTokens" min="0" max="32000" value="4000" step="200"></div>
+      <div class="control"><div class="control-header"><label title="Internal reasoning tokens the model uses before responding. Billed at output rate or equivalent cached rates depending on provider.">Avg thinking tokens</label><span class="sens-tag" data-sens="thinkingTokens"></span><span class="control-value" id="v-thinkingTokens">4,000</span></div><input type="range" id="thinkingTokens" min="0" max="32000" value="4000" step="200"></div>
     </div>
   </div>
 
@@ -92,19 +109,20 @@
   <div class="section" id="sec-tools">
     <div class="section-header"><span class="chv">&#9660;</span> Tool Usage</div>
     <div class="section-body">
-      <div class="section-hint">Each tool round adds another Claude sampling step. Earlier tool calls can include interleaved thinking, and those thinking blocks must be sent back with tool results during the same tool loop.</div>
-      <div class="control"><div class="control-header"><label title="How many tool calls (file reads, searches, edits) Claude makes before responding. Each resends the full conversation.">Tool rounds / turn</label><span class="sens-tag" data-sens="toolRounds"></span><span class="control-value" id="v-toolRounds">3</span></div><input type="range" id="toolRounds" min="0" max="15" value="3"></div>
+      <div class="section-hint">Each tool round adds another model sampling step. Tool loops often resend shared context plus tool outputs, and higher reasoning effort can change how many tool steps a model takes.</div>
+      <div class="control"><div class="control-header"><label title="How many tool calls (file reads, searches, edits) the agent makes before responding. Each resends shared conversation context.">Tool rounds / turn</label><span class="sens-tag" data-sens="toolRounds"></span><span class="control-value" id="v-toolRounds">3</span></div><input type="range" id="toolRounds" min="0" max="15" value="3"></div>
       <div class="control"><div class="control-header"><label title="Average size of data returned by each tool call (file contents, search results, etc.)">Avg tool result (tokens)</label><span class="sens-tag" data-sens="toolResult"></span><span class="control-value" id="v-toolResult">800</span></div><input type="range" id="toolResult" min="50" max="6000" value="800" step="50"></div>
     </div>
   </div>
 
-  <!-- Claude Code Extras -->
+  <!-- Provider Extras -->
   <div class="section" id="sec-extras">
-    <div class="section-header"><span class="chv">&#9660;</span> Claude Code Extras</div>
+    <div class="section-header"><span class="chv">&#9660;</span> Provider Extras</div>
     <div class="section-body">
-      <div class="section-hint">Anthropic bills a small amount of background Claude Code activity per session, and web search adds a per-search fee on top of tokens.</div>
-      <div class="control"><div class="control-header"><label title="Claude Code docs say background jobs like resume summarization and status checks typically stay under about $0.04 per session. This is an estimate, not a guaranteed charge.">Background overhead (est.)</label><span class="sens-tag" data-sens="backgroundCost"></span><span class="control-value" id="v-backgroundCost">$0.0200</span></div><input type="range" id="backgroundCost" min="0" max="0.04" value="0.02" step="0.0025"></div>
-      <div class="control"><div class="control-header"><label title="Anthropic web search is billed at $10 per 1,000 searches, in addition to the tokens you already count in tool results.">Web searches / session</label><span class="sens-tag" data-sens="webSearches"></span><span class="control-value" id="v-webSearches">0</span></div><input type="range" id="webSearches" min="0" max="20" value="0" step="1"></div>
+      <div class="section-hint" id="extras-hint">Background overhead, search fees, and execution-session pricing vary by provider. This section adapts to the selected provider.</div>
+      <div class="control"><div class="control-header"><label id="background-label" title="Optional provider-specific background or orchestration overhead per session.">Background overhead (est.)</label><span class="sens-tag" data-sens="backgroundCost"></span><span class="control-value" id="v-backgroundCost">$0.0200</span></div><input type="range" id="backgroundCost" min="0" max="0.04" value="0.02" step="0.0025"></div>
+      <div class="control"><div class="control-header"><label id="websearch-label" title="Provider web search or grounded prompt calls. Search content tokens are still counted separately in tool results.">Web searches / session</label><span class="sens-tag" data-sens="webSearches"></span><span class="control-value" id="v-webSearches">0</span></div><input type="range" id="webSearches" min="0" max="20" value="0" step="1"></div>
+      <div class="control"><div class="control-header"><label id="exec-label" title="Provider execution-session or container-session charges, if any.">Execution sessions</label><span class="control-value" id="v-execSessions">0</span></div><input type="range" id="execSessions" min="0" max="10" value="0" step="1"></div>
     </div>
   </div>
 
@@ -141,7 +159,7 @@
   <div class="section" id="sec-cache">
     <div class="section-header"><span class="chv">&#9660;</span> Cache &amp; Timing</div>
     <div class="section-body">
-      <div class="section-hint">When cache expires, the next call pays full input price for the entire context. Prompts below Anthropic's model-specific cache minimum do not get cached at all.</div>
+      <div class="section-hint" id="cache-hint">When cache reuse is lost, the next call pays more for the full context. Anthropic uses explicit TTLs; other providers are modeled with an effective reuse window.</div>
       <div class="control"><div class="control-header"><label>Avg time between turns</label><span class="sens-tag" data-sens="timeBetween"></span><span class="control-value" id="v-timeBetween">1.5 min</span></div><input type="range" id="timeBetween" min="0.5" max="90" value="1.5" step="0.5" class="danger-zone"></div>
       <div class="control"><div class="control-header"><label id="lbl-cacheDrops" title="Explicit long pauses you already know about. Interruption rate adds more cache misses on top of this.">Manual idle breaks (&gt;5 min gaps)</label><span class="sens-tag" data-sens="cacheDrops"></span><span class="control-value" id="v-cacheDrops">0</span></div><input type="range" id="cacheDrops" min="0" max="15" value="0"></div>
       <div class="efficiency-bar-container">
@@ -156,8 +174,8 @@
   <div class="section" id="sec-compact">
     <div class="section-header"><span class="chv">&#9660;</span> Compaction</div>
     <div class="section-body">
-      <div class="section-hint">Claude Code can compact conversation history near the context limit. This estimator treats compaction as one extra API call plus a fresh cache prefix.</div>
-      <div class="control"><div class="control-header"><label title="Use this to model manual /compact commands or extra compactions beyond Claude Code's automatic behavior.">Manual compactions</label><span class="sens-tag" data-sens="compactions"></span><span class="control-value" id="v-compactions">0</span></div><input type="range" id="compactions" min="0" max="10" value="0"></div>
+      <div class="section-hint">Long interactive sessions may compact or summarize prior context near the context limit. This estimator treats compaction as one extra API call plus a fresh cache prefix.</div>
+      <div class="control"><div class="control-header"><label title="Use this to model manual compactions or extra summarization checkpoints beyond the simulator's automatic behavior.">Manual compactions</label><span class="sens-tag" data-sens="compactions"></span><span class="control-value" id="v-compactions">0</span></div><input type="range" id="compactions" min="0" max="10" value="0"></div>
       <div class="control"><div class="control-header"><label title="What fraction of the conversation is kept after compaction. Lower = more aggressive summarization.">Compaction ratio (kept)</label><span class="sens-tag" data-sens="compactRatio"></span><span class="control-value" id="v-compactRatio">25%</span></div><input type="range" id="compactRatio" min="0.1" max="0.5" value="0.25" step="0.05"></div>
       <label class="checkbox-row"><input type="checkbox" id="autoCompact" checked>Auto-compact at ~95% context</label>
     </div>
@@ -184,7 +202,7 @@
 
   <div class="summary-row">
     <div class="summary-card sc-total"><div class="card-label">Total Session Cost</div><div class="card-value" id="sum-total">&mdash;</div><div class="card-detail"><span id="sum-tokens">&mdash;</span> total tokens <span id="sum-extra-detail"></span></div></div>
-    <div class="summary-card sc-input"><div class="card-label">Input Cost</div><div class="card-value" id="sum-input">&mdash;</div><div class="card-detail">cache read + write + uncached</div></div>
+    <div class="summary-card sc-input"><div class="card-label">Input Cost</div><div class="card-value" id="sum-input">&mdash;</div><div class="card-detail">cached + setup + uncached</div></div>
     <div class="summary-card sc-output"><div class="card-label">Output + Thinking</div><div class="card-value" id="sum-output">&mdash;</div><div class="card-detail"><span id="sum-thinking-pct">&mdash;</span> from thinking</div></div>
     <div class="summary-card sc-monthly"><div class="card-label">Monthly Cost</div><div class="card-value" id="sum-monthly">&mdash;</div><div class="card-detail"><div class="stepper"><button class="stepper-btn" id="sess-down">-</button><span id="sess-count">4</span><span class="stepper-label">sessions/day</span><button class="stepper-btn" id="sess-up">+</button></div><div class="summary-subdetail" id="monthly-plan-detail"></div></div></div>
     <div class="summary-card sc-calls"><div class="card-label">Total API Calls</div><div class="card-value" id="sum-calls">&mdash;</div><div class="card-detail"><span id="sum-calls-detail">&mdash;</span></div></div>
@@ -236,7 +254,7 @@
       <div class="proj-detail" id="proj-marginal-detail"></div>
     </div>
     <div class="proj-card">
-      <div class="proj-title">Model Switch</div>
+      <div class="proj-title">Best Alternative</div>
       <div class="proj-result" id="proj-model-switch">&mdash;</div>
       <div class="proj-detail" id="proj-model-switch-detail"></div>
     </div>
@@ -260,6 +278,7 @@
     <div class="chart-card">
       <div class="chart-title">Model Comparison</div>
       <div class="bar-group" id="bar-comparison"></div>
+      <div class="compare-table" id="compare-table"></div>
     </div>
   </div>
 

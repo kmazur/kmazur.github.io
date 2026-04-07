@@ -1,14 +1,18 @@
 import {
-  MODELS,
-  PRESETS,
   AUTO_COMPACT_THRESHOLD,
+  EFFORT_LEVELS,
+  MODELS,
+  MODEL_ORDER,
+  PRESETS,
+  PROVIDERS,
+  SESSION_MIX,
+  TASK_PROFILES,
   TOOL_CALL_OVERHEAD,
-  WEB_SEARCH_COST_PER_REQUEST,
 } from './constants.js';
 import { config, state } from './state.js';
-import { simulate, computePlanning, computeSensitivity, getCacheTTLMinutes } from './simulation.js';
+import { computePlanning, computeSensitivity, getCacheTTLMinutes, getModel, getProvider, simulate } from './simulation.js';
 import { fmtCost, fmtMins, fmtPct, fmtTok, escHtml } from './formatters.js';
-import { drawLine, drawStackedBars, drawDonut, buildModelBars } from './charts.js';
+import { drawDonut, drawLine, drawStackedBars, buildModelBars } from './charts.js';
 import { syncToURL } from './url-state.js';
 
 function animateEl(id, target, formatter) {
@@ -50,31 +54,84 @@ function formatCount(value) {
   return value.toFixed(1);
 }
 
+function renderProviderSelectors() {
+  const providerBox = document.getElementById('provider-selector');
+  const modelBox = document.getElementById('model-selector');
+  providerBox.innerHTML = Object.values(PROVIDERS).map(provider =>
+    `<button class="provider-btn ${provider.id === config.provider ? 'active' : ''}" data-provider="${provider.id}" style="--provider-color:${provider.color}">
+      <span>${escHtml(provider.name)}</span>
+    </button>`).join('');
+
+  const models = MODEL_ORDER.map(id => MODELS[id]).filter(model => model.provider === config.provider);
+  modelBox.innerHTML = models.map(model =>
+    `<button class="model-btn ${model.id === config.model ? 'active' : ''}" data-model="${model.id}">
+      ${escHtml(model.shortName)}
+      <small>$${escHtml(model.input)} / $${escHtml(model.output)}</small>
+    </button>`).join('');
+}
+
+function renderTaskAndEffortToggles() {
+  document.querySelectorAll('#tg-task .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === config.taskProfile);
+  });
+  document.querySelectorAll('#tg-effort .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === config.effort);
+  });
+}
+
 export function applyModelConstraints() {
-  const m = MODELS[config.model];
-  if (!m) return;
-  if (config.contextWindow > m.maxContext) config.contextWindow = m.maxContext;
+  const model = getModel(config.model);
+  const provider = getProvider(model.provider);
+  config.provider = model.provider;
+  if (config.contextWindow > model.maxContext) config.contextWindow = model.maxContext;
+
+  renderProviderSelectors();
+  renderTaskAndEffortToggles();
 
   document.querySelectorAll('#tg-ctx .toggle-btn').forEach(btn => {
     const val = +btn.dataset.val;
-    btn.disabled = val > m.maxContext;
+    btn.disabled = val > model.maxContext;
     btn.classList.toggle('active', val === config.contextWindow);
   });
+  document.querySelectorAll('#tg-cache .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === config.cacheTTL);
+  });
+  document.querySelectorAll('#tg-toolmix .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === config.toolMix);
+  });
+  document.querySelectorAll('#tg-uncertainty .toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.val === config.uncertainty);
+  });
+
+  document.getElementById('cache-ttl-label').textContent = provider.cacheTTLNote;
+  document.getElementById('extras-hint').textContent = provider.extraHint;
+  document.getElementById('background-label').textContent = provider.id === 'anthropic' ? 'Agent overhead (est.)' : 'Agent overhead override';
+  document.getElementById('websearch-label').textContent = provider.id === 'google' ? 'Grounded prompts / session' : 'Web searches / session';
+  document.getElementById('exec-label').textContent = provider.execSessionLabel;
+  document.getElementById('cache-hint').textContent =
+    provider.id === 'anthropic'
+      ? 'Anthropic uses explicit prompt-caching TTLs. Prompts below the per-model minimum do not get cached.'
+      : provider.id === 'openai'
+        ? 'OpenAI cached input is automatic. This estimator treats TTL as an effective reuse window for interactive sessions.'
+        : 'Gemini is modeled using explicit-cache style pricing and TTLs so cache economics are comparable across providers.';
 
   const note = document.getElementById('model-cap-note');
-  if (note) {
-    const longCtx = m.maxContext >= 1000000
-      ? 'Supports 1M context at standard pricing.'
-      : 'Limited to 200K context for this model.';
-    note.textContent =
-      `${longCtx} Prompt caching starts at ${fmtTok(m.minCacheable)} input tokens. Claude Code auto-compaction is modeled at about 95% context usage.`;
-  }
+  const effort = EFFORT_LEVELS[config.effort];
+  const longCtx = model.longContextThreshold
+    ? `Long-context pricing changes after about ${fmtTok(model.longContextThreshold)} input tokens.`
+    : model.maxContext >= 1000000
+      ? 'No long-context surcharge is modeled for this selection.'
+      : `Context is capped at ${fmtTok(model.maxContext)}.`;
+  note.textContent = `${provider.name} • ${model.name}. ${longCtx} Cache minimum: ${fmtTok(model.minCacheable)} tokens. Effort mode: ${effort.label} (${effort.description}).`;
+
+  const bgSlider = document.getElementById('backgroundCost');
+  bgSlider.max = provider.id === 'anthropic' ? '0.04' : '0.10';
 }
 
 export function updateSensitivityBadges() {
   const sens = computeSensitivity();
   const vals = Object.values(sens).filter(v => v > 0);
-  if (vals.length === 0) return;
+  if (!vals.length) return;
   vals.sort((a, b) => b - a);
   const highThreshold = vals[Math.floor(vals.length * 0.33)] || 0;
   const medThreshold = vals[Math.floor(vals.length * 0.66)] || 0;
@@ -96,14 +153,15 @@ export function updateSensitivityBadges() {
 
 function getCostSegments(T) {
   return [
-    { label: 'Cache Read', value: T.crCost, color: '#34d399' },
-    { label: 'Cache Write', value: T.cwCost, color: '#60a5fa' },
+    { label: 'Cached Input', value: T.crCost, color: '#34d399' },
+    { label: 'Cache Setup', value: T.cwCost, color: '#60a5fa' },
     { label: 'Uncached Input', value: T.unCost, color: '#f59e0b' },
     { label: 'Output', value: T.outCost, color: '#a78bfa' },
     { label: 'Thinking', value: T.thCost, color: '#f472b6' },
     { label: 'Compaction', value: T.compCost, color: '#f87171' },
-    { label: 'Background', value: T.backgroundCost, color: '#22d3ee' },
-    { label: 'Web Search', value: T.webCost, color: '#facc15' },
+    { label: 'Agent Overhead', value: T.backgroundCost, color: '#22d3ee' },
+    { label: 'Web / Grounding', value: T.webCost, color: '#facc15' },
+    { label: 'Exec Sessions', value: T.execCost, color: '#38bdf8' },
   ];
 }
 
@@ -118,11 +176,11 @@ function updateCostDrivers(T) {
     return;
   }
 
-  const mx = drivers[0]?.cost || 1;
+  const maxCost = drivers[0]?.cost || 1;
   const total = drivers.reduce((sum, d) => sum + d.cost, 0);
   el.innerHTML = drivers.map(d => {
     const pct = (d.cost / total * 100).toFixed(0);
-    const barW = (d.cost / mx * 100).toFixed(1);
+    const barW = (d.cost / maxCost * 100).toFixed(1);
     return `<div class="driver-row">
       <span class="driver-label">${escHtml(d.name)}</span>
       <div class="driver-bar-bg"><div class="driver-bar-fill" style="width:${barW}%;background:${escHtml(d.color)}"></div></div>
@@ -132,31 +190,24 @@ function updateCostDrivers(T) {
   }).join('');
 }
 
-function updateContextProjection(turns) {
+function updateContextProjection(turns, adjustedCfg) {
   const el = document.getElementById('ctx-projection');
-  const limit = config.contextWindow;
+  const limit = adjustedCfg.contextWindow;
   const threshold = limit * AUTO_COMPACT_THRESHOLD;
-  const growthPerTurn = config.userMsg + config.toolRounds * (TOOL_CALL_OVERHEAD + config.toolResult) + config.responseTokens;
-  const turnsToThreshold = Math.max(0, Math.ceil((threshold - config.sysPrompt) / growthPerTurn));
+  const growthPerTurn = adjustedCfg.userMsg + adjustedCfg.toolRounds * (TOOL_CALL_OVERHEAD + adjustedCfg.toolResult) + adjustedCfg.responseTokens;
+  const turnsToThreshold = Math.max(0, Math.ceil((threshold - adjustedCfg.sysPrompt) / Math.max(growthPerTurn, 1)));
 
   const firstComp = turns.find(t => t.compaction);
   const lastTurn = turns[turns.length - 1];
 
   let html = `<div style="margin-bottom:8px">Growth: <strong>${escHtml(fmtTok(growthPerTurn))}</strong> tokens/turn</div>`;
-
   if (firstComp) {
-    html += `Auto-compact triggers around <strong>turn ${escHtml(firstComp.turn)}</strong> (about <span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>, or 95% of context)`;
-  } else if (turnsToThreshold <= config.turns * 1.5) {
-    html += `At current rate, the 95% threshold (<span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>) is reached around <strong>turn ${escHtml(turnsToThreshold)}</strong>`;
+    html += `Compaction hits around <strong>turn ${escHtml(firstComp.turn)}</strong> near <span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>.`;
+  } else if (turnsToThreshold <= adjustedCfg.turns * 1.5) {
+    html += `At this pace, the 95% context threshold (<span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>) lands around <strong>turn ${escHtml(turnsToThreshold)}</strong>.`;
   } else {
-    html += `Context stays well within limits. Final size: <span class="highlight">${escHtml(fmtTok(lastTurn?.contextSize || 0))}</span> of ${escHtml(fmtTok(limit))}`;
+    html += `Context stays within limits. Final size: <span class="highlight">${escHtml(fmtTok(lastTurn?.contextSize || 0))}</span> of ${escHtml(fmtTok(limit))}.`;
   }
-
-  const compCount = turns.filter(t => t.compaction).length;
-  if (compCount > 0) {
-    html += `<div style="margin-top:6px">Total compactions in session: <strong>${escHtml(compCount)}</strong></div>`;
-  }
-
   const usage = lastTurn ? (lastTurn.contextSize / limit * 100).toFixed(0) : 0;
   html += `<div style="margin-top:6px">Final context usage: <strong>${escHtml(usage)}%</strong></div>`;
   el.innerHTML = html;
@@ -164,15 +215,11 @@ function updateContextProjection(turns) {
 
 function updateMixPlanner(planning) {
   const el = document.getElementById('mix-planner');
-  const active = planning.mixEntries
-    .filter(entry => entry.weight > 0)
-    .sort((a, b) => b.weight - a.weight);
-
+  const active = planning.mixEntries.filter(entry => entry.weight > 0).sort((a, b) => b.weight - a.weight);
   if (!active.length) {
     el.textContent = 'Add session weights to see a blended monthly plan.';
     return;
   }
-
   const totalWeight = active.reduce((sum, entry) => sum + entry.weight, 0);
   el.innerHTML = `
     <div class="mix-list">
@@ -185,42 +232,62 @@ function updateMixPlanner(planning) {
         </div>`;
       }).join('')}
     </div>
-    <div class="proj-detail">Blend: ${escHtml(fmtCost(planning.blendedSession))}/session. Dominant mix: ${escHtml(planning.dominantMix?.label || 'n/a')}.</div>
+    <div class="proj-detail">Blend: ${escHtml(fmtCost(planning.blendedSession))}/session. ${escHtml(fmtPct(planning.blendedSuccessRate * 100, 0))} expected good-result rate.</div>
   `;
 }
 
-function updateProjections(cost, planning) {
+function renderCompareTable(rows) {
+  const el = document.getElementById('compare-table');
+  const sorted = [...rows].sort((a, b) => a.costPerSuccessfulOutcome - b.costPerSuccessfulOutcome);
+  const currentRow = sorted.find(row => row.modelId === config.model);
+  const visible = sorted.slice(0, 6);
+  if (currentRow && !visible.some(row => row.modelId === currentRow.modelId)) {
+    visible[visible.length - 1] = currentRow;
+  }
+  el.innerHTML = `
+    <div class="compare-head">
+      <span>Model</span>
+      <span>Raw</span>
+      <span>Good</span>
+      <span>Win</span>
+      <span>Time</span>
+    </div>
+    ${visible.map(row => `
+      <div class="compare-row ${row.modelId === config.model ? 'current' : ''}">
+        <span class="compare-model"><span class="compare-dot" style="background:${escHtml(row.model.color)}"></span>${escHtml(row.model.shortName)}</span>
+        <span>${escHtml(fmtCost(row.rawSession))}</span>
+        <span>${escHtml(fmtCost(row.costPerSuccessfulOutcome))}</span>
+        <span>${escHtml(fmtPct(row.successRate * 100, 0))}</span>
+        <span>${escHtml(fmtMins(row.timeToGoodOutcomeMins))}</span>
+      </div>`).join('')}
+  `;
+}
+
+function updateProjections(planning) {
   animateEl('sum-monthly', planning.monthlyBlended, fmtCost);
   document.getElementById('sess-count').textContent = config.sessPerDay;
   document.getElementById('monthly-plan-detail').textContent =
-    `${config.sessPerDay}/day x ${config.workdaysPerMonth} workdays = ${planning.sessionsPerMonth.toLocaleString()} sessions/mo. Blend ${fmtCost(planning.blendedSession)}/session.`;
+    `${config.sessPerDay}/day x ${config.workdaysPerMonth} workdays = ${planning.sessionsPerMonth.toLocaleString()} sessions/mo. ${fmtPct(planning.blendedSuccessRate * 100, 0)} good-result rate.`;
 
   const budgetInput = document.getElementById('budgetInput');
-  if (budgetInput && document.activeElement !== budgetInput) {
-    budgetInput.value = config.monthlyBudget;
-  }
+  if (budgetInput && document.activeElement !== budgetInput) budgetInput.value = config.monthlyBudget;
 
   const budget = config.monthlyBudget || 0;
   if (budget > 0 && planning.blendedSession > 0) {
     const headroom = budget - planning.monthlyBlended;
-    const fitting = planning.presetBudgetView.filter(entry => entry.fits).map(entry => entry.label).slice(0, 3);
     document.getElementById('proj-budget').textContent = `${formatCount(planning.safeSessionsPerDay)}/day safe`;
     document.getElementById('proj-budget-detail').textContent =
-      `${planning.sessionsWithinBudget.toLocaleString()} sessions/mo within ${fmtCost(budget)}. Planned blend uses ${fmtPct(planning.budgetUtilization * 100, 0)}${headroom >= 0 ? ` with ${fmtCost(headroom)} headroom.` : ` and is ${fmtCost(Math.abs(headroom))} over.`} ${fitting.length ? `Fits: ${fitting.join(', ')}.` : 'No default preset comfortably fits at this pace.'}`;
+      `${planning.sessionsWithinBudget.toLocaleString()} sessions/mo within ${fmtCost(budget)}. Blend uses ${fmtPct(planning.budgetUtilization * 100, 0)}${headroom >= 0 ? ` with ${fmtCost(headroom)} headroom.` : ` and is ${fmtCost(Math.abs(headroom))} over.`}`;
   } else {
     document.getElementById('proj-budget').textContent = '\u2014';
     document.getElementById('proj-budget-detail').textContent = '';
   }
 
-  const sessionMins = config.timeBetween * config.turns;
-  if (planning.effectiveSession > 0 && sessionMins > 0) {
-    const costPerHr = planning.effectiveSession / (sessionMins / 60);
-    const sessionsPerEngineerHour = config.hourlyRate > 0 ? config.hourlyRate / planning.effectiveSession : 0;
-    document.getElementById('cost-per-hour').textContent = `${fmtCost(costPerHr)} / hr`;
+  if (planning.timeToGoodOutcomeMins > 0) {
+    const costPerHour = planning.costPerSuccessfulOutcome / (planning.timeToGoodOutcomeMins / 60);
+    document.getElementById('cost-per-hour').textContent = `${fmtCost(costPerHour)} / hr`;
     document.getElementById('cost-per-hour-detail').textContent =
-      planning.costPctOfLabor != null
-        ? `${fmtPct(planning.costPctOfLabor, 0)} of ${fmtCost(config.hourlyRate)}/hr labor. One engineer hour costs about ${formatCount(sessionsPerEngineerHour)} sessions.`
-        : `${config.turns} turns x ${config.timeBetween} min ~= ${Math.round(sessionMins)} min visible session.`;
+      `${fmtMins(planning.timeToGoodOutcomeMins)} to a likely good result. Raw session is ${fmtCost(planning.baseSession)}; quality-adjusted cost is ${fmtCost(planning.costPerSuccessfulOutcome)}.`;
   } else {
     document.getElementById('cost-per-hour').textContent = '\u2014';
     document.getElementById('cost-per-hour-detail').textContent = '';
@@ -229,7 +296,7 @@ function updateProjections(cost, planning) {
   if (planning.perSessionLaborValue > 0 && config.hourlyRate > 0) {
     document.getElementById('proj-roi').textContent = fmtMins(planning.breakEvenMins);
     document.getElementById('proj-roi-detail').textContent =
-      `${fmtCost(planning.perSessionLaborValue)} labor recovered/session at ${fmtMins(config.timeSavedMins)} saved. Net ${fmtSignedCost(planning.netValuePerSession)} per session and ${fmtSignedCost(planning.monthlyNetValue)} per month.`;
+      `${fmtCost(planning.perSessionLaborValue)} expected labor value/session. Net ${fmtSignedCost(planning.netValuePerSession)} per session and ${fmtSignedCost(planning.monthlyNetValue)} per month.`;
   } else {
     document.getElementById('proj-roi').textContent = '\u2014';
     document.getElementById('proj-roi-detail').textContent = 'Set hourly rate and time saved to estimate break-even and ROI.';
@@ -242,61 +309,69 @@ function updateProjections(cost, planning) {
   document.getElementById('proj-marginal').textContent =
     planning.marginalTurnCost > 0 ? `+${fmtCost(planning.marginalTurnCost)} / turn` : '\u2014';
   document.getElementById('proj-marginal-detail').textContent =
-    `Cache miss: ${fmtSignedCost(planning.cacheMissCost)}. Web search fee: ${fmtCost(planning.directWebSearchCost)} before token costs.`;
+    `Extra cache miss: ${fmtSignedCost(planning.cacheMissCost)}. Search call: ${fmtCost(planning.directWebSearchCost)}. Exec session: ${fmtCost(planning.directExecSessionCost)}.`;
 
-  const currentName = MODELS[config.model]?.name || 'Current model';
-  const preferredAlt = config.model === 'opus-4.6'
-    ? { label: 'Sonnet 4.6', cost: planning.sonnetCost }
-    : { label: 'Opus 4.6', cost: planning.opusCost };
-  const altDelta = preferredAlt.cost - planning.currentModelCost;
+  const best = planning.bestValue;
+  const currentRow = planning.comparisonRows.find(row => row.modelId === config.model);
+  const delta = currentRow ? best.netValuePerSession - currentRow.netValuePerSession : 0;
   document.getElementById('proj-model-switch').textContent =
-    altDelta === 0 ? 'No change' : `${altDelta < 0 ? 'Save' : 'Spend'} ${fmtCost(Math.abs(altDelta))}`;
+    delta > 0.0001 ? `Gain ${fmtCost(delta)}` : 'Already best';
   document.getElementById('proj-model-switch-detail').textContent =
-    `${currentName}: ${fmtCost(planning.currentModelCost)}. Sonnet: ${fmtCost(planning.sonnetCost)} (${fmtSignedCost(planning.sonnetCost - planning.currentModelCost)}). Opus: ${fmtCost(planning.opusCost)} (${fmtSignedCost(planning.opusCost - planning.currentModelCost)}).`;
+    `Best net value: ${best.model.shortName} at ${fmtSignedCost(best.netValuePerSession)} expected/session. Cheapest good-result cost: ${planning.bestOutcome.model.shortName} at ${fmtCost(planning.bestOutcome.costPerSuccessfulOutcome)}. Fastest: ${planning.fastest.model.shortName} in ${fmtMins(planning.fastest.timeToGoodOutcomeMins)}.`;
 }
 
-function updateSummarySentence(cost, T, planning) {
-  const m = MODELS[config.model];
-  const el = document.getElementById('summary-sentence');
-  const extras = T.backgroundCost + T.webCost;
+function updateSummarySentence(res, planning) {
+  const model = getModel(config.model);
+  const provider = getProvider(model.provider);
+  const extras = res.T.backgroundCost + res.T.webCost + res.T.execCost;
   const extraBits = [];
-  if (T.backgroundCost > 0) extraBits.push(`${fmtCost(T.backgroundCost)} background`);
-  if (T.webCost > 0) {
-    extraBits.push(`${fmtCost(T.webCost)} web search (${config.webSearches} x ${fmtCost(WEB_SEARCH_COST_PER_REQUEST)})`);
-  }
+  if (res.T.backgroundCost > 0) extraBits.push(`${fmtCost(res.T.backgroundCost)} overhead`);
+  if (res.T.webCost > 0) extraBits.push(`${fmtCost(res.T.webCost)} search`);
+  if (res.T.execCost > 0) extraBits.push(`${fmtCost(res.T.execCost)} exec`);
 
-  let html = `Raw <strong>${escHtml(config.turns)}-turn ${escHtml(m.name)}</strong> session cost is <span class="hl">${escHtml(fmtCost(cost))}</span>. `;
-  html += `Effective workflow cost after interruptions, retries, and helpers is <span class="hl">${escHtml(fmtCost(planning.effectiveSession))}</span>. `;
-  html += `Your blended portfolio lands at <span class="hl">${escHtml(fmtCost(planning.monthlyBlended))}/mo</span> at ${escHtml(config.sessPerDay)} sessions/day across ${escHtml(config.workdaysPerMonth)} workdays.`;
+  let html = `<strong>${escHtml(provider.name)} / ${escHtml(model.name)}</strong> on <strong>${escHtml(TASK_PROFILES[config.taskProfile].label)}</strong> with <strong>${escHtml(EFFORT_LEVELS[config.effort].label)}</strong> effort. `;
+  html += `Raw session cost: <span class="hl">${escHtml(fmtCost(res.T.cost))}</span>. `;
+  html += `Expected good-result cost: <span class="hl">${escHtml(fmtCost(planning.costPerSuccessfulOutcome))}</span> at <span class="hl">${escHtml(fmtPct(planning.successRate * 100, 0))}</span> success odds and about <span class="hl">${escHtml(fmtMins(planning.timeToGoodOutcomeMins))}</span> to a good result. `;
+  html += `Monthly blended spend is <span class="hl">${escHtml(fmtCost(planning.monthlyBlended))}</span>.`;
   if (planning.perSessionLaborValue > 0 && config.hourlyRate > 0) {
-    html += ` Break-even is <span class="hl">${escHtml(fmtMins(planning.breakEvenMins))}</span> saved per session against ${escHtml(fmtCost(config.hourlyRate))}/hr labor.`;
+    html += ` Break-even arrives at <span class="hl">${escHtml(fmtMins(planning.breakEvenMins))}</span> saved per session.`;
   }
-  if (extras > 0) {
-    html += ` Extras modeled: ${escHtml(extraBits.join(' + '))}.`;
-  }
-  el.innerHTML = html;
+  if (extras > 0) html += ` Extras modeled: ${escHtml(extraBits.join(' + '))}.`;
+  document.getElementById('summary-sentence').innerHTML = html;
 }
 
 export function updatePresetCosts() {
   document.querySelectorAll('.preset-card').forEach(btn => {
-    const p = PRESETS[btn.dataset.preset];
+    const presetKey = btn.dataset.preset;
+    const p = PRESETS[presetKey];
     if (!p) return;
-    const r = simulate({ ...config, ...p });
+    const r = simulate({ ...config, ...p, taskProfile: presetKey }, config.model, presetKey);
     const el = btn.querySelector('[data-pcost]');
     if (el) el.textContent = '~' + fmtCost(r.T.cost);
   });
 }
 
 export function updatePricingBox() {
-  const m = MODELS[config.model];
-  const cw = config.cacheTTL === '1h' ? m.cache1h : m.cache5m;
-  document.getElementById('pricing-box').innerHTML =
-    `<div class="price-item"><span class="pl">Input</span><span class="pv">$${escHtml(m.input)}/MTok</span></div>
-     <div class="price-item"><span class="pl">Output</span><span class="pv">$${escHtml(m.output)}/MTok</span></div>
-     <div class="price-item"><span class="pl">Cache write</span><span class="pv">$${escHtml(cw)}/MTok</span></div>
-     <div class="price-item"><span class="pl">Cache read</span><span class="pv">$${escHtml(m.cacheRead)}/MTok</span></div>
-     <div class="price-item"><span class="pl">Max context</span><span class="pv">${escHtml(fmtTok(m.maxContext))}</span></div>
-     <div class="price-item"><span class="pl">Min cacheable</span><span class="pv">${escHtml(fmtTok(m.minCacheable))}</span></div>`;
+  const model = getModel(config.model);
+  const provider = getProvider(model.provider);
+  const cacheRate = config.cacheTTL === '1h'
+    ? (model.cache1h ?? model.cachedInput)
+    : (model.cache5m ?? model.cachedInput);
+  const extraLines = [
+    `<div class="price-item"><span class="pl">Provider</span><span class="pv">${escHtml(provider.name)}</span></div>`,
+    `<div class="price-item"><span class="pl">Input</span><span class="pv">$${escHtml(model.input)}/MTok</span></div>`,
+    `<div class="price-item"><span class="pl">Output</span><span class="pv">$${escHtml(model.output)}/MTok</span></div>`,
+    `<div class="price-item"><span class="pl">${escHtml(provider.cacheStrategy === 'write-read' ? 'Cache write' : 'Cached input')}</span><span class="pv">$${escHtml(cacheRate ?? 0)}/MTok</span></div>`,
+    `<div class="price-item"><span class="pl">Max context</span><span class="pv">${escHtml(fmtTok(model.maxContext))}</span></div>`,
+    `<div class="price-item"><span class="pl">Min cacheable</span><span class="pv">${escHtml(fmtTok(model.minCacheable))}</span></div>`,
+  ];
+  if (model.cacheStoragePerHour) {
+    extraLines.push(`<div class="price-item"><span class="pl">Cache storage</span><span class="pv">$${escHtml(model.cacheStoragePerHour)}/MTok-hr</span></div>`);
+  }
+  if (model.longContextThreshold) {
+    extraLines.push(`<div class="price-item"><span class="pl">Long-context</span><span class="pv">&gt;${escHtml(fmtTok(model.longContextThreshold))}</span></div>`);
+  }
+  document.getElementById('pricing-box').innerHTML = extraLines.join('');
 }
 
 export function updateIdleLabel() {
@@ -324,11 +399,8 @@ export function updatePresetHighlight() {
   document.querySelectorAll('.preset-card').forEach(btn => {
     const pk = btn.dataset.preset;
     btn.classList.remove('active-preset', 'modified');
-    if (pk === active) {
-      btn.classList.add('active-preset');
-    } else if (pk === state.lastPreset && active === null) {
-      btn.classList.add('modified');
-    }
+    if (pk === active) btn.classList.add('active-preset');
+    else if (pk === state.lastPreset && active === null) btn.classList.add('modified');
   });
 }
 
@@ -342,83 +414,83 @@ export function updateDangerZone() {
 
 export function update() {
   applyModelConstraints();
-  const res = simulate(config);
-  const planning = computePlanning(config);
+  const res = simulate(config, config.model, config.taskProfile);
+  const planning = computePlanning(config, config.model, config.taskProfile);
   state.lastResult = res;
-  const t = res.T;
 
-  animateEl('sum-total', t.cost, fmtCost);
-  animateEl('sum-input', t.crCost + t.cwCost + t.unCost, fmtCost);
-  animateEl('sum-output', t.outCost + t.thCost, fmtCost);
-  animateEl('sum-calls', t.apiCalls, v => Math.round(v).toLocaleString());
+  animateEl('sum-total', res.T.cost, fmtCost);
+  animateEl('sum-input', res.T.crCost + res.T.cwCost + res.T.unCost, fmtCost);
+  animateEl('sum-output', res.T.outCost + res.T.thCost, fmtCost);
+  animateEl('sum-calls', res.T.apiCalls, v => Math.round(v).toLocaleString());
 
-  const avgCost = config.turns > 0 ? t.cost / config.turns : 0;
+  const avgCost = res.scenario.adjustedCfg.turns > 0 ? res.T.cost / res.scenario.adjustedCfg.turns : 0;
   animateEl('sum-avg', avgCost, fmtCost);
 
-  const half = Math.floor(res.turns.length / 2);
-  if (half > 0 && res.turns.length > 2) {
-    const first = res.turns.slice(0, half).reduce((sum, d) => sum + d.turnCost, 0) / half;
-    const second = res.turns.slice(half).reduce((sum, d) => sum + d.turnCost, 0) / (res.turns.length - half);
-    const ratio = second / Math.max(first, 0.001);
-    const arrow = ratio > 1.15 ? '<span class="trend-arrow up">&#9650;</span> rising'
-      : ratio < 0.85 ? '<span class="trend-arrow down">&#9660;</span> falling'
-      : '<span class="trend-arrow flat">&#9654;</span> stable';
-    document.getElementById('sum-avg-detail').innerHTML = arrow;
-  }
-
-  const totTok = t.crTok + t.cwTok + t.unTok + t.outTok + t.thTok;
-  document.getElementById('sum-tokens').textContent = fmtTok(totTok);
-  document.getElementById('sum-extra-detail').textContent =
-    (t.backgroundCost + t.webCost) > 0 ? `+ ${fmtCost(t.backgroundCost + t.webCost)} extras` : '';
+  const totalTok = res.T.crTok + res.T.cwTok + res.T.unTok + res.T.outTok + res.T.thTok;
+  document.getElementById('sum-tokens').textContent = fmtTok(totalTok);
+  const extrasCost = res.T.backgroundCost + res.T.webCost + res.T.execCost;
+  document.getElementById('sum-extra-detail').textContent = extrasCost > 0 ? `+ ${fmtCost(extrasCost)} extras` : '';
   document.getElementById('sum-thinking-pct').textContent =
-    (t.outCost + t.thCost) > 0 ? ((t.thCost / (t.outCost + t.thCost)) * 100).toFixed(0) + '%' : '0%';
+    (res.T.outCost + res.T.thCost) > 0 ? fmtPct((res.T.thCost / (res.T.outCost + res.T.thCost)) * 100, 0) : '0%';
   document.getElementById('sum-calls-detail').textContent =
-    (1 + config.toolRounds) + ' calls/turn x ' + config.turns + ' turns'
-    + (t.apiCalls > config.turns * (1 + config.toolRounds) ? ' + compactions' : '');
+    `${1 + res.scenario.adjustedCfg.toolRounds} calls/turn x ${res.scenario.adjustedCfg.turns} turns${res.T.apiCalls > res.scenario.adjustedCfg.turns * (1 + res.scenario.adjustedCfg.toolRounds) ? ' + compactions' : ''}`;
 
-  const totIn = t.crTok + t.cwTok + t.unTok;
-  const eff = totIn > 0 ? (t.crTok / totIn) * 100 : 0;
-  document.getElementById('cache-eff-bar').style.width = eff.toFixed(1) + '%';
-  document.getElementById('cache-eff-pct').textContent = eff.toFixed(0) + '% cache hits';
-  document.getElementById('cache-eff-ratio').textContent = fmtTok(t.crTok) + ' / ' + fmtTok(totIn) + ' input';
+  const totalIn = res.T.crTok + res.T.cwTok + res.T.unTok;
+  const cacheEff = totalIn > 0 ? (res.T.crTok / totalIn) * 100 : 0;
+  document.getElementById('cache-eff-bar').style.width = `${cacheEff.toFixed(1)}%`;
+  document.getElementById('cache-eff-pct').textContent = `${cacheEff.toFixed(0)}% cached`;
+  document.getElementById('cache-eff-ratio').textContent = `${fmtTok(res.T.crTok)} / ${fmtTok(totalIn)} input`;
 
-  const stackData = res.turns.map(d => ({
-    x: d.turn,
-    compaction: d.compaction,
-    cacheDrop: d.cacheDrop,
+  const stackData = res.turns.map(turn => ({
+    x: turn.turn,
+    compaction: turn.compaction,
+    cacheDrop: turn.cacheDrop,
     segments: [
-      { value: d.crCost, color: '#34d39988' },
-      { value: d.cwCost, color: '#60a5fa88' },
-      { value: d.unCost, color: '#f59e0b88' },
-      { value: d.outCost + d.compCost, color: '#a78bfa88' },
-      { value: d.thCost, color: '#f472b688' },
+      { value: turn.crCost, color: '#34d39988' },
+      { value: turn.cwCost, color: '#60a5fa88' },
+      { value: turn.unCost, color: '#f59e0b88' },
+      { value: turn.outCost + turn.compCost, color: '#a78bfa88' },
+      { value: turn.thCost, color: '#f472b688' },
     ],
   }));
   drawStackedBars(document.getElementById('chart-perturn'), stackData, { height: 200, yFmt: fmtCost });
 
-  const ctxD = res.turns.map(d => ({ x: d.turn, y: d.contextSize, compaction: d.compaction, cacheDrop: d.cacheDrop }));
-  drawLine(document.getElementById('chart-ctx'), [{ data: ctxD, color: '#60a5fa' }], {
+  const ctxData = res.turns.map(turn => ({
+    x: turn.turn,
+    y: turn.contextSize,
+    compaction: turn.compaction,
+    cacheDrop: turn.cacheDrop,
+  }));
+  drawLine(document.getElementById('chart-ctx'), [{ data: ctxData, color: getModel(config.model).color }], {
     height: 200,
     yFmt: fmtTok,
-    limitY: config.contextWindow,
-    limitLabel: fmtTok(config.contextWindow) + ' limit',
-    thresholdY: config.contextWindow * AUTO_COMPACT_THRESHOLD,
+    limitY: res.scenario.adjustedCfg.contextWindow,
+    limitLabel: `${fmtTok(res.scenario.adjustedCfg.contextWindow)} limit`,
+    thresholdY: res.scenario.adjustedCfg.contextWindow * AUTO_COMPACT_THRESHOLD,
     thresholdLabel: '95% compact',
   });
 
-  const segs = getCostSegments(t).filter(s => s.value > 0.0001);
-  drawDonut(document.getElementById('chart-donut'), segs);
-  document.getElementById('donut-legend').innerHTML = segs.map(s =>
-    `<div class="legend-item"><div class="legend-dot" style="background:${escHtml(s.color)}"></div>
-     <span class="legend-label">${escHtml(s.label)}</span>
-     <span class="legend-value" style="color:${escHtml(s.color)}">${escHtml(fmtCost(s.value))}</span></div>`).join('');
+  const segments = getCostSegments(res.T).filter(segment => segment.value > 0.0001);
+  drawDonut(document.getElementById('chart-donut'), segments);
+  document.getElementById('donut-legend').innerHTML = segments.map(segment =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${escHtml(segment.color)}"></div>
+      <span class="legend-label">${escHtml(segment.label)}</span>
+      <span class="legend-value" style="color:${escHtml(segment.color)}">${escHtml(fmtCost(segment.value))}</span></div>`).join('');
 
-  buildModelBars('bar-comparison', config);
-  updateProjections(t.cost, planning);
-  updateSummarySentence(t.cost, t, planning);
+  const compareRows = [...planning.comparisonRows].sort((a, b) => a.costPerSuccessfulOutcome - b.costPerSuccessfulOutcome);
+  const currentCompareRow = compareRows.find(row => row.modelId === config.model);
+  const visibleCompareRows = compareRows.slice(0, 6);
+  if (currentCompareRow && !visibleCompareRows.some(row => row.modelId === currentCompareRow.modelId)) {
+    visibleCompareRows[visibleCompareRows.length - 1] = currentCompareRow;
+  }
+  buildModelBars('bar-comparison', visibleCompareRows);
+  renderCompareTable(compareRows);
+
+  updateProjections(planning);
+  updateSummarySentence(res, planning);
   updatePresetCosts();
-  updateCostDrivers(t);
-  updateContextProjection(res.turns);
+  updateCostDrivers(res.T);
+  updateContextProjection(res.turns, res.scenario.adjustedCfg);
   updateMixPlanner(planning);
   updatePresetHighlight();
   updateDangerZone();

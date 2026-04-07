@@ -1,8 +1,8 @@
 import { config } from './state.js';
 
-const CONFIG_KEYS = ['model', 'cacheTTL', 'contextWindow', 'turns', 'sysPrompt', 'userMsg',
+const CONFIG_KEYS = ['provider', 'model', 'effort', 'taskProfile', 'cacheTTL', 'contextWindow', 'turns', 'sysPrompt', 'userMsg',
   'responseTokens', 'thinkingTokens', 'toolRounds', 'toolResult', 'timeBetween', 'cacheDrops',
-  'compactions', 'compactRatio', 'autoCompact', 'backgroundCost', 'webSearches',
+  'compactions', 'compactRatio', 'autoCompact', 'backgroundCost', 'webSearches', 'execSessions',
   'sessPerDay', 'monthlyBudget', 'hourlyRate', 'timeSavedMins', 'workdaysPerMonth',
   'interruptions', 'retryRate', 'parallelAgents', 'parallelAgentCostRatio',
   'toolMix', 'uncertainty', 'mixQuickFix', 'mixFeature', 'mixReview', 'mixRefactor',

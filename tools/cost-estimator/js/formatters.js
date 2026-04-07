@@ -26,6 +26,10 @@ export function fmtMins(v) {
   return Math.round(v) + ' min';
 }
 
+export function fmtRatio(v, digits = 2) {
+  return (+v).toFixed(digits) + 'x';
+}
+
 export function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -44,6 +48,7 @@ export const SLIDER_FORMATTERS = {
   compactRatio: v => Math.round(v * 100) + '%',
   backgroundCost: v => fmtCost(+v),
   webSearches: v => v,
+  execSessions: v => Math.round(+v),
   hourlyRate: v => '$' + Math.round(+v) + '/hr',
   timeSavedMins: v => fmtMins(+v),
   workdaysPerMonth: v => Math.round(+v) + ' days',

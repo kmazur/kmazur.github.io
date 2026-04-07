@@ -1,4 +1,4 @@
-import { INTEGER_SLIDER_KEYS, PRESETS, SLIDER_KEYS } from './constants.js';
+import { MODEL_ORDER, PRESETS, PROVIDERS, SLIDER_KEYS } from './constants.js';
 import { config, state } from './state.js';
 import { SLIDER_FORMATTERS, fmtCost, fmtTok } from './formatters.js';
 import { showAnatomy, closeAnatomy } from './anatomy.js';
@@ -7,162 +7,241 @@ import { shareURL } from './url-state.js';
 
 function parseControlValue(key, rawValue) {
   const value = parseFloat(rawValue);
-  return INTEGER_SLIDER_KEYS.has(key) ? Math.round(value) : value;
+  if (['turns', 'sysPrompt', 'userMsg', 'responseTokens', 'thinkingTokens', 'toolRounds', 'toolResult', 'cacheDrops', 'compactions', 'webSearches', 'execSessions', 'hourlyRate', 'timeSavedMins', 'workdaysPerMonth', 'interruptions', 'retryRate', 'parallelAgents', 'mixQuickFix', 'mixFeature', 'mixReview', 'mixRefactor', 'mixExploration', 'mixVibe'].includes(key)) {
+    return Math.round(value);
+  }
+  return value;
+}
+
+function setControlDisplay(key) {
+  const el = document.getElementById(key);
+  const display = document.getElementById(`v-${key}`);
+  if (!el || !display || !SLIDER_FORMATTERS[key]) return;
+  const formatted = SLIDER_FORMATTERS[key](config[key]);
+  display.textContent = formatted;
+  el.setAttribute('aria-valuetext', String(formatted));
+}
+
+function setProvider(providerId) {
+  const provider = PROVIDERS[providerId];
+  if (!provider) return;
+  config.provider = providerId;
+  const firstModel = MODEL_ORDER.find(id => id.startsWith(providerId === 'google' ? 'gemini' : providerId === 'openai' ? 'gpt' : 'claude'));
+  if (firstModel) config.model = firstModel;
+  config.backgroundCost = provider.defaultBackgroundCost;
+  config.execSessions = 0;
+  const bgInput = document.getElementById('backgroundCost');
+  const execInput = document.getElementById('execSessions');
+  if (bgInput) bgInput.value = config.backgroundCost;
+  if (execInput) execInput.value = config.execSessions;
+  setControlDisplay('backgroundCost');
+  setControlDisplay('execSessions');
 }
 
 function mkTip(cvId, tipId, fmt) {
-  const cv = document.getElementById(cvId), tip = document.getElementById(tipId);
+  const cv = document.getElementById(cvId);
+  const tip = document.getElementById(tipId);
   cv.addEventListener('mousemove', e => {
-    const r = cv.getBoundingClientRect(), x = e.clientX - r.left;
-    const pad = 62, cw = r.width - pad - 16;
-    if (x < pad || x > pad + cw) { tip.classList.remove('visible'); return; }
-    if (!state.lastResult) { tip.classList.remove('visible'); return; }
-    const d = state.lastResult.turns; if (!d.length) { tip.classList.remove('visible'); return; }
-    const idx = Math.min(Math.max(Math.floor(((x - pad) / cw) * d.length), 0), d.length - 1);
-    const cl = d[idx];
-    if (!cl) { tip.classList.remove('visible'); return; }
-    tip.innerHTML = fmt(cl); tip.classList.add('visible');
+    const r = cv.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const pad = 62;
+    const cw = r.width - pad - 16;
+    if (x < pad || x > pad + cw || !state.lastResult?.turns?.length) {
+      tip.classList.remove('visible');
+      return;
+    }
+    const idx = Math.min(Math.max(Math.floor(((x - pad) / cw) * state.lastResult.turns.length), 0), state.lastResult.turns.length - 1);
+    const point = state.lastResult.turns[idx];
+    if (!point) {
+      tip.classList.remove('visible');
+      return;
+    }
+    tip.innerHTML = fmt(point);
+    tip.classList.add('visible');
     const tw = tip.offsetWidth;
-    tip.style.left = ((x + tw + 20 > r.width) ? x - tw - 12 : x + 12) + 'px';
-    tip.style.top = (e.clientY - r.top - 30) + 'px';
+    tip.style.left = `${(x + tw + 20 > r.width) ? x - tw - 12 : x + 12}px`;
+    tip.style.top = `${e.clientY - r.top - 30}px`;
   });
   cv.addEventListener('mouseleave', () => tip.classList.remove('visible'));
 }
 
-function bindToggleGroup(groupId, key, parse = v => v) {
-  document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(btn => btn.addEventListener('click', () => {
-    if (btn.disabled) return;
-    document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(x => x.classList.remove('active'));
-    btn.classList.add('active');
-    config[key] = parse(btn.dataset.val);
-    update();
-  }));
-}
-
 export function bindEvents() {
-  // Share button
   document.getElementById('shareBtn').addEventListener('click', shareURL);
 
-  // Model buttons
-  document.querySelectorAll('.model-btn').forEach(btn => btn.addEventListener('click', () => {
-    document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); config.model = btn.dataset.model;
-    applyModelConstraints();
-    updatePricingBox(); update();
-  }));
+  document.addEventListener('click', e => {
+    const providerBtn = e.target.closest('.provider-btn');
+    if (providerBtn) {
+      setProvider(providerBtn.dataset.provider);
+      updatePricingBox();
+      updateIdleLabel();
+      update();
+      return;
+    }
 
-  // Toggle groups
-  document.querySelectorAll('#tg-cache .toggle-btn').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('#tg-cache .toggle-btn').forEach(x => x.classList.remove('active'));
-    b.classList.add('active'); config.cacheTTL = b.dataset.val;
-    updatePricingBox(); updateIdleLabel(); update();
-  }));
-  bindToggleGroup('tg-ctx', 'contextWindow', v => +v);
-  bindToggleGroup('tg-toolmix', 'toolMix');
-  bindToggleGroup('tg-uncertainty', 'uncertainty');
+    const modelBtn = e.target.closest('.model-btn');
+    if (modelBtn && modelBtn.dataset.model) {
+      config.model = modelBtn.dataset.model;
+      config.provider = MODEL_ORDER.find(id => id === config.model)?.startsWith('gpt') ? 'openai'
+        : config.model.startsWith('gemini') ? 'google' : 'anthropic';
+      applyModelConstraints();
+      updatePricingBox();
+      update();
+      return;
+    }
 
-  // Sliders
+    const cacheBtn = e.target.closest('#tg-cache .toggle-btn');
+    if (cacheBtn) {
+      config.cacheTTL = cacheBtn.dataset.val;
+      updatePricingBox();
+      updateIdleLabel();
+      update();
+      return;
+    }
+
+    const ctxBtn = e.target.closest('#tg-ctx .toggle-btn');
+    if (ctxBtn && !ctxBtn.disabled) {
+      config.contextWindow = +ctxBtn.dataset.val;
+      update();
+      return;
+    }
+
+    const taskBtn = e.target.closest('#tg-task .toggle-btn');
+    if (taskBtn) {
+      config.taskProfile = taskBtn.dataset.val;
+      update();
+      return;
+    }
+
+    const effortBtn = e.target.closest('#tg-effort .toggle-btn');
+    if (effortBtn) {
+      config.effort = effortBtn.dataset.val;
+      update();
+      return;
+    }
+
+    const toolMixBtn = e.target.closest('#tg-toolmix .toggle-btn');
+    if (toolMixBtn) {
+      config.toolMix = toolMixBtn.dataset.val;
+      update();
+      return;
+    }
+
+    const uncertaintyBtn = e.target.closest('#tg-uncertainty .toggle-btn');
+    if (uncertaintyBtn) {
+      config.uncertainty = uncertaintyBtn.dataset.val;
+      update();
+      return;
+    }
+
+    const presetBtn = e.target.closest('.preset-card');
+    if (presetBtn) {
+      const presetKey = presetBtn.dataset.preset;
+      const preset = PRESETS[presetKey];
+      if (!preset) return;
+      state.lastPreset = presetKey;
+      config.taskProfile = presetKey;
+      for (const [k, v] of Object.entries(preset)) {
+        config[k] = v;
+        const input = document.getElementById(k);
+        if (input) input.value = v;
+        setControlDisplay(k);
+      }
+      update();
+      return;
+    }
+  });
+
   for (const key of SLIDER_KEYS) {
-    const el = document.getElementById(key); if (!el) continue;
+    const el = document.getElementById(key);
+    if (!el) continue;
     el.addEventListener('input', () => {
       config[key] = parseControlValue(key, el.value);
-      const d = document.getElementById('v-' + key);
-      if (d && SLIDER_FORMATTERS[key]) {
-        const formatted = SLIDER_FORMATTERS[key](config[key]);
-        d.textContent = formatted;
-        el.setAttribute('aria-valuetext', String(formatted));
-      }
+      setControlDisplay(key);
       update();
     });
   }
-  // Sessions/day stepper
+
   document.getElementById('sess-up').addEventListener('click', () => {
-    config.sessPerDay = Math.min(30, (config.sessPerDay || 4) + 1); update();
+    config.sessPerDay = Math.min(30, (config.sessPerDay || 4) + 1);
+    update();
   });
   document.getElementById('sess-down').addEventListener('click', () => {
-    config.sessPerDay = Math.max(1, (config.sessPerDay || 4) - 1); update();
+    config.sessPerDay = Math.max(1, (config.sessPerDay || 4) - 1);
+    update();
   });
   document.getElementById('budgetInput').addEventListener('input', e => {
     const raw = parseFloat(e.target.value);
     config.monthlyBudget = Number.isFinite(raw) ? raw : 0;
     update();
   });
-  document.getElementById('autoCompact').addEventListener('change', e => { config.autoCompact = e.target.checked; update(); });
-
-  // Presets
-  document.querySelectorAll('.preset-card').forEach(btn => btn.addEventListener('click', () => {
-    const p = PRESETS[btn.dataset.preset]; if (!p) return;
-    state.lastPreset = btn.dataset.preset;
-    for (const [k, v] of Object.entries(p)) {
-      config[k] = v;
-      const el = document.getElementById(k);
-      if (el) {
-        el.value = v;
-        const d = document.getElementById('v-' + k);
-        if (d && SLIDER_FORMATTERS[k]) {
-          const formatted = SLIDER_FORMATTERS[k](v);
-          d.textContent = formatted;
-          el.setAttribute('aria-valuetext', String(formatted));
-        }
-      }
-    }
+  document.getElementById('autoCompact').addEventListener('change', e => {
+    config.autoCompact = e.target.checked;
     update();
-  }));
+  });
 
-  // Collapse sections
-  document.querySelectorAll('.section-header').forEach(h =>
-    h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
+  document.querySelectorAll('.section-header').forEach(header => {
+    header.addEventListener('click', () => header.parentElement.classList.toggle('collapsed'));
+  });
 
-  // Resize
-  let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(update, 100); })
-    .observe(document.querySelector('.main'));
+  let resizeTimer;
+  new ResizeObserver(() => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(update, 100);
+  }).observe(document.querySelector('.main'));
 
-  // Tooltips
-  mkTip('chart-ctx', 'tip-ctx', d =>
-    `Turn ${d.turn}  |  context: ${fmtTok(d.contextSize)} tokens`
-    + (d.compaction ? ' [COMPACTED]' : ''));
+  mkTip('chart-ctx', 'tip-ctx', point =>
+    `Turn ${point.turn} | context: ${fmtTok(point.contextSize)} tokens${point.compaction ? ' [COMPACTED]' : ''}`);
 
-  // Stacked bar tooltip + click
   const ptCv = document.getElementById('chart-perturn');
   const ptTip = document.getElementById('tip-perturn');
   ptCv.addEventListener('mousemove', e => {
-    if (!state.lastResult) return;
-    const r = ptCv.getBoundingClientRect(), x = e.clientX - r.left;
-    const pad = 62, cw = r.width - pad - 16;
-    if (x < pad || x > pad + cw) { ptTip.classList.remove('visible'); return; }
-    const d = state.lastResult.turns; if (!d.length) { ptTip.classList.remove('visible'); return; }
-    const idx = Math.min(Math.max(Math.floor(((x - pad) / cw) * d.length), 0), d.length - 1);
-    const cl = d[idx]; if (!cl) { ptTip.classList.remove('visible'); return; }
-    ptTip.innerHTML = `Turn ${cl.turn} | ${fmtCost(cl.turnCost)}<br>`
-      + `<span style="color:#34d399">CR:${fmtCost(cl.crCost)}</span> `
-      + `<span style="color:#60a5fa">CW:${fmtCost(cl.cwCost)}</span> `
-      + `<span style="color:#f59e0b">UN:${fmtCost(cl.unCost)}</span> `
-      + `<span style="color:#a78bfa">OUT:${fmtCost(cl.outCost)}</span> `
-      + `<span style="color:#f472b6">TH:${fmtCost(cl.thCost)}</span>`
-      + (cl.compaction ? ' <span style="color:#f59e0b">[COMPACT]</span>' : '')
-      + (cl.cacheDrop ? ' <span style="color:#f87171">[DROP]</span>' : '')
+    if (!state.lastResult?.turns?.length) return;
+    const r = ptCv.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const pad = 62;
+    const cw = r.width - pad - 16;
+    if (x < pad || x > pad + cw) {
+      ptTip.classList.remove('visible');
+      return;
+    }
+    const idx = Math.min(Math.max(Math.floor(((x - pad) / cw) * state.lastResult.turns.length), 0), state.lastResult.turns.length - 1);
+    const point = state.lastResult.turns[idx];
+    if (!point) {
+      ptTip.classList.remove('visible');
+      return;
+    }
+    ptTip.innerHTML = `Turn ${point.turn} | ${fmtCost(point.turnCost)}<br>`
+      + `<span style="color:#34d399">CA:${fmtCost(point.crCost)}</span> `
+      + `<span style="color:#60a5fa">SET:${fmtCost(point.cwCost)}</span> `
+      + `<span style="color:#f59e0b">UN:${fmtCost(point.unCost)}</span> `
+      + `<span style="color:#a78bfa">OUT:${fmtCost(point.outCost)}</span> `
+      + `<span style="color:#f472b6">TH:${fmtCost(point.thCost)}</span>`
+      + (point.compaction ? ' <span style="color:#f59e0b">[COMPACT]</span>' : '')
+      + (point.cacheDrop ? ' <span style="color:#f87171">[DROP]</span>' : '')
       + '<br><span style="color:var(--text-muted)">Click for full anatomy</span>';
     ptTip.classList.add('visible');
     const tw = ptTip.offsetWidth;
-    ptTip.style.left = ((x + tw + 20 > r.width) ? x - tw - 12 : x + 12) + 'px';
-    ptTip.style.top = (e.clientY - r.top - 50) + 'px';
+    ptTip.style.left = `${(x + tw + 20 > r.width) ? x - tw - 12 : x + 12}px`;
+    ptTip.style.top = `${e.clientY - r.top - 50}px`;
   });
   ptCv.addEventListener('mouseleave', () => ptTip.classList.remove('visible'));
   ptCv.addEventListener('click', e => {
-    if (!state.lastResult) return;
-    const r = ptCv.getBoundingClientRect(), x = e.clientX - r.left;
-    const pad = 62, cw = r.width - pad - 16;
+    if (!state.lastResult?.turns?.length) return;
+    const r = ptCv.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const pad = 62;
+    const cw = r.width - pad - 16;
     if (x < pad || x > pad + cw) return;
-    const d = state.lastResult.turns;
-    const idx = Math.min(Math.max(Math.floor(((x - pad) / cw) * d.length), 0), d.length - 1);
-    if (d[idx]) showAnatomy(d[idx]);
+    const idx = Math.min(Math.max(Math.floor(((x - pad) / cw) * state.lastResult.turns.length), 0), state.lastResult.turns.length - 1);
+    if (state.lastResult.turns[idx]) showAnatomy(state.lastResult.turns[idx]);
   });
   ptCv.style.cursor = 'pointer';
 
-  // Close anatomy on overlay click or close button
   document.getElementById('anatomy-close-btn').addEventListener('click', closeAnatomy);
   document.getElementById('anatomy-overlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeAnatomy();
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAnatomy(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeAnatomy();
+  });
 }
