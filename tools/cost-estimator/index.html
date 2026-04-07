@@ -61,6 +61,7 @@
         </div>
       </div>
       <div class="pricing-summary" id="pricing-box"></div>
+      <div class="section-hint" id="model-cap-note"></div>
     </div>
   </div>
 
@@ -80,9 +81,19 @@
   <div class="section" id="sec-tools">
     <div class="section-header"><span class="chv">&#9660;</span> Tool Usage</div>
     <div class="section-body">
-      <div class="section-hint">Each tool round = one extra API call resending the growing context.</div>
+      <div class="section-hint">Each tool round adds another Claude sampling step. Earlier tool calls can include interleaved thinking, and those thinking blocks must be sent back with tool results during the same tool loop.</div>
       <div class="control"><div class="control-header"><label title="How many tool calls (file reads, searches, edits) Claude makes before responding. Each resends the full conversation.">Tool rounds / turn</label><span class="sens-tag" data-sens="toolRounds"></span><span class="control-value" id="v-toolRounds">3</span></div><input type="range" id="toolRounds" min="0" max="15" value="3"></div>
       <div class="control"><div class="control-header"><label title="Average size of data returned by each tool call (file contents, search results, etc.)">Avg tool result (tokens)</label><span class="sens-tag" data-sens="toolResult"></span><span class="control-value" id="v-toolResult">800</span></div><input type="range" id="toolResult" min="50" max="6000" value="800" step="50"></div>
+    </div>
+  </div>
+
+  <!-- Claude Code Extras -->
+  <div class="section" id="sec-extras">
+    <div class="section-header"><span class="chv">&#9660;</span> Claude Code Extras</div>
+    <div class="section-body">
+      <div class="section-hint">Anthropic bills a small amount of background Claude Code activity per session, and web search adds a per-search fee on top of tokens.</div>
+      <div class="control"><div class="control-header"><label title="Claude Code docs say background jobs like resume summarization and status checks typically stay under about $0.04 per session. This is an estimate, not a guaranteed charge.">Background overhead (est.)</label><span class="sens-tag" data-sens="backgroundCost"></span><span class="control-value" id="v-backgroundCost">$0.0200</span></div><input type="range" id="backgroundCost" min="0" max="0.04" value="0.02" step="0.0025"></div>
+      <div class="control"><div class="control-header"><label title="Anthropic web search is billed at $10 per 1,000 searches, in addition to the tokens you already count in tool results.">Web searches / session</label><span class="sens-tag" data-sens="webSearches"></span><span class="control-value" id="v-webSearches">0</span></div><input type="range" id="webSearches" min="0" max="20" value="0" step="1"></div>
     </div>
   </div>
 
@@ -90,7 +101,7 @@
   <div class="section" id="sec-cache">
     <div class="section-header"><span class="chv">&#9660;</span> Cache &amp; Timing</div>
     <div class="section-body">
-      <div class="section-hint">When cache expires, the next call pays full input price for the entire context.</div>
+      <div class="section-hint">When cache expires, the next call pays full input price for the entire context. Prompts below Anthropic's model-specific cache minimum do not get cached at all.</div>
       <div class="control"><div class="control-header"><label>Avg time between turns</label><span class="sens-tag" data-sens="timeBetween"></span><span class="control-value" id="v-timeBetween">1.5 min</span></div><input type="range" id="timeBetween" min="0.5" max="90" value="1.5" step="0.5" class="danger-zone"></div>
       <div class="control"><div class="control-header"><label id="lbl-cacheDrops" title="Number of times you pause longer than the cache TTL during the session.">Idle breaks (&gt;5 min gaps)</label><span class="sens-tag" data-sens="cacheDrops"></span><span class="control-value" id="v-cacheDrops">0</span></div><input type="range" id="cacheDrops" min="0" max="15" value="0"></div>
       <div class="efficiency-bar-container">
@@ -105,10 +116,10 @@
   <div class="section" id="sec-compact">
     <div class="section-header"><span class="chv">&#9660;</span> Compaction</div>
     <div class="section-body">
-      <div class="section-hint">Compaction summarizes conversation. Costs one API call + cold-cache restart.</div>
-      <div class="control"><div class="control-header"><label title="When context gets too large, Claude summarizes the conversation to free space. Costs one extra API call.">Manual compactions</label><span class="sens-tag" data-sens="compactions"></span><span class="control-value" id="v-compactions">0</span></div><input type="range" id="compactions" min="0" max="10" value="0"></div>
+      <div class="section-hint">Claude Code can compact conversation history near the context limit. This estimator treats compaction as one extra API call plus a fresh cache prefix.</div>
+      <div class="control"><div class="control-header"><label title="Use this to model manual /compact commands or extra compactions beyond Claude Code's automatic behavior.">Manual compactions</label><span class="sens-tag" data-sens="compactions"></span><span class="control-value" id="v-compactions">0</span></div><input type="range" id="compactions" min="0" max="10" value="0"></div>
       <div class="control"><div class="control-header"><label title="What fraction of the conversation is kept after compaction. Lower = more aggressive summarization.">Compaction ratio (kept)</label><span class="sens-tag" data-sens="compactRatio"></span><span class="control-value" id="v-compactRatio">25%</span></div><input type="range" id="compactRatio" min="0.1" max="0.5" value="0.25" step="0.05"></div>
-      <label class="checkbox-row"><input type="checkbox" id="autoCompact" checked>Auto-compact at ~70% context</label>
+      <label class="checkbox-row"><input type="checkbox" id="autoCompact" checked>Auto-compact at ~95% context</label>
     </div>
   </div>
 
@@ -118,7 +129,7 @@
 <main class="main">
 
   <div class="summary-row">
-    <div class="summary-card sc-total"><div class="card-label">Total Session Cost</div><div class="card-value" id="sum-total">&mdash;</div><div class="card-detail"><span id="sum-tokens">&mdash;</span> total tokens</div></div>
+    <div class="summary-card sc-total"><div class="card-label">Total Session Cost</div><div class="card-value" id="sum-total">&mdash;</div><div class="card-detail"><span id="sum-tokens">&mdash;</span> total tokens <span id="sum-extra-detail"></span></div></div>
     <div class="summary-card sc-input"><div class="card-label">Input Cost</div><div class="card-value" id="sum-input">&mdash;</div><div class="card-detail">cache read + write + uncached</div></div>
     <div class="summary-card sc-output"><div class="card-label">Output + Thinking</div><div class="card-value" id="sum-output">&mdash;</div><div class="card-detail"><span id="sum-thinking-pct">&mdash;</span> from thinking</div></div>
     <div class="summary-card sc-monthly"><div class="card-label">Monthly Cost</div><div class="card-value" id="sum-monthly">&mdash;</div><div class="card-detail"><div class="stepper"><button class="stepper-btn" id="sess-down">-</button><span id="sess-count">4</span><span class="stepper-label">sessions/day</span><button class="stepper-btn" id="sess-up">+</button></div></div></div>

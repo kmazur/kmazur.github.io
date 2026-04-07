@@ -1,9 +1,14 @@
-import { PRESETS } from './constants.js';
+import { INTEGER_SLIDER_KEYS, PRESETS, SLIDER_KEYS } from './constants.js';
 import { config, state } from './state.js';
 import { SLIDER_FORMATTERS, fmtCost, fmtTok } from './formatters.js';
 import { showAnatomy, closeAnatomy } from './anatomy.js';
-import { update, updatePricingBox, updateIdleLabel } from './ui.js';
+import { applyModelConstraints, update, updatePricingBox, updateIdleLabel } from './ui.js';
 import { shareURL } from './url-state.js';
+
+function parseControlValue(key, rawValue) {
+  const value = parseFloat(rawValue);
+  return INTEGER_SLIDER_KEYS.has(key) ? Math.round(value) : value;
+}
 
 function mkTip(cvId, tipId, fmt) {
   const cv = document.getElementById(cvId), tip = document.getElementById(tipId);
@@ -32,6 +37,7 @@ export function bindEvents() {
   document.querySelectorAll('.model-btn').forEach(btn => btn.addEventListener('click', () => {
     document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active'); config.model = btn.dataset.model;
+    applyModelConstraints();
     updatePricingBox(); update();
   }));
 
@@ -42,19 +48,19 @@ export function bindEvents() {
     updatePricingBox(); updateIdleLabel(); update();
   }));
   document.querySelectorAll('#tg-ctx .toggle-btn').forEach(b => b.addEventListener('click', () => {
+    if (b.disabled) return;
     document.querySelectorAll('#tg-ctx .toggle-btn').forEach(x => x.classList.remove('active'));
     b.classList.add('active'); config.contextWindow = +b.dataset.val; update();
   }));
 
   // Sliders
-  for (const key of ['turns', 'sysPrompt', 'userMsg', 'responseTokens', 'thinkingTokens',
-    'toolRounds', 'toolResult', 'timeBetween', 'cacheDrops', 'compactions', 'compactRatio']) {
+  for (const key of SLIDER_KEYS) {
     const el = document.getElementById(key); if (!el) continue;
     el.addEventListener('input', () => {
-      config[key] = parseFloat(el.value);
+      config[key] = parseControlValue(key, el.value);
       const d = document.getElementById('v-' + key);
       if (d && SLIDER_FORMATTERS[key]) {
-        const formatted = SLIDER_FORMATTERS[key](el.value);
+        const formatted = SLIDER_FORMATTERS[key](config[key]);
         d.textContent = formatted;
         el.setAttribute('aria-valuetext', String(formatted));
       }

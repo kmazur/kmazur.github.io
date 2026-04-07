@@ -1,4 +1,10 @@
-import { MODELS, PRESETS, COMPACT_THRESHOLD, TOOL_CALL_OVERHEAD } from './constants.js';
+import {
+  MODELS,
+  PRESETS,
+  AUTO_COMPACT_THRESHOLD,
+  TOOL_CALL_OVERHEAD,
+  WEB_SEARCH_COST_PER_REQUEST,
+} from './constants.js';
 import { config, state } from './state.js';
 import { simulate, computeSensitivity, getCacheTTLMinutes } from './simulation.js';
 import { fmtCost, fmtTok, escHtml } from './formatters.js';
@@ -29,6 +35,27 @@ function animateEl(id, target, formatter) {
   s.raf = requestAnimationFrame(tick);
 }
 
+export function applyModelConstraints() {
+  const m = MODELS[config.model];
+  if (!m) return;
+  if (config.contextWindow > m.maxContext) config.contextWindow = m.maxContext;
+
+  document.querySelectorAll('#tg-ctx .toggle-btn').forEach(btn => {
+    const val = +btn.dataset.val;
+    btn.disabled = val > m.maxContext;
+    btn.classList.toggle('active', val === config.contextWindow);
+  });
+
+  const note = document.getElementById('model-cap-note');
+  if (note) {
+    const longCtx = m.maxContext >= 1000000
+      ? 'Supports 1M context at standard pricing.'
+      : 'Limited to 200K context for this model.';
+    note.textContent =
+      `${longCtx} Prompt caching starts at ${fmtTok(m.minCacheable)} input tokens. Claude Code auto-compaction is modeled at about 95% context usage.`;
+  }
+}
+
 export function updateSensitivityBadges() {
   const sens = computeSensitivity();
   const vals = Object.values(sens).filter(v => v > 0);
@@ -46,15 +73,24 @@ export function updateSensitivityBadges() {
   }
 }
 
+function getCostSegments(T) {
+  return [
+    { label: 'Cache Read', value: T.crCost, color: '#34d399' },
+    { label: 'Cache Write', value: T.cwCost, color: '#60a5fa' },
+    { label: 'Uncached Input', value: T.unCost, color: '#f59e0b' },
+    { label: 'Output', value: T.outCost, color: '#a78bfa' },
+    { label: 'Thinking', value: T.thCost, color: '#f472b6' },
+    { label: 'Compaction', value: T.compCost, color: '#f87171' },
+    { label: 'Background', value: T.backgroundCost, color: '#22d3ee' },
+    { label: 'Web Search', value: T.webCost, color: '#facc15' },
+  ];
+}
+
 function updateCostDrivers(T) {
-  const drivers = [
-    { name: 'Cache Read', cost: T.crCost, color: '#34d399' },
-    { name: 'Cache Write', cost: T.cwCost, color: '#60a5fa' },
-    { name: 'Uncached Input', cost: T.unCost, color: '#f59e0b' },
-    { name: 'Output', cost: T.outCost, color: '#a78bfa' },
-    { name: 'Thinking', cost: T.thCost, color: '#f472b6' },
-    { name: 'Compaction', cost: T.compCost, color: '#f87171' },
-  ].filter(d => d.cost > 0.0001).sort((a, b) => b.cost - a.cost);
+  const drivers = getCostSegments(T)
+    .map(seg => ({ name: seg.label, cost: seg.value, color: seg.color }))
+    .filter(d => d.cost > 0.0001)
+    .sort((a, b) => b.cost - a.cost);
   const mx = drivers[0]?.cost || 1;
   const total = drivers.reduce((s, d) => s + d.cost, 0);
   const el = document.getElementById('cost-drivers');
@@ -73,7 +109,7 @@ function updateCostDrivers(T) {
 function updateContextProjection(turns) {
   const el = document.getElementById('ctx-projection');
   const limit = config.contextWindow;
-  const threshold = limit * COMPACT_THRESHOLD;
+  const threshold = limit * AUTO_COMPACT_THRESHOLD;
   const growthPerTurn = config.userMsg + config.toolRounds * (TOOL_CALL_OVERHEAD + config.toolResult) + config.responseTokens;
   const turnsToThreshold = Math.max(0, Math.ceil((threshold - config.sysPrompt) / growthPerTurn));
 
@@ -83,9 +119,9 @@ function updateContextProjection(turns) {
   let html = `<div style="margin-bottom:8px">Growth: <strong>${escHtml(fmtTok(growthPerTurn))}</strong> tokens/turn</div>`;
 
   if (firstComp) {
-    html += `Auto-compact triggers at <strong>turn ${escHtml(firstComp.turn)}</strong> (context reaches <span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>)`;
+    html += `Auto-compact triggers around <strong>turn ${escHtml(firstComp.turn)}</strong> (about <span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>, or 95% of context)`;
   } else if (turnsToThreshold <= config.turns * 1.5) {
-    html += `At current rate, 70% threshold (<span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>) reached around <strong>turn ${escHtml(turnsToThreshold)}</strong>`;
+    html += `At current rate, the 95% threshold (<span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>) is reached around <strong>turn ${escHtml(turnsToThreshold)}</strong>`;
   } else {
     html += `Context stays well within limits. Final size: <span class="highlight">${escHtml(fmtTok(lastTurn?.contextSize || 0))}</span> of ${escHtml(fmtTok(limit))}`;
   }
@@ -131,12 +167,19 @@ function updateProjections(cost) {
   }
 }
 
-function updateSummarySentence(cost) {
+function updateSummarySentence(cost, T) {
   const m = MODELS[config.model];
   const spd = state.sessPerDay || 4;
   const mo = cost * spd * 30;
   const el = document.getElementById('summary-sentence');
-  el.innerHTML = `This <strong>${escHtml(config.turns)}-turn ${escHtml(m.name)}</strong> session costs <span class="hl">${escHtml(fmtCost(cost))}</span>, or <span class="hl">${escHtml(fmtCost(mo))}/mo</span> at ${escHtml(spd)} sessions/day`;
+  const extras = T.backgroundCost + T.webCost;
+  const extraBits = [];
+  if (T.backgroundCost > 0) extraBits.push(`${fmtCost(T.backgroundCost)} background`);
+  if (T.webCost > 0) {
+    extraBits.push(`${fmtCost(T.webCost)} web search (${config.webSearches} x ${fmtCost(WEB_SEARCH_COST_PER_REQUEST)})`);
+  }
+  el.innerHTML = `This <strong>${escHtml(config.turns)}-turn ${escHtml(m.name)}</strong> session costs <span class="hl">${escHtml(fmtCost(cost))}</span>, or <span class="hl">${escHtml(fmtCost(mo))}/mo</span> at ${escHtml(spd)} sessions/day`
+    + (extras > 0 ? `. Includes ${escHtml(extraBits.join(' + '))}.` : '');
 }
 
 export function updatePresetCosts() {
@@ -155,7 +198,9 @@ export function updatePricingBox() {
     `<div class="price-item"><span class="pl">Input</span><span class="pv">$${escHtml(m.input)}/MTok</span></div>
      <div class="price-item"><span class="pl">Output</span><span class="pv">$${escHtml(m.output)}/MTok</span></div>
      <div class="price-item"><span class="pl">Cache write</span><span class="pv">$${escHtml(cw)}/MTok</span></div>
-     <div class="price-item"><span class="pl">Cache read</span><span class="pv">$${escHtml(m.cacheRead)}/MTok</span></div>`;
+     <div class="price-item"><span class="pl">Cache read</span><span class="pv">$${escHtml(m.cacheRead)}/MTok</span></div>
+     <div class="price-item"><span class="pl">Max context</span><span class="pv">${escHtml(fmtTok(m.maxContext))}</span></div>
+     <div class="price-item"><span class="pl">Min cacheable</span><span class="pv">${escHtml(fmtTok(m.minCacheable))}</span></div>`;
 }
 
 export function updateIdleLabel() {
@@ -197,6 +242,7 @@ export function updateDangerZone() {
 }
 
 export function update() {
+  applyModelConstraints();
   const res = simulate(config);
   state.lastResult = res;
   const t = res.T;
@@ -222,6 +268,8 @@ export function update() {
 
   const totTok = t.crTok + t.cwTok + t.unTok + t.outTok + t.thTok;
   document.getElementById('sum-tokens').textContent = fmtTok(totTok);
+  document.getElementById('sum-extra-detail').textContent =
+    (t.backgroundCost + t.webCost) > 0 ? `+ ${fmtCost(t.backgroundCost + t.webCost)} extras` : '';
   document.getElementById('sum-thinking-pct').textContent =
     (t.outCost + t.thCost) > 0 ? ((t.thCost / (t.outCost + t.thCost)) * 100).toFixed(0) + '%' : '0%';
   document.getElementById('sum-calls-detail').textContent =
@@ -250,16 +298,9 @@ export function update() {
   drawLine(document.getElementById('chart-ctx'), [{ data: ctxD, color: '#60a5fa' }],
     { height: 200, yFmt: fmtTok,
       limitY: config.contextWindow, limitLabel: fmtTok(config.contextWindow) + ' limit',
-      thresholdY: config.contextWindow * COMPACT_THRESHOLD, thresholdLabel: '70% compact' });
+      thresholdY: config.contextWindow * AUTO_COMPACT_THRESHOLD, thresholdLabel: '95% compact' });
 
-  const segs = [
-    { label: 'Cache Read', value: t.crCost, color: '#34d399' },
-    { label: 'Cache Write', value: t.cwCost, color: '#60a5fa' },
-    { label: 'Uncached Input', value: t.unCost, color: '#f59e0b' },
-    { label: 'Output', value: t.outCost, color: '#a78bfa' },
-    { label: 'Thinking', value: t.thCost, color: '#f472b6' },
-    { label: 'Compaction', value: t.compCost, color: '#f87171' },
-  ].filter(s => s.value > 0.0001);
+  const segs = getCostSegments(t).filter(s => s.value > 0.0001);
   drawDonut(document.getElementById('chart-donut'), segs);
   document.getElementById('donut-legend').innerHTML = segs.map(s =>
     `<div class="legend-item"><div class="legend-dot" style="background:${escHtml(s.color)}"></div>
@@ -268,7 +309,7 @@ export function update() {
 
   buildModelBars('bar-comparison', config);
   updateProjections(t.cost);
-  updateSummarySentence(t.cost);
+  updateSummarySentence(t.cost, t);
   updatePresetCosts();
   updateCostDrivers(t);
   updateContextProjection(res.turns);

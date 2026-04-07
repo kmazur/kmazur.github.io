@@ -120,6 +120,9 @@ header .subtitle { font-size:11px; color:var(--text-muted); margin-left:auto; fo
 .toggle-btn:last-child { border-right:none; }
 .toggle-btn.active { background:var(--primary-soft); color:var(--primary); }
 .toggle-btn:hover:not(.active) { color:var(--text-secondary); }
+.toggle-btn:disabled {
+  color:rgba(122,131,159,0.45); cursor:not-allowed; background:rgba(255,255,255,0.01);
+}
 
 /* ── Pricing ── */
 .pricing-summary {

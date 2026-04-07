@@ -1,4 +1,11 @@
-import { MODELS, COMPACT_THRESHOLD, TOOL_CALL_OVERHEAD, SLIDER_RANGES } from './constants.js';
+import {
+  INTEGER_SLIDER_KEYS,
+  MODELS,
+  AUTO_COMPACT_THRESHOLD,
+  TOOL_CALL_OVERHEAD,
+  WEB_SEARCH_COST_PER_REQUEST,
+  SLIDER_RANGES,
+} from './constants.js';
 import { config } from './state.js';
 
 function getCacheWritePrice(m, ttl) {
@@ -9,11 +16,23 @@ export function getCacheTTLMinutes(ttl) {
   return ttl === '1h' ? 60 : 5;
 }
 
+function buildThinkingPlan(totalThink, nCalls) {
+  if (nCalls <= 1) return [totalThink];
+  const perCall = Math.floor(totalThink / nCalls);
+  const plan = Array(nCalls).fill(perCall);
+  plan[nCalls - 1] += totalThink - (perCall * nCalls);
+  return plan;
+}
+
 function costOneCall(inputTok, outputTok, thinkTok, model, cwPrice, warm, cachedPrefix, noCache) {
   const R = 1e6;
   let cr = 0, cw = 0, un = 0;
+  const canCache = inputTok >= model.minCacheable;
   if (noCache) {
     // No caching at all: pay full base input rate
+    un = inputTok;
+  } else if (!canCache) {
+    // Anthropic silently skips caching for prompts below the per-model minimum.
     un = inputTok;
   } else if (warm && cachedPrefix > 0) {
     // Cache hit: read cached prefix, write new tokens into cache
@@ -24,7 +43,7 @@ function costOneCall(inputTok, outputTok, thinkTok, model, cwPrice, warm, cached
     cw = inputTok;
   }
   return {
-    cr, cw, un, out: outputTok, think: thinkTok,
+    cr, cw, un, out: outputTok, think: thinkTok, cacheEligible: canCache,
     crCost: cr * model.cacheRead / R,
     cwCost: cw * cwPrice / R,
     unCost: un * model.input / R,
@@ -38,7 +57,7 @@ export function simulate(cfg, modelOverride) {
   const m = MODELS[modelOverride || cfg.model];
   const cwPrice = getCacheWritePrice(m, cfg.cacheTTL);
   const ttlMin = getCacheTTLMinutes(cfg.cacheTTL);
-  const ctxLimit = cfg.contextWindow;
+  const ctxLimit = Math.min(cfg.contextWindow, m.maxContext);
   const noCache = !!cfg._noCache;
 
   const dropSet = new Set();
@@ -55,6 +74,7 @@ export function simulate(cfg, modelOverride) {
   let ctx = cfg.sysPrompt, warm = false, cached = 0;
   const T = {
     cost: 0, crCost: 0, cwCost: 0, unCost: 0, outCost: 0, thCost: 0, compCost: 0,
+    backgroundCost: 0, webCost: 0,
     crTok: 0, cwTok: 0, unTok: 0, outTok: 0, thTok: 0, apiCalls: 0,
   };
   const turns = [];
@@ -64,7 +84,8 @@ export function simulate(cfg, modelOverride) {
     const wasWarm = warm;
     if (isDrop) { warm = false; cached = 0; }
 
-    const needComp = compSet.has(t) || (cfg.autoCompact && ctx >= ctxLimit * COMPACT_THRESHOLD);
+    const turnInput = ctx + cfg.userMsg;
+    const needComp = compSet.has(t) || (cfg.autoCompact && turnInput >= ctxLimit * AUTO_COMPACT_THRESHOLD);
     let compCost = 0, compDetail = null;
     if (needComp) {
       const summ = Math.floor(ctx * cfg.compactRatio);
@@ -77,6 +98,7 @@ export function simulate(cfg, modelOverride) {
     }
 
     const nCalls = 1 + cfg.toolRounds;
+    const thinkingPlan = buildThinkingPlan(cfg.thinkingTokens, nCalls);
     let curIn = ctx + cfg.userMsg;
     let tCR = 0, tCW = 0, tUN = 0, tOut = 0, tTh = 0;
     let tCRc = 0, tCWc = 0, tUNc = 0, tOc = 0, tThc = 0;
@@ -85,7 +107,7 @@ export function simulate(cfg, modelOverride) {
     for (let a = 0; a < nCalls; a++) {
       const last = a === nCalls - 1;
       const oTok = last ? cfg.responseTokens : TOOL_CALL_OVERHEAD;
-      const thTok = last ? cfg.thinkingTokens : 0;
+      const thTok = thinkingPlan[a] || 0;
       const c = costOneCall(curIn, oTok, thTok, m, cwPrice, warm, cached, noCache);
 
       callDetails.push({
@@ -98,8 +120,9 @@ export function simulate(cfg, modelOverride) {
       tCR += c.cr; tCRc += c.crCost; tCW += c.cw; tCWc += c.cwCost;
       tUN += c.un; tUNc += c.unCost; tOut += oTok; tOc += c.outCost;
       tTh += thTok; tThc += c.thCost;
-      if (!noCache) { cached = curIn; warm = true; }
-      if (!last) curIn += oTok + cfg.toolResult;
+      if (!noCache && c.cacheEligible) { cached = curIn; warm = true; }
+      else if (!noCache) { cached = 0; warm = false; }
+      if (!last) curIn += oTok + thTok + cfg.toolResult;
     }
 
     T.apiCalls += nCalls;
@@ -118,6 +141,11 @@ export function simulate(cfg, modelOverride) {
       apiCalls: callDetails, compDetail, nCalls,
     });
   }
+
+  T.backgroundCost = Math.max(0, Number(cfg.backgroundCost) || 0);
+  T.webCost = Math.max(0, Number(cfg.webSearches) || 0) * WEB_SEARCH_COST_PER_REQUEST;
+  T.cost += T.backgroundCost + T.webCost;
+
   return { T, turns };
 }
 
@@ -126,14 +154,20 @@ export function simulateNoCacheCost(cfg) {
   return simulate({ ...cfg, _noCache: true }).T.cost;
 }
 
+function normalizeSensitivityValue(key, value, range) {
+  const bounded = Math.max(range.min, Math.min(range.max, value));
+  return INTEGER_SLIDER_KEYS.has(key) ? Math.round(bounded) : bounded;
+}
+
 export function computeSensitivity() {
   const base = simulate(config).T.cost;
   if (base === 0) return {};
   const results = {};
   for (const [key, { min, max }] of Object.entries(SLIDER_RANGES)) {
     const delta = (max - min) * 0.10;
-    const up = { ...config, [key]: Math.min(max, config[key] + delta) };
-    const dn = { ...config, [key]: Math.max(min, config[key] - delta) };
+    const range = { min, max };
+    const up = { ...config, [key]: normalizeSensitivityValue(key, config[key] + delta, range) };
+    const dn = { ...config, [key]: normalizeSensitivityValue(key, config[key] - delta, range) };
     const costUp = simulate(up).T.cost;
     const costDn = simulate(dn).T.cost;
     results[key] = Math.abs(costUp - costDn) / base;

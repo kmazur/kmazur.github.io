@@ -1,7 +1,8 @@
 import { config } from './state.js';
+import { SLIDER_KEYS } from './constants.js';
 import { SLIDER_FORMATTERS } from './formatters.js';
-import { loadFromURL, shareURL } from './url-state.js';
-import { update, updatePricingBox, updateIdleLabel } from './ui.js';
+import { loadFromURL } from './url-state.js';
+import { applyModelConstraints, update, updatePricingBox, updateIdleLabel } from './ui.js';
 import { bindEvents } from './events.js';
 
 function restoreUIFromConfig() {
@@ -18,8 +19,7 @@ function restoreUIFromConfig() {
     b.classList.toggle('active', +b.dataset.val === config.contextWindow);
   });
   // Sliders
-  for (const key of ['turns', 'sysPrompt', 'userMsg', 'responseTokens', 'thinkingTokens',
-    'toolRounds', 'toolResult', 'timeBetween', 'cacheDrops', 'compactions', 'compactRatio']) {
+  for (const key of SLIDER_KEYS) {
     const el = document.getElementById(key); if (!el) continue;
     el.value = config[key];
     const d = document.getElementById('v-' + key);
@@ -32,10 +32,13 @@ function restoreUIFromConfig() {
   document.getElementById('autoCompact').checked = config.autoCompact;
 }
 
-// Init
-const loaded = loadFromURL();
-if (loaded) restoreUIFromConfig();
-bindEvents();
-updatePricingBox();
-updateIdleLabel();
-update();
+// Init in browser contexts only so modules remain importable in Node-based checks.
+if (typeof document !== 'undefined') {
+  const loaded = loadFromURL();
+  applyModelConstraints();
+  if (loaded) restoreUIFromConfig();
+  bindEvents();
+  updatePricingBox();
+  updateIdleLabel();
+  update();
+}

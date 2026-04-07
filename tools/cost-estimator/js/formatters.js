@@ -33,5 +33,7 @@ export const SLIDER_FORMATTERS = {
   cacheDrops: v => v,
   compactions: v => v,
   compactRatio: v => Math.round(v * 100) + '%',
+  backgroundCost: v => fmtCost(+v),
+  webSearches: v => v,
   sessPerDay: v => v,
 };

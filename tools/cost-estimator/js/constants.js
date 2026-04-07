@@ -1,7 +1,7 @@
 export const MODELS = {
-  'opus-4.6':   { name:'Opus 4.6',   input:5,  output:25, cache5m:6.25, cache1h:10, cacheRead:0.50, color:'#a78bfa' },
-  'sonnet-4.6': { name:'Sonnet 4.6', input:3,  output:15, cache5m:3.75, cache1h:6,  cacheRead:0.30, color:'#60a5fa' },
-  'haiku-4.5':  { name:'Haiku 4.5',  input:1,  output:5,  cache5m:1.25, cache1h:2,  cacheRead:0.10, color:'#34d399' },
+  'opus-4.6':   { name:'Opus 4.6',   input:5,  output:25, cache5m:6.25, cache1h:10, cacheRead:0.50, color:'#a78bfa', maxContext:1000000, minCacheable:4096 },
+  'sonnet-4.6': { name:'Sonnet 4.6', input:3,  output:15, cache5m:3.75, cache1h:6,  cacheRead:0.30, color:'#60a5fa', maxContext:1000000, minCacheable:2048 },
+  'haiku-4.5':  { name:'Haiku 4.5',  input:1,  output:5,  cache5m:1.25, cache1h:2,  cacheRead:0.10, color:'#34d399', maxContext:200000, minCacheable:4096 },
 };
 
 // Presets only override usage-pattern inputs (task shape).
@@ -15,9 +15,40 @@ export const PRESETS = {
   vibe:        { turns:100, userMsg:600,  responseTokens:3000, thinkingTokens:10000, toolRounds:6,  toolResult:1200, cacheDrops:3, compactions:4, compactRatio:0.20 },
 };
 
-export const COMPACT_THRESHOLD = 0.70;
+// Claude Code auto-compacts close to the context limit rather than at the much
+// earlier API compaction thresholds used in some raw API examples.
+export const AUTO_COMPACT_THRESHOLD = 0.95;
 // Approximate output tokens per tool-use call (function name, JSON schema, invocation boilerplate)
 export const TOOL_CALL_OVERHEAD = 180;
+export const WEB_SEARCH_COST_PER_REQUEST = 0.01;
+export const DEFAULT_BACKGROUND_COST = 0.02;
+export const SLIDER_KEYS = [
+  'turns',
+  'sysPrompt',
+  'userMsg',
+  'responseTokens',
+  'thinkingTokens',
+  'toolRounds',
+  'toolResult',
+  'timeBetween',
+  'cacheDrops',
+  'compactions',
+  'compactRatio',
+  'backgroundCost',
+  'webSearches',
+];
+export const INTEGER_SLIDER_KEYS = new Set([
+  'turns',
+  'sysPrompt',
+  'userMsg',
+  'responseTokens',
+  'thinkingTokens',
+  'toolRounds',
+  'toolResult',
+  'cacheDrops',
+  'compactions',
+  'webSearches',
+]);
 
 export const SLIDER_RANGES = {
   turns:           { min: 1,    max: 200 },
@@ -31,4 +62,6 @@ export const SLIDER_RANGES = {
   cacheDrops:      { min: 0,    max: 15 },
   compactions:     { min: 0,    max: 10 },
   compactRatio:    { min: 0.1,  max: 0.5 },
+  backgroundCost:  { min: 0,    max: 0.04 },
+  webSearches:     { min: 0,    max: 20 },
 };
