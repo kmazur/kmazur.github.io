@@ -8,11 +8,16 @@ export const config = {
   timeBetween:1.5, cacheDrops:0,
   compactions:0, compactRatio:0.25, autoCompact:true,
   backgroundCost:DEFAULT_BACKGROUND_COST, webSearches:0,
+  sessPerDay:4, monthlyBudget:100,
+  hourlyRate:120, timeSavedMins:20, workdaysPerMonth:20,
+  interruptions:1, retryRate:10,
+  parallelAgents:0, parallelAgentCostRatio:0.35,
+  toolMix:'balanced', uncertainty:'med',
+  mixQuickFix:2, mixFeature:4, mixReview:2, mixRefactor:1, mixExploration:1, mixVibe:0,
 };
 
 export const state = {
   lastResult: null,
   lastPreset: null,
   animState: {},
-  sessPerDay: 4,
 };

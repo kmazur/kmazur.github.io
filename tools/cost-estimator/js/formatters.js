@@ -17,6 +17,15 @@ export function fmtComma(n) {
   return (+n).toLocaleString('en-US');
 }
 
+export function fmtPct(v, digits = 0) {
+  return (+v).toFixed(digits) + '%';
+}
+
+export function fmtMins(v) {
+  if (v >= 60) return (v / 60).toFixed(v % 60 === 0 ? 0 : 1) + ' hr';
+  return Math.round(v) + ' min';
+}
+
 export function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -35,5 +44,19 @@ export const SLIDER_FORMATTERS = {
   compactRatio: v => Math.round(v * 100) + '%',
   backgroundCost: v => fmtCost(+v),
   webSearches: v => v,
-  sessPerDay: v => v,
+  hourlyRate: v => '$' + Math.round(+v) + '/hr',
+  timeSavedMins: v => fmtMins(+v),
+  workdaysPerMonth: v => Math.round(+v) + ' days',
+  interruptions: v => Math.round(+v),
+  retryRate: v => fmtPct(+v),
+  parallelAgents: v => Math.round(+v),
+  parallelAgentCostRatio: v => fmtPct((+v) * 100),
+  mixQuickFix: v => 'x' + Math.round(+v),
+  mixFeature: v => 'x' + Math.round(+v),
+  mixReview: v => 'x' + Math.round(+v),
+  mixRefactor: v => 'x' + Math.round(+v),
+  mixExploration: v => 'x' + Math.round(+v),
+  mixVibe: v => 'x' + Math.round(+v),
+  sessPerDay: v => Math.round(+v),
+  monthlyBudget: v => fmtCost(+v),
 };

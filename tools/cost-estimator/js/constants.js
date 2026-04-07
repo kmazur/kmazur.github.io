@@ -22,6 +22,45 @@ export const AUTO_COMPACT_THRESHOLD = 0.95;
 export const TOOL_CALL_OVERHEAD = 180;
 export const WEB_SEARCH_COST_PER_REQUEST = 0.01;
 export const DEFAULT_BACKGROUND_COST = 0.02;
+export const SESSION_MIX = [
+  { key:'mixQuickFix', preset:'quickFix', label:'Quick Fix' },
+  { key:'mixFeature', preset:'feature', label:'Feature' },
+  { key:'mixReview', preset:'review', label:'Review' },
+  { key:'mixRefactor', preset:'refactor', label:'Refactor' },
+  { key:'mixExploration', preset:'exploration', label:'Explore' },
+  { key:'mixVibe', preset:'vibe', label:'Vibe' },
+];
+export const TOOL_MIX_OPTIONS = {
+  local: {
+    label:'Local',
+    note:'Mostly local CLI, file reads, and edits. Lowest external pricing risk.',
+    rangeDown:0.96,
+    rangeUp:1.04,
+  },
+  balanced: {
+    label:'Balanced',
+    note:'Mix of local work with occasional web/docs/tool usage.',
+    rangeDown:0.93,
+    rangeUp:1.10,
+  },
+  research: {
+    label:'Research',
+    note:'Heavier web/docs usage. Search fees and larger fetched contexts matter more.',
+    rangeDown:0.90,
+    rangeUp:1.18,
+  },
+  execution: {
+    label:'Execution',
+    note:'Server-side tools and code execution add the most hidden-cost variance.',
+    rangeDown:0.88,
+    rangeUp:1.28,
+  },
+};
+export const UNCERTAINTY_OPTIONS = {
+  low:  { label:'Low', rangeDown:0.95, rangeUp:1.10 },
+  med:  { label:'Med', rangeDown:0.85, rangeUp:1.25 },
+  high: { label:'High', rangeDown:0.72, rangeUp:1.50 },
+};
 export const SLIDER_KEYS = [
   'turns',
   'sysPrompt',
@@ -36,6 +75,19 @@ export const SLIDER_KEYS = [
   'compactRatio',
   'backgroundCost',
   'webSearches',
+  'hourlyRate',
+  'timeSavedMins',
+  'workdaysPerMonth',
+  'interruptions',
+  'retryRate',
+  'parallelAgents',
+  'parallelAgentCostRatio',
+  'mixQuickFix',
+  'mixFeature',
+  'mixReview',
+  'mixRefactor',
+  'mixExploration',
+  'mixVibe',
 ];
 export const INTEGER_SLIDER_KEYS = new Set([
   'turns',
@@ -48,6 +100,18 @@ export const INTEGER_SLIDER_KEYS = new Set([
   'cacheDrops',
   'compactions',
   'webSearches',
+  'hourlyRate',
+  'timeSavedMins',
+  'workdaysPerMonth',
+  'interruptions',
+  'retryRate',
+  'parallelAgents',
+  'mixQuickFix',
+  'mixFeature',
+  'mixReview',
+  'mixRefactor',
+  'mixExploration',
+  'mixVibe',
 ]);
 
 export const SLIDER_RANGES = {

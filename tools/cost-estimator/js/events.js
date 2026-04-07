@@ -29,6 +29,16 @@ function mkTip(cvId, tipId, fmt) {
   cv.addEventListener('mouseleave', () => tip.classList.remove('visible'));
 }
 
+function bindToggleGroup(groupId, key, parse = v => v) {
+  document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(btn => btn.addEventListener('click', () => {
+    if (btn.disabled) return;
+    document.querySelectorAll(`#${groupId} .toggle-btn`).forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    config[key] = parse(btn.dataset.val);
+    update();
+  }));
+}
+
 export function bindEvents() {
   // Share button
   document.getElementById('shareBtn').addEventListener('click', shareURL);
@@ -47,11 +57,9 @@ export function bindEvents() {
     b.classList.add('active'); config.cacheTTL = b.dataset.val;
     updatePricingBox(); updateIdleLabel(); update();
   }));
-  document.querySelectorAll('#tg-ctx .toggle-btn').forEach(b => b.addEventListener('click', () => {
-    if (b.disabled) return;
-    document.querySelectorAll('#tg-ctx .toggle-btn').forEach(x => x.classList.remove('active'));
-    b.classList.add('active'); config.contextWindow = +b.dataset.val; update();
-  }));
+  bindToggleGroup('tg-ctx', 'contextWindow', v => +v);
+  bindToggleGroup('tg-toolmix', 'toolMix');
+  bindToggleGroup('tg-uncertainty', 'uncertainty');
 
   // Sliders
   for (const key of SLIDER_KEYS) {
@@ -69,12 +77,16 @@ export function bindEvents() {
   }
   // Sessions/day stepper
   document.getElementById('sess-up').addEventListener('click', () => {
-    state.sessPerDay = Math.min(30, (state.sessPerDay || 4) + 1); update();
+    config.sessPerDay = Math.min(30, (config.sessPerDay || 4) + 1); update();
   });
   document.getElementById('sess-down').addEventListener('click', () => {
-    state.sessPerDay = Math.max(1, (state.sessPerDay || 4) - 1); update();
+    config.sessPerDay = Math.max(1, (config.sessPerDay || 4) - 1); update();
   });
-  document.getElementById('budgetInput').addEventListener('input', () => update());
+  document.getElementById('budgetInput').addEventListener('input', e => {
+    const raw = parseFloat(e.target.value);
+    config.monthlyBudget = Number.isFinite(raw) ? raw : 0;
+    update();
+  });
   document.getElementById('autoCompact').addEventListener('change', e => { config.autoCompact = e.target.checked; update(); });
 
   // Presets

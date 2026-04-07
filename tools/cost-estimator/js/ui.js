@@ -6,8 +6,8 @@ import {
   WEB_SEARCH_COST_PER_REQUEST,
 } from './constants.js';
 import { config, state } from './state.js';
-import { simulate, computeSensitivity, getCacheTTLMinutes } from './simulation.js';
-import { fmtCost, fmtTok, escHtml } from './formatters.js';
+import { simulate, computePlanning, computeSensitivity, getCacheTTLMinutes } from './simulation.js';
+import { fmtCost, fmtMins, fmtPct, fmtTok, escHtml } from './formatters.js';
 import { drawLine, drawStackedBars, drawDonut, buildModelBars } from './charts.js';
 import { syncToURL } from './url-state.js';
 
@@ -29,10 +29,25 @@ function animateEl(id, target, formatter) {
     const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
     s.current = from + (s.target - from) * ease;
     document.getElementById(id).textContent = formatter(s.current);
-    if (t < 1) { s.raf = requestAnimationFrame(tick); }
-    else { s.raf = null; s.current = s.target; document.getElementById(id).textContent = formatter(s.target); }
+    if (t < 1) {
+      s.raf = requestAnimationFrame(tick);
+    } else {
+      s.raf = null;
+      s.current = s.target;
+      document.getElementById(id).textContent = formatter(s.target);
+    }
   }
   s.raf = requestAnimationFrame(tick);
+}
+
+function fmtSignedCost(value) {
+  if (value === 0) return fmtCost(0);
+  return (value > 0 ? '+' : '-') + fmtCost(Math.abs(value));
+}
+
+function formatCount(value) {
+  if (value >= 10) return value.toFixed(0);
+  return value.toFixed(1);
 }
 
 export function applyModelConstraints() {
@@ -61,15 +76,21 @@ export function updateSensitivityBadges() {
   const vals = Object.values(sens).filter(v => v > 0);
   if (vals.length === 0) return;
   vals.sort((a, b) => b - a);
-  // p33 = top-third boundary (high value), p66 = top-two-thirds boundary (lower value)
   const highThreshold = vals[Math.floor(vals.length * 0.33)] || 0;
   const medThreshold = vals[Math.floor(vals.length * 0.66)] || 0;
   for (const [key, val] of Object.entries(sens)) {
     const el = document.querySelector(`[data-sens="${key}"]`);
     if (!el) continue;
-    if (val >= highThreshold) { el.className = 'sens-tag high'; el.textContent = 'HIGH'; }
-    else if (val >= medThreshold) { el.className = 'sens-tag med'; el.textContent = 'MED'; }
-    else { el.className = 'sens-tag low'; el.textContent = 'LOW'; }
+    if (val >= highThreshold) {
+      el.className = 'sens-tag high';
+      el.textContent = 'HIGH';
+    } else if (val >= medThreshold) {
+      el.className = 'sens-tag med';
+      el.textContent = 'MED';
+    } else {
+      el.className = 'sens-tag low';
+      el.textContent = 'LOW';
+    }
   }
 }
 
@@ -91,9 +112,14 @@ function updateCostDrivers(T) {
     .map(seg => ({ name: seg.label, cost: seg.value, color: seg.color }))
     .filter(d => d.cost > 0.0001)
     .sort((a, b) => b.cost - a.cost);
-  const mx = drivers[0]?.cost || 1;
-  const total = drivers.reduce((s, d) => s + d.cost, 0);
   const el = document.getElementById('cost-drivers');
+  if (!drivers.length) {
+    el.textContent = 'No billable activity yet.';
+    return;
+  }
+
+  const mx = drivers[0]?.cost || 1;
+  const total = drivers.reduce((sum, d) => sum + d.cost, 0);
   el.innerHTML = drivers.map(d => {
     const pct = (d.cost / total * 100).toFixed(0);
     const barW = (d.cost / mx * 100).toFixed(1);
@@ -136,41 +162,101 @@ function updateContextProjection(turns) {
   el.innerHTML = html;
 }
 
-function updateProjections(cost) {
-  // Monthly cost in summary card
-  const spd = state.sessPerDay || 4;
-  const mo = cost * spd * 30;
-  animateEl('sum-monthly', mo, fmtCost);
-  document.getElementById('sess-count').textContent = spd;
+function updateMixPlanner(planning) {
+  const el = document.getElementById('mix-planner');
+  const active = planning.mixEntries
+    .filter(entry => entry.weight > 0)
+    .sort((a, b) => b.weight - a.weight);
 
-  // Budget calculator
-  const budget = parseFloat(document.getElementById('budgetInput').value) || 0;
-  if (cost > 0 && budget > 0) {
-    const sess = Math.floor(budget / cost);
-    document.getElementById('proj-budget').textContent = sess + ' sessions';
-    document.getElementById('proj-budget-detail').textContent = '= ' + (sess / 30).toFixed(1) + ' sessions/day for 30 days';
+  if (!active.length) {
+    el.textContent = 'Add session weights to see a blended monthly plan.';
+    return;
+  }
+
+  const totalWeight = active.reduce((sum, entry) => sum + entry.weight, 0);
+  el.innerHTML = `
+    <div class="mix-list">
+      ${active.map(entry => {
+        const share = totalWeight > 0 ? (entry.weight / totalWeight * 100) : 0;
+        return `<div class="mix-row">
+          <div class="mix-row-label">${escHtml(entry.label)}</div>
+          <div class="mix-row-bar"><div class="mix-row-fill" style="width:${share.toFixed(1)}%"></div></div>
+          <div class="mix-row-meta">${escHtml('x' + entry.weight)} · ${escHtml(fmtCost(entry.cost))}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="proj-detail">Blend: ${escHtml(fmtCost(planning.blendedSession))}/session. Dominant mix: ${escHtml(planning.dominantMix?.label || 'n/a')}.</div>
+  `;
+}
+
+function updateProjections(cost, planning) {
+  animateEl('sum-monthly', planning.monthlyBlended, fmtCost);
+  document.getElementById('sess-count').textContent = config.sessPerDay;
+  document.getElementById('monthly-plan-detail').textContent =
+    `${config.sessPerDay}/day x ${config.workdaysPerMonth} workdays = ${planning.sessionsPerMonth.toLocaleString()} sessions/mo. Blend ${fmtCost(planning.blendedSession)}/session.`;
+
+  const budgetInput = document.getElementById('budgetInput');
+  if (budgetInput && document.activeElement !== budgetInput) {
+    budgetInput.value = config.monthlyBudget;
+  }
+
+  const budget = config.monthlyBudget || 0;
+  if (budget > 0 && planning.blendedSession > 0) {
+    const headroom = budget - planning.monthlyBlended;
+    const fitting = planning.presetBudgetView.filter(entry => entry.fits).map(entry => entry.label).slice(0, 3);
+    document.getElementById('proj-budget').textContent = `${formatCount(planning.safeSessionsPerDay)}/day safe`;
+    document.getElementById('proj-budget-detail').textContent =
+      `${planning.sessionsWithinBudget.toLocaleString()} sessions/mo within ${fmtCost(budget)}. Planned blend uses ${fmtPct(planning.budgetUtilization * 100, 0)}${headroom >= 0 ? ` with ${fmtCost(headroom)} headroom.` : ` and is ${fmtCost(Math.abs(headroom))} over.`} ${fitting.length ? `Fits: ${fitting.join(', ')}.` : 'No default preset comfortably fits at this pace.'}`;
   } else {
     document.getElementById('proj-budget').textContent = '\u2014';
     document.getElementById('proj-budget-detail').textContent = '';
   }
 
-  // Cost per hour
   const sessionMins = config.timeBetween * config.turns;
-  if (cost > 0 && sessionMins > 0) {
-    const costPerHr = cost / (sessionMins / 60);
-    document.getElementById('cost-per-hour').textContent = fmtCost(costPerHr) + ' / hr';
+  if (planning.effectiveSession > 0 && sessionMins > 0) {
+    const costPerHr = planning.effectiveSession / (sessionMins / 60);
+    const sessionsPerEngineerHour = config.hourlyRate > 0 ? config.hourlyRate / planning.effectiveSession : 0;
+    document.getElementById('cost-per-hour').textContent = `${fmtCost(costPerHr)} / hr`;
     document.getElementById('cost-per-hour-detail').textContent =
-      `${config.turns} turns x ${config.timeBetween} min = ${Math.round(sessionMins)} min session`;
+      planning.costPctOfLabor != null
+        ? `${fmtPct(planning.costPctOfLabor, 0)} of ${fmtCost(config.hourlyRate)}/hr labor. One engineer hour costs about ${formatCount(sessionsPerEngineerHour)} sessions.`
+        : `${config.turns} turns x ${config.timeBetween} min ~= ${Math.round(sessionMins)} min visible session.`;
   } else {
     document.getElementById('cost-per-hour').textContent = '\u2014';
     document.getElementById('cost-per-hour-detail').textContent = '';
   }
+
+  if (planning.perSessionLaborValue > 0 && config.hourlyRate > 0) {
+    document.getElementById('proj-roi').textContent = fmtMins(planning.breakEvenMins);
+    document.getElementById('proj-roi-detail').textContent =
+      `${fmtCost(planning.perSessionLaborValue)} labor recovered/session at ${fmtMins(config.timeSavedMins)} saved. Net ${fmtSignedCost(planning.netValuePerSession)} per session and ${fmtSignedCost(planning.monthlyNetValue)} per month.`;
+  } else {
+    document.getElementById('proj-roi').textContent = '\u2014';
+    document.getElementById('proj-roi-detail').textContent = 'Set hourly rate and time saved to estimate break-even and ROI.';
+  }
+
+  document.getElementById('proj-range').textContent = `${fmtCost(planning.monthlyLean)} - ${fmtCost(planning.monthlyHeavy)}`;
+  document.getElementById('proj-range-detail').textContent =
+    `${planning.toolMix.label} tool mix with ${planning.uncertainty.label.toUpperCase()} variance. Midpoint: ${fmtCost(planning.monthlyBlended)}/mo.`;
+
+  document.getElementById('proj-marginal').textContent =
+    planning.marginalTurnCost > 0 ? `+${fmtCost(planning.marginalTurnCost)} / turn` : '\u2014';
+  document.getElementById('proj-marginal-detail').textContent =
+    `Cache miss: ${fmtSignedCost(planning.cacheMissCost)}. Web search fee: ${fmtCost(planning.directWebSearchCost)} before token costs.`;
+
+  const currentName = MODELS[config.model]?.name || 'Current model';
+  const preferredAlt = config.model === 'opus-4.6'
+    ? { label: 'Sonnet 4.6', cost: planning.sonnetCost }
+    : { label: 'Opus 4.6', cost: planning.opusCost };
+  const altDelta = preferredAlt.cost - planning.currentModelCost;
+  document.getElementById('proj-model-switch').textContent =
+    altDelta === 0 ? 'No change' : `${altDelta < 0 ? 'Save' : 'Spend'} ${fmtCost(Math.abs(altDelta))}`;
+  document.getElementById('proj-model-switch-detail').textContent =
+    `${currentName}: ${fmtCost(planning.currentModelCost)}. Sonnet: ${fmtCost(planning.sonnetCost)} (${fmtSignedCost(planning.sonnetCost - planning.currentModelCost)}). Opus: ${fmtCost(planning.opusCost)} (${fmtSignedCost(planning.opusCost - planning.currentModelCost)}).`;
 }
 
-function updateSummarySentence(cost, T) {
+function updateSummarySentence(cost, T, planning) {
   const m = MODELS[config.model];
-  const spd = state.sessPerDay || 4;
-  const mo = cost * spd * 30;
   const el = document.getElementById('summary-sentence');
   const extras = T.backgroundCost + T.webCost;
   const extraBits = [];
@@ -178,13 +264,23 @@ function updateSummarySentence(cost, T) {
   if (T.webCost > 0) {
     extraBits.push(`${fmtCost(T.webCost)} web search (${config.webSearches} x ${fmtCost(WEB_SEARCH_COST_PER_REQUEST)})`);
   }
-  el.innerHTML = `This <strong>${escHtml(config.turns)}-turn ${escHtml(m.name)}</strong> session costs <span class="hl">${escHtml(fmtCost(cost))}</span>, or <span class="hl">${escHtml(fmtCost(mo))}/mo</span> at ${escHtml(spd)} sessions/day`
-    + (extras > 0 ? `. Includes ${escHtml(extraBits.join(' + '))}.` : '');
+
+  let html = `Raw <strong>${escHtml(config.turns)}-turn ${escHtml(m.name)}</strong> session cost is <span class="hl">${escHtml(fmtCost(cost))}</span>. `;
+  html += `Effective workflow cost after interruptions, retries, and helpers is <span class="hl">${escHtml(fmtCost(planning.effectiveSession))}</span>. `;
+  html += `Your blended portfolio lands at <span class="hl">${escHtml(fmtCost(planning.monthlyBlended))}/mo</span> at ${escHtml(config.sessPerDay)} sessions/day across ${escHtml(config.workdaysPerMonth)} workdays.`;
+  if (planning.perSessionLaborValue > 0 && config.hourlyRate > 0) {
+    html += ` Break-even is <span class="hl">${escHtml(fmtMins(planning.breakEvenMins))}</span> saved per session against ${escHtml(fmtCost(config.hourlyRate))}/hr labor.`;
+  }
+  if (extras > 0) {
+    html += ` Extras modeled: ${escHtml(extraBits.join(' + '))}.`;
+  }
+  el.innerHTML = html;
 }
 
 export function updatePresetCosts() {
   document.querySelectorAll('.preset-card').forEach(btn => {
-    const p = PRESETS[btn.dataset.preset]; if (!p) return;
+    const p = PRESETS[btn.dataset.preset];
+    if (!p) return;
     const r = simulate({ ...config, ...p });
     const el = btn.querySelector('[data-pcost]');
     if (el) el.textContent = '~' + fmtCost(r.T.cost);
@@ -205,7 +301,7 @@ export function updatePricingBox() {
 
 export function updateIdleLabel() {
   const ttl = config.cacheTTL === '1h' ? '1 hr' : '5 min';
-  document.getElementById('lbl-cacheDrops').textContent = 'Idle breaks (>' + ttl + ' gaps)';
+  document.getElementById('lbl-cacheDrops').textContent = `Manual idle breaks (>${ttl} gaps)`;
 }
 
 export function detectActivePreset() {
@@ -213,7 +309,10 @@ export function detectActivePreset() {
     const p = PRESETS[key];
     let match = true;
     for (const [k, v] of Object.entries(p)) {
-      if (config[k] !== v) { match = false; break; }
+      if (config[k] !== v) {
+        match = false;
+        break;
+      }
     }
     if (match) return key;
   }
@@ -244,6 +343,7 @@ export function updateDangerZone() {
 export function update() {
   applyModelConstraints();
   const res = simulate(config);
+  const planning = computePlanning(config);
   state.lastResult = res;
   const t = res.T;
 
@@ -257,12 +357,12 @@ export function update() {
 
   const half = Math.floor(res.turns.length / 2);
   if (half > 0 && res.turns.length > 2) {
-    const first = res.turns.slice(0, half).reduce((s, d) => s + d.turnCost, 0) / half;
-    const second = res.turns.slice(half).reduce((s, d) => s + d.turnCost, 0) / (res.turns.length - half);
+    const first = res.turns.slice(0, half).reduce((sum, d) => sum + d.turnCost, 0) / half;
+    const second = res.turns.slice(half).reduce((sum, d) => sum + d.turnCost, 0) / (res.turns.length - half);
     const ratio = second / Math.max(first, 0.001);
-    const arrow = ratio > 1.15 ? '<span class="trend-arrow up">&#9650;</span> rising' :
-                  ratio < 0.85 ? '<span class="trend-arrow down">&#9660;</span> falling' :
-                  '<span class="trend-arrow flat">&#9654;</span> stable';
+    const arrow = ratio > 1.15 ? '<span class="trend-arrow up">&#9650;</span> rising'
+      : ratio < 0.85 ? '<span class="trend-arrow down">&#9660;</span> falling'
+      : '<span class="trend-arrow flat">&#9654;</span> stable';
     document.getElementById('sum-avg-detail').innerHTML = arrow;
   }
 
@@ -283,7 +383,9 @@ export function update() {
   document.getElementById('cache-eff-ratio').textContent = fmtTok(t.crTok) + ' / ' + fmtTok(totIn) + ' input';
 
   const stackData = res.turns.map(d => ({
-    x: d.turn, compaction: d.compaction, cacheDrop: d.cacheDrop,
+    x: d.turn,
+    compaction: d.compaction,
+    cacheDrop: d.cacheDrop,
     segments: [
       { value: d.crCost, color: '#34d39988' },
       { value: d.cwCost, color: '#60a5fa88' },
@@ -295,10 +397,14 @@ export function update() {
   drawStackedBars(document.getElementById('chart-perturn'), stackData, { height: 200, yFmt: fmtCost });
 
   const ctxD = res.turns.map(d => ({ x: d.turn, y: d.contextSize, compaction: d.compaction, cacheDrop: d.cacheDrop }));
-  drawLine(document.getElementById('chart-ctx'), [{ data: ctxD, color: '#60a5fa' }],
-    { height: 200, yFmt: fmtTok,
-      limitY: config.contextWindow, limitLabel: fmtTok(config.contextWindow) + ' limit',
-      thresholdY: config.contextWindow * AUTO_COMPACT_THRESHOLD, thresholdLabel: '95% compact' });
+  drawLine(document.getElementById('chart-ctx'), [{ data: ctxD, color: '#60a5fa' }], {
+    height: 200,
+    yFmt: fmtTok,
+    limitY: config.contextWindow,
+    limitLabel: fmtTok(config.contextWindow) + ' limit',
+    thresholdY: config.contextWindow * AUTO_COMPACT_THRESHOLD,
+    thresholdLabel: '95% compact',
+  });
 
   const segs = getCostSegments(t).filter(s => s.value > 0.0001);
   drawDonut(document.getElementById('chart-donut'), segs);
@@ -308,11 +414,12 @@ export function update() {
      <span class="legend-value" style="color:${escHtml(s.color)}">${escHtml(fmtCost(s.value))}</span></div>`).join('');
 
   buildModelBars('bar-comparison', config);
-  updateProjections(t.cost);
-  updateSummarySentence(t.cost, t);
+  updateProjections(t.cost, planning);
+  updateSummarySentence(t.cost, t, planning);
   updatePresetCosts();
   updateCostDrivers(t);
   updateContextProjection(res.turns);
+  updateMixPlanner(planning);
   updatePresetHighlight();
   updateDangerZone();
   syncToURL();

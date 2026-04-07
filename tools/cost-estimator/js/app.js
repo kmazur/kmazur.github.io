@@ -18,6 +18,12 @@ function restoreUIFromConfig() {
   document.querySelectorAll('#tg-ctx .toggle-btn').forEach(b => {
     b.classList.toggle('active', +b.dataset.val === config.contextWindow);
   });
+  document.querySelectorAll('#tg-toolmix .toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === config.toolMix);
+  });
+  document.querySelectorAll('#tg-uncertainty .toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === config.uncertainty);
+  });
   // Sliders
   for (const key of SLIDER_KEYS) {
     const el = document.getElementById(key); if (!el) continue;
@@ -29,6 +35,8 @@ function restoreUIFromConfig() {
       el.setAttribute('aria-valuetext', String(formatted));
     }
   }
+  document.getElementById('budgetInput').value = config.monthlyBudget;
+  document.getElementById('sess-count').textContent = config.sessPerDay;
   document.getElementById('autoCompact').checked = config.autoCompact;
 }
 

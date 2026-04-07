@@ -2,7 +2,11 @@ import {
   INTEGER_SLIDER_KEYS,
   MODELS,
   AUTO_COMPACT_THRESHOLD,
+  PRESETS,
+  SESSION_MIX,
   TOOL_CALL_OVERHEAD,
+  TOOL_MIX_OPTIONS,
+  UNCERTAINTY_OPTIONS,
   WEB_SEARCH_COST_PER_REQUEST,
   SLIDER_RANGES,
 } from './constants.js';
@@ -152,6 +156,126 @@ export function simulate(cfg, modelOverride) {
 export function simulateNoCacheCost(cfg) {
   // Reuse simulate with caching fully disabled: every call pays base input rate
   return simulate({ ...cfg, _noCache: true }).T.cost;
+}
+
+function getWorkflowMultiplier(cfg) {
+  return (1 + (cfg.retryRate || 0) / 100) * (1 + (cfg.parallelAgents || 0) * (cfg.parallelAgentCostRatio || 0));
+}
+
+function getInterruptedCfg(cfg) {
+  const turns = Math.max(0, Math.round(cfg.turns || 0));
+  const extraDrops = Math.min(Math.max(0, Math.round(cfg.interruptions || 0)), Math.max(turns - 1, 0));
+  return {
+    ...cfg,
+    cacheDrops: Math.min(Math.max(turns - 1, 0), Math.round(cfg.cacheDrops || 0) + extraDrops),
+  };
+}
+
+function getEffectiveSessionCost(cfg, modelOverride) {
+  const interrupted = simulate(getInterruptedCfg(cfg), modelOverride).T.cost;
+  return interrupted * getWorkflowMultiplier(cfg);
+}
+
+function getMixEntries(cfg) {
+  return SESSION_MIX.map(meta => {
+    const weight = Math.max(0, Math.round(cfg[meta.key] || 0));
+    const sessionCfg = { ...cfg, ...PRESETS[meta.preset] };
+    const cost = getEffectiveSessionCost(sessionCfg);
+    return { ...meta, weight, cost };
+  });
+}
+
+function getRangeFactors(cfg) {
+  const uncertainty = UNCERTAINTY_OPTIONS[cfg.uncertainty] || UNCERTAINTY_OPTIONS.med;
+  const toolMix = TOOL_MIX_OPTIONS[cfg.toolMix] || TOOL_MIX_OPTIONS.balanced;
+  const retryLift = Math.min(0.18, (cfg.retryRate || 0) / 250);
+  const interruptionLift = Math.min(0.08, (cfg.interruptions || 0) * 0.0125);
+  const helperLift = Math.min(0.12, (cfg.parallelAgents || 0) * 0.025);
+  const lean = uncertainty.rangeDown * toolMix.rangeDown;
+  const heavy = uncertainty.rangeUp * toolMix.rangeUp * (1 + retryLift + interruptionLift + helperLift);
+  return { lean, heavy, toolMix, uncertainty };
+}
+
+export function computePlanning(cfg) {
+  const baseSession = simulate(cfg).T.cost;
+  const interruptedSession = simulate(getInterruptedCfg(cfg)).T.cost;
+  const effectiveSession = interruptedSession * getWorkflowMultiplier(cfg);
+  const perSessionLaborValue = (cfg.hourlyRate || 0) * ((cfg.timeSavedMins || 0) / 60);
+  const breakEvenMins = (cfg.hourlyRate || 0) > 0 ? (effectiveSession / cfg.hourlyRate) * 60 : 0;
+
+  const mixEntries = getMixEntries(cfg);
+  const totalWeight = mixEntries.reduce((sum, entry) => sum + entry.weight, 0);
+  const blendedSession = totalWeight > 0
+    ? mixEntries.reduce((sum, entry) => sum + entry.cost * entry.weight, 0) / totalWeight
+    : effectiveSession;
+
+  const sessionsPerMonth = (cfg.sessPerDay || 0) * (cfg.workdaysPerMonth || 0);
+  const monthlyCurrent = effectiveSession * sessionsPerMonth;
+  const monthlyBlended = blendedSession * sessionsPerMonth;
+  const monthlyLaborValue = perSessionLaborValue * sessionsPerMonth;
+  const monthlyNetValue = monthlyLaborValue - monthlyBlended;
+
+  const marginalTurnCost = (cfg.turns || 0) < 200
+    ? simulate({ ...cfg, turns: Math.round(cfg.turns) + 1 }).T.cost - baseSession
+    : 0;
+  const cacheMissCost = (cfg.turns || 0) > 1
+    ? simulate({ ...cfg, cacheDrops: Math.min(Math.round(cfg.turns) - 1, Math.round(cfg.cacheDrops || 0) + 1) }).T.cost - baseSession
+    : 0;
+
+  const sonnetCost = getEffectiveSessionCost(cfg, 'sonnet-4.6');
+  const opusCost = getEffectiveSessionCost(cfg, 'opus-4.6');
+  const currentModelCost = getEffectiveSessionCost(cfg);
+
+  const rangeFactors = getRangeFactors(cfg);
+  const monthlyLean = monthlyBlended * rangeFactors.lean;
+  const monthlyHeavy = monthlyBlended * rangeFactors.heavy;
+
+  const budget = cfg.monthlyBudget || 0;
+  const safeSessionsPerDay = blendedSession > 0 && (cfg.workdaysPerMonth || 0) > 0
+    ? budget / (blendedSession * cfg.workdaysPerMonth)
+    : 0;
+  const sessionsWithinBudget = blendedSession > 0 ? Math.floor(budget / blendedSession) : 0;
+
+  const presetBudgetView = SESSION_MIX.map(meta => {
+    const monthly = getEffectiveSessionCost({ ...cfg, ...PRESETS[meta.preset] }) * sessionsPerMonth;
+    return { label: meta.label, monthly, fits: budget > 0 ? monthly <= budget : false };
+  }).sort((a, b) => a.monthly - b.monthly);
+
+  const dominantMix = [...mixEntries].sort((a, b) => b.weight - a.weight)[0] || null;
+
+  return {
+    baseSession,
+    interruptedSession,
+    effectiveSession,
+    blendedSession,
+    perSessionLaborValue,
+    breakEvenMins,
+    costPctOfLabor: perSessionLaborValue > 0 ? (effectiveSession / perSessionLaborValue) * 100 : null,
+    netValuePerSession: perSessionLaborValue - effectiveSession,
+    sessionsPerMonth,
+    monthlyCurrent,
+    monthlyBlended,
+    monthlyLaborValue,
+    monthlyNetValue,
+    marginalTurnCost,
+    cacheMissCost,
+    directWebSearchCost: WEB_SEARCH_COST_PER_REQUEST,
+    currentModelCost,
+    sonnetCost,
+    opusCost,
+    currentVsSonnet: currentModelCost - sonnetCost,
+    currentVsOpus: currentModelCost - opusCost,
+    monthlyLean,
+    monthlyHeavy,
+    safeSessionsPerDay,
+    sessionsWithinBudget,
+    budgetUtilization: budget > 0 ? monthlyBlended / budget : 0,
+    mixEntries,
+    dominantMix,
+    presetBudgetView,
+    toolMix: rangeFactors.toolMix,
+    uncertainty: rangeFactors.uncertainty,
+  };
 }
 
 function normalizeSensitivityValue(key, value, range) {

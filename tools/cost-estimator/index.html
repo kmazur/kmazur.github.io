@@ -65,6 +65,17 @@
     </div>
   </div>
 
+  <!-- Economics -->
+  <div class="section" id="sec-economics">
+    <div class="section-header"><span class="chv">&#9660;</span> Economics</div>
+    <div class="section-body">
+      <div class="section-hint">Translate token spend into developer economics. These inputs power break-even time, net value, and monthly ROI.</div>
+      <div class="control"><div class="control-header"><label title="Fully loaded engineering rate or the rate you want to compare against.">Developer hourly rate</label><span class="control-value" id="v-hourlyRate">$120/hr</span></div><input type="range" id="hourlyRate" min="25" max="400" value="120" step="5"></div>
+      <div class="control"><div class="control-header"><label title="How much time Claude Code saves you on a typical session.">Time saved / session</label><span class="control-value" id="v-timeSavedMins">20 min</span></div><input type="range" id="timeSavedMins" min="0" max="180" value="20" step="5"></div>
+      <div class="control"><div class="control-header"><label>Workdays / month</label><span class="control-value" id="v-workdaysPerMonth">20 days</span></div><input type="range" id="workdaysPerMonth" min="10" max="31" value="20" step="1"></div>
+    </div>
+  </div>
+
   <!-- Session Shape -->
   <div class="section" id="sec-session">
     <div class="section-header"><span class="chv">&#9660;</span> Session Shape</div>
@@ -97,13 +108,42 @@
     </div>
   </div>
 
+  <!-- Workflow Reality -->
+  <div class="section" id="sec-workflow">
+    <div class="section-header"><span class="chv">&#9660;</span> Workflow Reality</div>
+    <div class="section-body">
+      <div class="section-hint">These are higher-level knobs for what real usage looks like beyond one clean session trace.</div>
+      <div class="toggle-row">
+        <span class="toggle-label" title="Research and server-side tools increase pricing variance and hidden overheads.">Tool mix</span>
+        <div class="toggle-group" id="tg-toolmix">
+          <button class="toggle-btn" data-val="local">Local</button>
+          <button class="toggle-btn active" data-val="balanced">Balanced</button>
+          <button class="toggle-btn" data-val="research">Research</button>
+          <button class="toggle-btn" data-val="execution">Execution</button>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label" title="Controls the lean/heavy monthly range around the blended estimate.">Variance</span>
+        <div class="toggle-group" id="tg-uncertainty">
+          <button class="toggle-btn" data-val="low">Low</button>
+          <button class="toggle-btn active" data-val="med">Med</button>
+          <button class="toggle-btn" data-val="high">High</button>
+        </div>
+      </div>
+      <div class="control"><div class="control-header"><label title="Extra interruptions beyond explicit idle breaks. This approximates cache misses caused by getting pulled away.">Interruption rate</label><span class="control-value" id="v-interruptions">1</span></div><input type="range" id="interruptions" min="0" max="10" value="1" step="1"></div>
+      <div class="control"><div class="control-header"><label title="Sessions that need a major retry, restart, or course correction.">Retry / rework rate</label><span class="control-value" id="v-retryRate">10%</span></div><input type="range" id="retryRate" min="0" max="100" value="10" step="5"></div>
+      <div class="control"><div class="control-header"><label title="Additional helper agents or side sessions that run in parallel.">Parallel agents</label><span class="control-value" id="v-parallelAgents">0</span></div><input type="range" id="parallelAgents" min="0" max="6" value="0" step="1"></div>
+      <div class="control"><div class="control-header"><label title="Approximate cost of each helper as a fraction of the main session.">Helper cost ratio</label><span class="control-value" id="v-parallelAgentCostRatio">35%</span></div><input type="range" id="parallelAgentCostRatio" min="0.1" max="1" value="0.35" step="0.05"></div>
+    </div>
+  </div>
+
   <!-- Cache & Timing -->
   <div class="section" id="sec-cache">
     <div class="section-header"><span class="chv">&#9660;</span> Cache &amp; Timing</div>
     <div class="section-body">
       <div class="section-hint">When cache expires, the next call pays full input price for the entire context. Prompts below Anthropic's model-specific cache minimum do not get cached at all.</div>
       <div class="control"><div class="control-header"><label>Avg time between turns</label><span class="sens-tag" data-sens="timeBetween"></span><span class="control-value" id="v-timeBetween">1.5 min</span></div><input type="range" id="timeBetween" min="0.5" max="90" value="1.5" step="0.5" class="danger-zone"></div>
-      <div class="control"><div class="control-header"><label id="lbl-cacheDrops" title="Number of times you pause longer than the cache TTL during the session.">Idle breaks (&gt;5 min gaps)</label><span class="sens-tag" data-sens="cacheDrops"></span><span class="control-value" id="v-cacheDrops">0</span></div><input type="range" id="cacheDrops" min="0" max="15" value="0"></div>
+      <div class="control"><div class="control-header"><label id="lbl-cacheDrops" title="Explicit long pauses you already know about. Interruption rate adds more cache misses on top of this.">Manual idle breaks (&gt;5 min gaps)</label><span class="sens-tag" data-sens="cacheDrops"></span><span class="control-value" id="v-cacheDrops">0</span></div><input type="range" id="cacheDrops" min="0" max="15" value="0"></div>
       <div class="efficiency-bar-container">
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Cache efficiency</div>
         <div class="efficiency-bar-bg"><div class="efficiency-bar-fill" id="cache-eff-bar" style="width:0%"></div></div>
@@ -123,6 +163,20 @@
     </div>
   </div>
 
+  <!-- Session Portfolio -->
+  <div class="section" id="sec-mix">
+    <div class="section-header"><span class="chv">&#9660;</span> Session Portfolio</div>
+    <div class="section-body">
+      <div class="section-hint">Weight the kinds of sessions you do most often. Monthly projections use this mix instead of assuming every session looks identical.</div>
+      <div class="control"><div class="control-header"><label>Quick Fix weight</label><span class="control-value" id="v-mixQuickFix">x2</span></div><input type="range" id="mixQuickFix" min="0" max="10" value="2" step="1"></div>
+      <div class="control"><div class="control-header"><label>Feature weight</label><span class="control-value" id="v-mixFeature">x4</span></div><input type="range" id="mixFeature" min="0" max="10" value="4" step="1"></div>
+      <div class="control"><div class="control-header"><label>Review weight</label><span class="control-value" id="v-mixReview">x2</span></div><input type="range" id="mixReview" min="0" max="10" value="2" step="1"></div>
+      <div class="control"><div class="control-header"><label>Refactor weight</label><span class="control-value" id="v-mixRefactor">x1</span></div><input type="range" id="mixRefactor" min="0" max="10" value="1" step="1"></div>
+      <div class="control"><div class="control-header"><label>Exploration weight</label><span class="control-value" id="v-mixExploration">x1</span></div><input type="range" id="mixExploration" min="0" max="10" value="1" step="1"></div>
+      <div class="control"><div class="control-header"><label>Vibe Coding weight</label><span class="control-value" id="v-mixVibe">x0</span></div><input type="range" id="mixVibe" min="0" max="10" value="0" step="1"></div>
+    </div>
+  </div>
+
 </aside>
 
 <!-- ─── Main ─── -->
@@ -132,7 +186,7 @@
     <div class="summary-card sc-total"><div class="card-label">Total Session Cost</div><div class="card-value" id="sum-total">&mdash;</div><div class="card-detail"><span id="sum-tokens">&mdash;</span> total tokens <span id="sum-extra-detail"></span></div></div>
     <div class="summary-card sc-input"><div class="card-label">Input Cost</div><div class="card-value" id="sum-input">&mdash;</div><div class="card-detail">cache read + write + uncached</div></div>
     <div class="summary-card sc-output"><div class="card-label">Output + Thinking</div><div class="card-value" id="sum-output">&mdash;</div><div class="card-detail"><span id="sum-thinking-pct">&mdash;</span> from thinking</div></div>
-    <div class="summary-card sc-monthly"><div class="card-label">Monthly Cost</div><div class="card-value" id="sum-monthly">&mdash;</div><div class="card-detail"><div class="stepper"><button class="stepper-btn" id="sess-down">-</button><span id="sess-count">4</span><span class="stepper-label">sessions/day</span><button class="stepper-btn" id="sess-up">+</button></div></div></div>
+    <div class="summary-card sc-monthly"><div class="card-label">Monthly Cost</div><div class="card-value" id="sum-monthly">&mdash;</div><div class="card-detail"><div class="stepper"><button class="stepper-btn" id="sess-down">-</button><span id="sess-count">4</span><span class="stepper-label">sessions/day</span><button class="stepper-btn" id="sess-up">+</button></div><div class="summary-subdetail" id="monthly-plan-detail"></div></div></div>
     <div class="summary-card sc-calls"><div class="card-label">Total API Calls</div><div class="card-value" id="sum-calls">&mdash;</div><div class="card-detail"><span id="sum-calls-detail">&mdash;</span></div></div>
     <div class="summary-card sc-avg"><div class="card-label">Avg Cost / Turn</div><div class="card-value" id="sum-avg">&mdash;</div><div class="card-detail" id="sum-avg-detail">&mdash;</div></div>
   </div>
@@ -148,6 +202,10 @@
       <div class="insight-title">Context Growth Projection</div>
       <div id="ctx-projection" class="ctx-projection-text"></div>
     </div>
+    <div class="insight-card">
+      <div class="insight-title">Session Mix Planner</div>
+      <div id="mix-planner"></div>
+    </div>
   </div>
 
   <div class="projections">
@@ -161,6 +219,26 @@
       <div class="proj-title">Cost per Hour</div>
       <div class="proj-result" id="cost-per-hour">&mdash;</div>
       <div class="proj-detail" id="cost-per-hour-detail"></div>
+    </div>
+    <div class="proj-card">
+      <div class="proj-title">ROI &amp; Break-even</div>
+      <div class="proj-result" id="proj-roi">&mdash;</div>
+      <div class="proj-detail" id="proj-roi-detail"></div>
+    </div>
+    <div class="proj-card">
+      <div class="proj-title">Monthly Spend Range</div>
+      <div class="proj-result" id="proj-range">&mdash;</div>
+      <div class="proj-detail" id="proj-range-detail"></div>
+    </div>
+    <div class="proj-card">
+      <div class="proj-title">Marginal Costs</div>
+      <div class="proj-result" id="proj-marginal">&mdash;</div>
+      <div class="proj-detail" id="proj-marginal-detail"></div>
+    </div>
+    <div class="proj-card">
+      <div class="proj-title">Model Switch</div>
+      <div class="proj-result" id="proj-model-switch">&mdash;</div>
+      <div class="proj-detail" id="proj-model-switch-detail"></div>
     </div>
   </div>
 
