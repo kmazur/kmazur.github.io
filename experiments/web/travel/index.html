@@ -36,31 +36,27 @@
 
     <!-- Filter Bar -->
     <div class="filter-bar">
-        <div class="search-row">
-            <input class="search-input" type="text" placeholder="search items..."
-                x-model="searchQuery" @input.debounce.150ms>
-        </div>
+        <input class="search-input" type="text" placeholder="search..."
+            x-model="searchQuery" @input.debounce.150ms>
 
-        <div class="tag-groups-row">
-            <template x-for="group in tagGroups()" :key="group.label">
-                <div class="tag-section">
-                    <span class="tag-group-label" x-text="group.label"></span>
-                    <div class="tag-row">
-                        <template x-for="tag in group.tags" :key="tag">
-                            <button class="tag-pill"
-                                :style="isTagActive(tag) ? `border-color: ${tagColor(tag)}; color: ${tagColor(tag)}; background: ${tagColor(tag)}15` : ''"
-                                @click="toggleTag(tag)"
-                                x-text="tag">
-                            </button>
-                        </template>
-                    </div>
+        <template x-for="group in tagGroups()" :key="group.label">
+            <div class="tag-section" x-show="group.label !== 'Other'">
+                <span class="tag-group-label" x-text="group.label"></span>
+                <div class="tag-row">
+                    <template x-for="tag in group.tags" :key="tag">
+                        <button class="tag-pill"
+                            :style="isTagActive(tag) ? `border-color: ${tagColor(tag)}; color: ${tagColor(tag)}; background: ${tagColor(tag)}15` : ''"
+                            @click="toggleTag(tag)"
+                            x-text="tag">
+                        </button>
+                    </template>
                 </div>
-            </template>
-        </div>
+            </div>
+        </template>
 
         <div class="filter-status" x-show="hasActiveFilters()">
-            <span x-text="`${filteredCount()} items match`"></span>
-            <button class="clear-filters" @click="clearFilters()">clear filters</button>
+            <span x-text="`${filteredCount()} match`"></span>
+            <button class="clear-filters" @click="clearFilters()">clear</button>
         </div>
     </div>
 

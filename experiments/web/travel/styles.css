@@ -109,77 +109,75 @@ button, input { font: inherit; }
 
 /* ── Filters ── */
 .filter-bar {
-    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
-}
-
-.search-row {
-    margin-bottom: 8px;
+    flex-wrap: wrap;
 }
 
 .search-input {
-    width: 100%;
-    padding: 5px 10px;
+    width: 160px;
+    padding: 4px 8px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface);
     color: var(--ink);
-    font-size: 12px;
+    font-size: 11px;
     outline: none;
     transition: border-color 0.15s;
+    flex-shrink: 0;
 }
 .search-input::placeholder { color: var(--dim); }
-.search-input:focus { border-color: var(--dim); }
+.search-input:focus { border-color: var(--dim); width: 220px; }
 
 .tag-groups-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 16px;
-    align-items: baseline;
+    display: contents;
 }
 
 .tag-section {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     white-space: nowrap;
 }
+
+.tag-section + .tag-section { padding-left: 6px; border-left: 1px solid var(--border); }
 
 .tag-group-label {
     font-size: 9px;
     color: var(--dim);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-right: 2px;
+    letter-spacing: 0.04em;
 }
 
 .tag-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 3px;
+    gap: 2px;
 }
 
 .tag-pill {
-    padding: 1px 7px;
-    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border: 1px solid transparent;
     border-radius: var(--radius);
     background: transparent;
-    color: var(--muted);
+    color: var(--dim);
     font-size: 11px;
     cursor: pointer;
     transition: all 0.15s;
-    line-height: 1.5;
+    line-height: 1.4;
 }
-.tag-pill:hover { color: var(--ink); border-color: var(--dim); }
+.tag-pill:hover { color: var(--ink); background: rgba(255,255,255,0.04); }
 
 .filter-status {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 6px;
+    gap: 8px;
     font-size: 11px;
     color: var(--dim);
+    margin-left: auto;
 }
 
 .clear-filters {
