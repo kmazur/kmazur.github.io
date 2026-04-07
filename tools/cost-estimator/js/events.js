@@ -190,7 +190,7 @@ export function bindEvents() {
   }).observe(document.querySelector('.main'));
 
   mkTip('chart-ctx', 'tip-ctx', point =>
-    `Turn ${point.turn} | context: ${fmtTok(point.contextSize)} tokens${point.compaction ? ' [COMPACTED]' : ''}`);
+    `Turn ${point.turnNumber || point.turn + 1} | context: ${fmtTok(point.contextSize)} tokens${point.compaction ? ' [COMPACTED]' : ''}`);
 
   const ptCv = document.getElementById('chart-perturn');
   const ptTip = document.getElementById('tip-perturn');
@@ -210,7 +210,7 @@ export function bindEvents() {
       ptTip.classList.remove('visible');
       return;
     }
-    ptTip.innerHTML = `Turn ${point.turn} | ${fmtCost(point.turnCost)}<br>`
+    ptTip.innerHTML = `Turn ${point.turnNumber || point.turn + 1} | ${fmtCost(point.turnCost)}<br>`
       + `<span style="color:#34d399">CA:${fmtCost(point.crCost)}</span> `
       + `<span style="color:#60a5fa">SET:${fmtCost(point.cwCost)}</span> `
       + `<span style="color:#f59e0b">UN:${fmtCost(point.unCost)}</span> `

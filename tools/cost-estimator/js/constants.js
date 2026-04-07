@@ -297,6 +297,7 @@ export const MODELS = {
     cacheStoragePerHour: 0.25,
     maxContext: 1048576,
     minCacheable: null,
+    cacheMinEstimate: 1024,
     reasoningMode: 'thinking-budget-optional',
     reasoningApiLabel: 'thinkingBudget',
     effortApiDefault: 'thinking disabled',

@@ -5,7 +5,7 @@ export function showAnatomy(turnData) {
   ov.classList.add('open');
   const t = turnData;
   document.getElementById('anatomy-title').innerHTML =
-    `Turn ${escHtml(t.turn)} Anatomy <span class="badge ${t.warmAtStart ? 'warm' : 'cold'}">${t.warmAtStart ? 'WARM' : 'COLD'} cache</span>`;
+    `Turn ${escHtml(t.turnNumber || t.turn + 1)} Anatomy <span class="badge ${t.warmAtStart ? 'warm' : 'cold'}">${t.warmAtStart ? 'WARM' : 'COLD'} cache</span>`;
   document.getElementById('anatomy-meta').innerHTML =
     `Context: <span>${escHtml(fmtTok(t.contextSize))}</span> | API calls: <span>${escHtml(t.nCalls)}</span> | Turn cost: <span>${escHtml(fmtCost(t.turnCost))}</span>`
     + (t.compaction ? ' | <span style="color:#f59e0b">COMPACTION</span>' : '')

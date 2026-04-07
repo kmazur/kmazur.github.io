@@ -94,7 +94,11 @@ export function applyModelConstraints() {
   const model = getModel(config.model);
   const provider = getProvider(model.provider);
   const contextChoices = [200000, 400000, 1000000].filter(value => value <= model.maxContext);
-  const cacheMinLabel = Number.isFinite(model.minCacheable) ? `${fmtTok(model.minCacheable)} tokens` : 'Not published';
+  const cacheMinLabel = Number.isFinite(model.minCacheable)
+    ? `${fmtTok(model.minCacheable)} tokens`
+    : Number.isFinite(model.cacheMinEstimate)
+      ? `Not published; using ~${fmtTok(model.cacheMinEstimate)} token estimate`
+      : 'Not published';
   const autoCompactAvailable = !!model.autoCompact;
 
   config.provider = model.provider;
@@ -246,7 +250,7 @@ function updateContextProjection(turns, adjustedCfg) {
 
   let html = `<div style="margin-bottom:8px">Growth: <strong>${escHtml(fmtTok(growthPerTurn))}</strong> tokens/turn</div>`;
   if (firstComp) {
-    html += `Compaction hits around <strong>turn ${escHtml(firstComp.turn)}</strong> near <span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>.`;
+    html += `Compaction hits around <strong>turn ${escHtml(firstComp.turnNumber || firstComp.turn + 1)}</strong> near <span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>.`;
   } else if (turnsToThreshold <= adjustedCfg.turns * 1.5) {
     html += `At this pace, the 95% context threshold (<span class="highlight">${escHtml(fmtTok(Math.round(threshold)))}</span>) lands around <strong>turn ${escHtml(turnsToThreshold)}</strong>.`;
   } else {
@@ -401,7 +405,11 @@ export function updatePresetCosts() {
 export function updatePricingBox() {
   const model = getModel(config.model);
   const provider = getProvider(model.provider);
-  const cacheMinLabel = Number.isFinite(model.minCacheable) ? fmtTok(model.minCacheable) : 'Not published';
+  const cacheMinLabel = Number.isFinite(model.minCacheable)
+    ? fmtTok(model.minCacheable)
+    : Number.isFinite(model.cacheMinEstimate)
+      ? `~${fmtTok(model.cacheMinEstimate)} est.`
+      : 'Not published';
   const cacheLineLabel = provider.cacheStrategy === 'write-read'
     ? 'Cache write'
     : provider.cacheStrategy === 'explicit-cache'
@@ -497,7 +505,7 @@ export function update() {
   document.getElementById('cache-eff-ratio').textContent = `${fmtTok(res.T.crTok)} / ${fmtTok(totalIn)} input`;
 
   const stackData = res.turns.map(turn => ({
-    x: turn.turn,
+    x: turn.turnNumber || turn.turn + 1,
     compaction: turn.compaction,
     cacheDrop: turn.cacheDrop,
     segments: [
@@ -511,7 +519,7 @@ export function update() {
   drawStackedBars(document.getElementById('chart-perturn'), stackData, { height: 200, yFmt: fmtCost });
 
   const ctxData = res.turns.map(turn => ({
-    x: turn.turn,
+    x: turn.turnNumber || turn.turn + 1,
     y: turn.contextSize,
     compaction: turn.compaction,
     cacheDrop: turn.cacheDrop,

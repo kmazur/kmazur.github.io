@@ -57,7 +57,9 @@ function getTaskPerformance(model, taskKey) {
 }
 
 function getMinCacheableTokens(model) {
-  return Number.isFinite(model.minCacheable) ? model.minCacheable : 0;
+  if (Number.isFinite(model.minCacheable)) return model.minCacheable;
+  if (Number.isFinite(model.cacheMinEstimate)) return model.cacheMinEstimate;
+  return Number.POSITIVE_INFINITY;
 }
 
 function getReasoningSettings(model, effortKey, baseThinkingTokens) {
@@ -98,7 +100,9 @@ function getReasoningSettings(model, effortKey, baseThinkingTokens) {
   const multiplier = profile.multipliers[effortKey] ?? profile.multipliers.deep ?? 1;
   const floor = profile.floors[effortKey] ?? 0;
   let tokens = roundInt((baseThinkingTokens || 0) * multiplier, 0);
-  if (baseThinkingTokens > 0 && floor > 0 && tokens > 0) tokens = Math.max(tokens, floor);
+  if (floor > 0 && (baseThinkingTokens > 0 || mode === 'thinking-budget-required')) {
+    tokens = Math.max(tokens, floor);
+  }
 
   return {
     tokens,
@@ -286,7 +290,7 @@ function simulateAdjusted(cfg, model) {
   const turns = [];
 
   for (let t = 0; t < cfg.turns; t++) {
-    const isDrop = !noCache && (dropSet.has(t) || cfg.timeBetween >= ttlMin);
+    const isDrop = !noCache && t > 0 && (dropSet.has(t) || cfg.timeBetween >= ttlMin);
     const wasWarm = warm;
     if (isDrop) {
       warm = false;
@@ -298,10 +302,17 @@ function simulateAdjusted(cfg, model) {
     let compCost = 0;
     let compDetail = null;
     if (needComp) {
-      const summaryTokens = Math.floor(ctx * cfg.compactRatio);
+      const historyTokens = Math.max(0, ctx - cfg.sysPrompt);
+      const summaryTokens = Math.floor(historyTokens * cfg.compactRatio);
       const c = costOneCall(ctx, summaryTokens, 0, cfg, model, warm, cached, noCache);
       compCost = c.crCost + c.cwCost + c.unCost + c.outCost;
-      compDetail = { inputTokens: ctx, outputTokens: summaryTokens, ...c, totalCost: compCost };
+      compDetail = {
+        inputTokens: ctx,
+        historyTokens,
+        outputTokens: summaryTokens,
+        ...c,
+        totalCost: compCost,
+      };
       T.compCost += compCost;
       T.cost += compCost;
       T.apiCalls++;
@@ -382,6 +393,7 @@ function simulateAdjusted(cfg, model) {
 
     turns.push({
       turn: t,
+      turnNumber: t + 1,
       contextSize: ctx,
       turnCost: turnApiCost + compCost,
       cumulativeCost: T.cost,

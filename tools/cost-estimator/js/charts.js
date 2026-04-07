@@ -26,12 +26,21 @@ export function drawLine(cv, datasets, opts = {}) {
   const { c, w, h } = setupCanvas(cv, opts.height || 200);
   const P = { t: 16, r: 16, b: 32, l: 62 };
   const cw = w - P.l - P.r, ch = h - P.t - P.b;
-  let mX = 0, mY = 0;
-  for (const ds of datasets) for (const p of ds.data) { if (p.x > mX) mX = p.x; if (p.y > mY) mY = p.y; }
+  let minX = Number.POSITIVE_INFINITY;
+  let mX = 0;
+  let mY = 0;
+  for (const ds of datasets) {
+    for (const p of ds.data) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > mX) mX = p.x;
+      if (p.y > mY) mY = p.y;
+    }
+  }
+  if (!Number.isFinite(minX)) minX = 0;
   if (mY === 0) mY = 1;
   if (opts.limitY) mY = Math.max(mY, opts.limitY * (opts.limitY < mY * 1.3 ? 1.1 : 0.4));
   const nM = ceilNice(mY);
-  const tx = v => P.l + (v / Math.max(mX, 1)) * cw;
+  const tx = v => P.l + ((v - minX) / Math.max(mX - minX, 1)) * cw;
   const ty = v => P.t + ch - (v / nM) * ch;
 
   c.strokeStyle = 'rgba(255,255,255,0.04)'; c.lineWidth = 1;
@@ -41,9 +50,10 @@ export function drawLine(cv, datasets, opts = {}) {
     c.fillStyle = 'rgba(255,255,255,0.25)'; c.font = '10px "JetBrains Mono"'; c.textAlign = 'right';
     c.fillText(opts.yFmt ? opts.yFmt(yv) : yv.toFixed(1), P.l - 8, yp + 3.5);
   }
-  const xSt = Math.max(1, Math.ceil(mX / 8));
+  const xRange = Math.max(mX - minX, 1);
+  const xSt = Math.max(1, Math.ceil(xRange / 8));
   c.fillStyle = 'rgba(255,255,255,0.25)'; c.textAlign = 'center'; c.font = '10px "JetBrains Mono"';
-  for (let x = 0; x <= mX; x += xSt) c.fillText(x, tx(x), h - P.b + 18);
+  for (let x = minX; x <= mX; x += xSt) c.fillText(x, tx(x), h - P.b + 18);
 
   if (opts.thresholdY) drawHLine(c, ty(opts.thresholdY), P.l, w - P.r, 'rgba(245,158,11,0.30)', opts.thresholdLabel);
   if (opts.limitY) drawHLine(c, ty(opts.limitY), P.l, w - P.r, 'rgba(248,113,113,0.35)', opts.limitLabel);
