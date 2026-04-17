@@ -214,12 +214,16 @@ export function applyModelConstraints() {
       : model.maxContext >= 1000000
       ? 'No long-context surcharge is modeled for this selection.'
       : `Context is capped at ${fmtTok(model.maxContext)}.`;
+  const modelBits = [
+    model.tokenUsageNote,
+    model.effortUsageNote,
+  ].filter(Boolean);
   const supportBits = [
     autoCompactAvailable ? 'Provider auto-compaction supported.' : 'Provider auto-compaction unavailable; only manual compactions are modeled.',
     model.searchSupported ? `Search / grounding supported at ${fmtCost(searchUnitCost)} each.` : 'Search / grounding not supported on this model.',
     model.execFeeSupported ? `${provider.execSessionLabel} billed at ${fmtCost(execUnitCost)} each.` : `${provider.execSessionLabel} not supported or not separately billed.`,
   ];
-  note.textContent = `${provider.name} • ${model.name}. ${longCtx} Cache minimum: ${cacheMinLabel}. Reasoning API: ${model.reasoningApiLabel} (provider default: ${model.effortApiDefault}). ${supportBits.join(' ')}`;
+  note.textContent = `${provider.name} • ${model.name}. ${longCtx} Cache minimum: ${cacheMinLabel}. Reasoning API: ${model.reasoningApiLabel} (provider default: ${model.effortApiDefault}). ${modelBits.join(' ')} ${supportBits.join(' ')}`.trim();
 
   const bgSlider = document.getElementById('backgroundCost');
   bgSlider.max = provider.id === 'anthropic' ? '0.04' : '0.10';
