@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krzysztof Mazur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0c0d10;
+    --sidebar-bg: #111318;
+    --border: #1f2230;
+    --text: #d4d8e4;
+    --muted: #6c7086;
+    --emerald: #34d399;
+    --sky: #38bdf8;
+    --violet: #a78bfa;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  html { font-size: 15px; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  /* ---- SIDEBAR ---- */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100vh;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 2.4rem 1.4rem;
+    z-index: 10;
+  }
+
+  .sidebar-brand {
+    margin-bottom: 0.4rem;
+  }
+
+  .monogram {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 1.6rem;
+    color: var(--text);
+    letter-spacing: 0.04em;
+  }
+
+  .sidebar-name {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+    margin-bottom: 2.8rem;
+  }
+
+  .sidebar-nav {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .sidebar-nav a {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 0.4rem 0 0.4rem 0;
+    position: relative;
+    transition: color 0.15s;
+  }
+
+  .sidebar-nav a:hover {
+    color: var(--text);
+  }
+
+  .sidebar-nav a.active {
+    color: var(--text);
+  }
+
+  .sidebar-nav a.active::before {
+    content: '—';
+    position: absolute;
+    left: -1.2rem;
+    color: var(--emerald);
+    font-size: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  /* ---- MAIN CONTENT ---- */
+  .main {
+    margin-left: 200px;
+    flex: 1;
+    min-height: 100vh;
+    padding: 2.4rem 2.8rem 4rem;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    max-width: 1100px;
+  }
+
+  /* ---- SECTION HEADERS ---- */
+  .section-header {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.2rem;
+  }
+
+  /* ---- PROJECTS COLUMN ---- */
+  .project-entry {
+    border-left: 3px solid var(--emerald);
+    padding: 0.7rem 0 0.7rem 1rem;
+    margin-bottom: 0.6rem;
+    transition: border-color 0.15s;
+  }
+
+  .project-entry:nth-child(2) {
+    border-left-color: var(--sky);
+  }
+
+  .project-entry:nth-child(3) {
+    border-left-color: var(--violet);
+  }
+
+  .project-entry:hover {
+    border-left-color: var(--text);
+  }
+
+  .project-title {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+
+  .project-title a:hover {
+    color: var(--emerald);
+  }
+
+  .project-entry:nth-child(2) .project-title a:hover {
+    color: var(--sky);
+  }
+
+  .project-entry:nth-child(3) .project-title a:hover {
+    color: var(--violet);
+  }
+
+  .project-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+    line-height: 1.45;
+  }
+
+  .project-tags {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+
+  /* ---- ARCHIVE ---- */
+  .archive-section {
+    margin-top: 2.4rem;
+  }
+
+  .archive-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem 1.2rem;
+  }
+
+  .archive-link {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    padding: 0.35rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .archive-link::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .archive-link:hover {
+    color: var(--text);
+  }
+
+  .archive-link:hover::before {
+    background: var(--emerald);
+  }
+
+  /* ---- WRITING COLUMN ---- */
+  .writing-category {
+    margin-bottom: 1.6rem;
+  }
+
+  .category-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .writing-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.32rem 0;
+    gap: 0.8rem;
+  }
+
+  .writing-title {
+    font-size: 0.8rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .writing-title:hover {
+    color: var(--emerald);
+  }
+
+  .writing-tag {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  /* ---- MOBILE TOGGLE ---- */
+  .mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border);
+    z-index: 20;
+    align-items: center;
+    padding: 0 1.2rem;
+    justify-content: space-between;
+  }
+
+  .mobile-header .monogram {
+    font-size: 1.1rem;
+  }
+
+  .menu-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  .menu-toggle:hover {
+    color: var(--text);
+    border-color: var(--muted);
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 9;
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 900px) {
+    .content-grid {
+      grid-template-columns: 1fr;
+      gap: 2.4rem;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .mobile-header {
+      display: flex;
+    }
+
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay.open {
+      display: block;
+    }
+
+    .main {
+      margin-left: 0;
+      padding: 72px 1.2rem 3rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Mobile header -->
+<header class="mobile-header">
+  <span class="monogram">KM</span>
+  <button class="menu-toggle" onclick="toggleMenu()">menu</button>
+</header>
+<div class="sidebar-overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="monogram">KM</div>
+  </div>
+  <div class="sidebar-name">Krzysztof Mazur</div>
+
+  <ul class="sidebar-nav">
+    <li><a href="#projects" class="active">Projects</a></li>
+    <li><a href="#writing">Writing</a></li>
+    <li><a href="#archive">Archive</a></li>
+    <li><a href="https://github.com/kmazur/kmazur.github.io" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+
+  <div class="sidebar-footer">mazur.km</div>
+</aside>
+
+<!-- Main content -->
+<main class="main">
+  <div class="content-grid">
+
+    <!-- LEFT COLUMN: Projects + Archive -->
+    <div class="col-left">
+      <h2 class="section-header" id="projects">Projects</h2>
+
+      <div class="project-entry">
+        <div class="project-title"><a href="./experiments/web/jdk/">JDK Explorer</a></div>
+        <div class="project-desc">Interactive browser for JDK classes, packages, and API surface across versions.</div>
+        <div class="project-tags"><span class="tag">java</span><span class="tag">web</span></div>
+      </div>
+
+      <div class="project-entry">
+        <div class="project-title"><a href="./experiments/web/travel/">Travel Checklist</a></div>
+        <div class="project-desc">Packing list generator with category filters and trip-type presets.</div>
+        <div class="project-tags"><span class="tag">tool</span><span class="tag">web</span></div>
+      </div>
+
+      <div class="project-entry">
+        <div class="project-title"><a href="./tools/cost-estimator/">Cost Estimator</a></div>
+        <div class="project-desc">Claude Code session cost calculator with token usage breakdown.</div>
+        <div class="project-tags"><span class="tag">tool</span><span class="tag">calculator</span></div>
+      </div>
+
+      <div class="archive-section" id="archive">
+        <h2 class="section-header">Archive</h2>
+        <div class="archive-links">
+          <a class="archive-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Browse Drafts</a>
+          <a class="archive-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/data" target="_blank" rel="noopener">Data</a>
+          <a class="archive-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/tools" target="_blank" rel="noopener">Tools</a>
+          <a class="archive-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/references" target="_blank" rel="noopener">References</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Writing -->
+    <div class="col-right" id="writing">
+      <h2 class="section-header">Writing</h2>
+
+      <div class="writing-category">
+        <div class="category-label">Engineering Practice</div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Pillars of Software Craftsmanship</a>
+          <span class="writing-tag">essay</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Code Review</a>
+          <span class="writing-tag">practice</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Seniority Matrix</a>
+          <span class="writing-tag">framework</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Tech Radar</a>
+          <span class="writing-tag">overview</span>
+        </div>
+      </div>
+
+      <div class="writing-category">
+        <div class="category-label">Interview & Career</div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Interview Preparation: Coding</a>
+          <span class="writing-tag">guide</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Interview Preparation: System Design</a>
+          <span class="writing-tag">guide</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Competitive Programming</a>
+          <span class="writing-tag">reference</span>
+        </div>
+      </div>
+
+      <div class="writing-category">
+        <div class="category-label">Deep Dives</div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Reactive Programming</a>
+          <span class="writing-tag">java</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Fork-Join Pool in Java</a>
+          <span class="writing-tag">java</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Experiments in Neural Networks</a>
+          <span class="writing-tag">ml</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Warsaw Housing Market Analysis</a>
+          <span class="writing-tag">data</span>
+        </div>
+      </div>
+
+      <div class="writing-category">
+        <div class="category-label">Collections</div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Subjective List of Best IT Books</a>
+          <span class="writing-tag">list</span>
+        </div>
+        <div class="writing-entry">
+          <a class="writing-title" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank" rel="noopener">Time Journey</a>
+          <span class="writing-tag">personal</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  function toggleMenu() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('open');
+  }
+</script>
+</body>
+</html>

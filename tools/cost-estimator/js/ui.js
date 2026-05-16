@@ -419,8 +419,11 @@ function updateProjections(planning) {
   }
 
   document.getElementById('proj-range').textContent = `${fmtCost(planning.monthlyLean)} - ${fmtCost(planning.monthlyHeavy)}`;
+  const tokenRangeDetail = planning.tokenUsageRange && (planning.tokenUsageRange.down < 0.999 || planning.tokenUsageRange.up > 1.001)
+    ? ` Includes model tokenization spread of ${fmtPct(planning.tokenUsageRange.down * 100, 0)}-${fmtPct(planning.tokenUsageRange.up * 100, 0)} around the default estimate.`
+    : '';
   document.getElementById('proj-range-detail').textContent =
-    `${planning.toolMix.label} tool mix with ${planning.uncertainty.label.toUpperCase()} variance. Midpoint: ${fmtCost(planning.monthlyBlended)}/mo.`;
+    `${planning.toolMix.label} tool mix with ${planning.uncertainty.label.toUpperCase()} variance. Midpoint: ${fmtCost(planning.monthlyBlended)}/mo.${tokenRangeDetail}`;
 
   document.getElementById('proj-marginal').textContent =
     planning.marginalTurnCost > 0 ? `+${fmtCost(planning.marginalTurnCost)} / turn` : '\u2014';

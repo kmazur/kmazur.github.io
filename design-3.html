@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krzysztof Mazur — Knowledge Archive</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cream: #f5f0e8;
+            --charcoal: #1a1a1a;
+            --red: #c23616;
+            --rule: #c8c0b4;
+            --muted: #6b6560;
+            --pill-bg: #ebe5db;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Source Sans 3', 'Source Sans Pro', sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+
+        a {
+            color: var(--red);
+            text-decoration: none;
+            transition: opacity 0.15s ease;
+        }
+
+        a:hover {
+            opacity: 0.7;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--rule);
+            margin: 0;
+        }
+
+        /* ── Masthead ── */
+        .masthead {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 20px 0;
+        }
+
+        .masthead-name {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--charcoal);
+            letter-spacing: 0.01em;
+        }
+
+        .masthead-nav {
+            display: flex;
+            gap: 24px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .masthead-nav a {
+            color: var(--charcoal);
+        }
+
+        .masthead-nav a:hover {
+            color: var(--red);
+            opacity: 1;
+        }
+
+        /* ── Intro ── */
+        .intro {
+            padding: 28px 0 24px;
+        }
+
+        .intro p {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: var(--muted);
+            max-width: 680px;
+        }
+
+        /* ── Section headings ── */
+        .section-label {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 20px 0 16px;
+        }
+
+        /* ── Featured Projects ── */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr 1px 1fr;
+            gap: 0;
+            padding-bottom: 28px;
+        }
+
+        .projects-grid .v-rule {
+            background: var(--rule);
+        }
+
+        .project-card {
+            padding: 0 28px;
+        }
+
+        .project-card:first-child {
+            padding-left: 0;
+        }
+
+        .project-card:last-child {
+            padding-right: 0;
+        }
+
+        .project-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--rule);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .project-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .project-title a {
+            color: var(--charcoal);
+        }
+
+        .project-title a:hover {
+            color: var(--red);
+            opacity: 1;
+        }
+
+        .project-desc {
+            font-size: 0.875rem;
+            line-height: 1.55;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .pill {
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            background: var(--pill-bg);
+            border-radius: 3px;
+            color: var(--muted);
+        }
+
+        .project-link {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .project-link .arrow {
+            transition: transform 0.15s ease;
+        }
+
+        .project-link:hover .arrow {
+            transform: translateX(3px);
+        }
+
+        /* ── Drafts & Notes ── */
+        .drafts-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 48px;
+            padding-bottom: 24px;
+        }
+
+        .draft-item {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid var(--pill-bg);
+        }
+
+        .draft-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: var(--charcoal);
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 12px;
+        }
+
+        .draft-tag {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        /* ── Archive Index ── */
+        .archive-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            padding: 0;
+        }
+
+        .archive-item {
+            text-align: center;
+            padding: 18px 12px;
+            border-right: 1px solid var(--rule);
+        }
+
+        .archive-item:last-child {
+            border-right: none;
+        }
+
+        .archive-item a {
+            display: block;
+        }
+
+        .archive-item .label {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 2px;
+            transition: color 0.15s ease;
+        }
+
+        .archive-item a:hover .label {
+            color: var(--red);
+        }
+
+        .archive-item .sub {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        /* ── Footer ── */
+        .footer {
+            padding: 20px 0;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .footer a {
+            color: var(--muted);
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .footer a:hover {
+            color: var(--red);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 720px) {
+            .masthead {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .masthead-nav {
+                gap: 16px;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .projects-grid .v-rule {
+                display: none;
+            }
+
+            .project-card {
+                padding: 0;
+                border-bottom: 1px solid var(--rule);
+                padding-bottom: 20px;
+            }
+
+            .project-card:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+
+            .drafts-columns {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .archive-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .archive-item:nth-child(2) {
+                border-right: none;
+            }
+
+            .archive-item:nth-child(1),
+            .archive-item:nth-child(2) {
+                border-bottom: 1px solid var(--rule);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- Masthead -->
+        <header class="masthead">
+            <div class="masthead-name">Krzysztof Mazur</div>
+            <nav class="masthead-nav">
+                <a href="#projects">Projects</a>
+                <a href="#archive">Archive</a>
+                <a href="https://github.com/kmazur/kmazur.github.io" target="_blank">GitHub</a>
+            </nav>
+        </header>
+        <hr>
+
+        <!-- Intro -->
+        <div class="intro">
+            <p>A personal knowledge archive collecting experiments, tools, and reference materials across software engineering and data exploration. Everything here is a living draft.</p>
+        </div>
+        <hr>
+
+        <!-- Featured Projects -->
+        <div class="section-label" id="projects">Featured Projects</div>
+        <div class="projects-grid">
+            <div class="project-card">
+                <div class="project-number">01</div>
+                <div class="project-title"><a href="./experiments/web/jdk/">JDK Explorer</a></div>
+                <p class="project-desc">An interactive browser for JDK internals, API surfaces, and version-to-version changes.</p>
+                <div class="pills">
+                    <span class="pill">Java</span>
+                    <span class="pill">Web</span>
+                    <span class="pill">Reference</span>
+                </div>
+                <a class="project-link" href="./experiments/web/jdk/">Explore <span class="arrow">&rarr;</span></a>
+            </div>
+            <div class="v-rule"></div>
+            <div class="project-card">
+                <div class="project-number">02</div>
+                <div class="project-title"><a href="./experiments/web/travel/">Travel Checklist</a></div>
+                <p class="project-desc">A packing and preparation checklist for trips, with categories, priorities, and progress tracking.</p>
+                <div class="pills">
+                    <span class="pill">Travel</span>
+                    <span class="pill">Productivity</span>
+                </div>
+                <a class="project-link" href="./experiments/web/travel/">Open <span class="arrow">&rarr;</span></a>
+            </div>
+            <div class="v-rule"></div>
+            <div class="project-card">
+                <div class="project-number">03</div>
+                <div class="project-title"><a href="./tools/cost-estimator/">Cost Estimator</a></div>
+                <p class="project-desc">Estimate and compare costs for LLM API usage across providers, models, and token volumes.</p>
+                <div class="pills">
+                    <span class="pill">LLM</span>
+                    <span class="pill">Tools</span>
+                    <span class="pill">Cost</span>
+                </div>
+                <a class="project-link" href="./tools/cost-estimator/">Calculate <span class="arrow">&rarr;</span></a>
+            </div>
+        </div>
+        <hr>
+
+        <!-- Drafts & Notes -->
+        <div class="section-label">Drafts &amp; Notes</div>
+        <div class="drafts-columns">
+            <div>
+                <div class="draft-item">
+                    <span class="draft-title">On JVM garbage collection strategies</span>
+                    <span class="draft-tag">Java</span>
+                </div>
+                <div class="draft-item">
+                    <span class="draft-title">Comparing embedding models for search</span>
+                    <span class="draft-tag">ML</span>
+                </div>
+                <div class="draft-item">
+                    <span class="draft-title">Notes on distributed consensus</span>
+                    <span class="draft-tag">Systems</span>
+                </div>
+                <div class="draft-item">
+                    <span class="draft-title">Prompt engineering patterns</span>
+                    <span class="draft-tag">LLM</span>
+                </div>
+                <div class="draft-item">
+                    <span class="draft-title">HTTP caching deep dive</span>
+                    <span class="draft-tag">Web</span>
+                </div>
+            </div>
+            <div>
+                <div class="draft-item">
+                    <span class="draft-title">Kotlin coroutines vs Project Loom</span>
+                    <span class="draft-tag">JVM</span>
+                </div>
+                <div class="draft-item">
+                    <span class="draft-title">Data pipeline reliability patterns</span>
+                    <span class="draft-tag">Data</span>
+                </div>
+                <div class="draft-item">
+                    <span class="draft-title">Postgres query optimization notes</span>
+                    <span class="draft-tag">Database</span>
+                </div>
+                <div class="draft-item">
+                    <span class="draft-title">Shell scripting for automation</span>
+                    <span class="draft-tag">DevOps</span>
+                </div>
+                <div class="draft-item">
+                    <span class="draft-title">Cost modeling for cloud workloads</span>
+                    <span class="draft-tag">Cloud</span>
+                </div>
+            </div>
+        </div>
+        <div style="text-align: right; padding-bottom: 20px;">
+            <a class="project-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank">Browse all drafts <span class="arrow">&rarr;</span></a>
+        </div>
+        <hr>
+
+        <!-- Archive Index -->
+        <div class="section-label" id="archive">Archive Index</div>
+        <div class="archive-strip">
+            <div class="archive-item">
+                <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" target="_blank">
+                    <div class="label">Drafts</div>
+                    <div class="sub">Writing &amp; ideas</div>
+                </a>
+            </div>
+            <div class="archive-item">
+                <a href="https://github.com/kmazur/kmazur.github.io/tree/master/data" target="_blank">
+                    <div class="label">Data</div>
+                    <div class="sub">Datasets &amp; exports</div>
+                </a>
+            </div>
+            <div class="archive-item">
+                <a href="https://github.com/kmazur/kmazur.github.io/tree/master/tools" target="_blank">
+                    <div class="label">Tools</div>
+                    <div class="sub">Utilities &amp; scripts</div>
+                </a>
+            </div>
+            <div class="archive-item">
+                <a href="https://github.com/kmazur/kmazur.github.io/tree/master/references" target="_blank">
+                    <div class="label">References</div>
+                    <div class="sub">Links &amp; resources</div>
+                </a>
+            </div>
+        </div>
+        <hr>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <a href="https://github.com/kmazur/kmazur.github.io" target="_blank">github.com/kmazur</a> &middot; Knowledge archive, perpetually in draft.
+        </footer>
+
+    </div>
+
+</body>
+</html>

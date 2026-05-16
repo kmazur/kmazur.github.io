@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kmazur — Knowledge Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+  :root{
+    --bg:#1a1b26;
+    --surface:#24283b;
+    --border:#343a52;
+    --text:#c0caf5;
+    --muted:#565f89;
+    --green:#9ece6a;
+    --blue:#7aa2f7;
+    --purple:#bb9af7;
+    --cyan:#7dcfff;
+    --orange:#ff9e64;
+  }
+
+  html{font-size:16px}
+
+  body{
+    font-family:'JetBrains Mono',monospace;
+    background-color:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    min-height:100vh;
+    /* dot-grid background */
+    background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);
+    background-size:24px 24px;
+  }
+
+  a{color:inherit;text-decoration:none}
+
+  .container{
+    max-width:960px;
+    margin:0 auto;
+    padding:0 1.5rem;
+  }
+
+  /* ── Header ── */
+  .header{
+    padding:1.5rem 0;
+    border-bottom:1px solid var(--border);
+  }
+  .header .container{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:0.5rem;
+  }
+  .header-left{display:flex;align-items:baseline;gap:0.75rem;flex-wrap:wrap}
+  .prompt{
+    font-size:1.15rem;
+    font-weight:600;
+    color:var(--green);
+  }
+  .tagline{
+    font-size:0.8rem;
+    font-weight:300;
+    color:var(--muted);
+  }
+  .gh-link{
+    font-size:0.8rem;
+    color:var(--muted);
+    border:1px solid var(--border);
+    padding:0.3rem 0.7rem;
+    border-radius:4px;
+    transition:color .2s,border-color .2s;
+  }
+  .gh-link:hover{color:var(--blue);border-color:var(--blue)}
+
+  /* ── Section titles ── */
+  .section{padding:2rem 0}
+  .section-title{
+    font-size:0.75rem;
+    font-weight:500;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--muted);
+    margin-bottom:1rem;
+  }
+  .section-title span{color:var(--text)}
+
+  /* ── Projects Grid ── */
+  .projects-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1rem;
+  }
+  .project-card{
+    background:var(--surface);
+    border-radius:6px;
+    padding:1.25rem;
+    display:flex;
+    flex-direction:column;
+    gap:0.6rem;
+    border:1px solid var(--border);
+    border-top:3px solid var(--border);
+    transition:transform .2s,box-shadow .2s;
+  }
+  .project-card[data-accent="green"]{border-top-color:var(--green)}
+  .project-card[data-accent="blue"]{border-top-color:var(--blue)}
+  .project-card[data-accent="orange"]{border-top-color:var(--orange)}
+
+  .project-card:hover{
+    transform:translateY(-3px);
+  }
+  .project-card[data-accent="green"]:hover{box-shadow:0 4px 20px rgba(158,206,106,.15)}
+  .project-card[data-accent="blue"]:hover{box-shadow:0 4px 20px rgba(122,162,247,.15)}
+  .project-card[data-accent="orange"]:hover{box-shadow:0 4px 20px rgba(255,158,100,.15)}
+
+  .project-name{
+    font-size:0.9rem;
+    font-weight:600;
+  }
+  .project-desc{
+    font-size:0.78rem;
+    font-weight:300;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  .project-tags{display:flex;flex-wrap:wrap;gap:0.4rem}
+  .tag{
+    font-size:0.65rem;
+    font-weight:400;
+    padding:0.15rem 0.45rem;
+    border-radius:3px;
+    background:rgba(86,95,137,.25);
+    color:var(--muted);
+  }
+  .project-link{
+    font-size:0.78rem;
+    font-weight:500;
+    margin-top:auto;
+    display:inline-flex;
+    align-items:center;
+    gap:0.3rem;
+    transition:color .2s;
+  }
+  .project-card[data-accent="green"] .project-link{color:var(--green)}
+  .project-card[data-accent="blue"] .project-link{color:var(--blue)}
+  .project-card[data-accent="orange"] .project-link{color:var(--orange)}
+  .project-link:hover{opacity:.8}
+  .project-link .arrow{transition:transform .2s}
+  .project-card:hover .project-link .arrow{transform:translateX(3px)}
+
+  /* ── Knowledge Base ── */
+  .kb-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:1.25rem;
+  }
+  .kb-category{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:1.25rem;
+  }
+  .kb-cat-header{
+    font-size:0.8rem;
+    font-weight:600;
+    margin-bottom:0.75rem;
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+  }
+  .kb-cat-header .dot{
+    width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;
+  }
+  .kb-cat-header[data-color="cyan"] .dot{background:var(--cyan)}
+  .kb-cat-header[data-color="purple"] .dot{background:var(--purple)}
+  .kb-cat-header[data-color="green"] .dot{background:var(--green)}
+  .kb-cat-header[data-color="orange"] .dot{background:var(--orange)}
+  .kb-cat-header[data-color="cyan"]{color:var(--cyan)}
+  .kb-cat-header[data-color="purple"]{color:var(--purple)}
+  .kb-cat-header[data-color="green"]{color:var(--green)}
+  .kb-cat-header[data-color="orange"]{color:var(--orange)}
+
+  .kb-list{list-style:none;display:flex;flex-direction:column;gap:0.4rem}
+  .kb-item{
+    font-size:0.78rem;
+    font-weight:300;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    gap:0.5rem;
+    padding:0.25rem 0;
+  }
+  .kb-item .dot-sm{
+    width:4px;height:4px;border-radius:50%;flex-shrink:0;
+    background:var(--border);
+  }
+
+  .kb-browse{
+    margin-top:1rem;
+    text-align:center;
+  }
+  .kb-browse a{
+    font-size:0.78rem;
+    font-weight:500;
+    color:var(--blue);
+    transition:opacity .2s;
+  }
+  .kb-browse a:hover{opacity:.7}
+
+  /* ── Archive ── */
+  .archive-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.75rem;
+  }
+  .archive-pill{
+    font-size:0.78rem;
+    font-weight:400;
+    padding:0.4rem 0.9rem;
+    border:1px solid var(--border);
+    border-radius:4px;
+    color:var(--muted);
+    display:inline-flex;
+    align-items:center;
+    gap:0.4rem;
+    transition:color .2s,border-color .2s,box-shadow .2s;
+  }
+  .archive-pill:hover{
+    color:var(--text);
+    border-color:var(--muted);
+    box-shadow:0 0 12px rgba(122,162,247,.1);
+  }
+  .archive-pill .pill-icon{font-size:0.85rem}
+
+  /* ── Footer ── */
+  .footer{
+    padding:2rem 0;
+    border-top:1px solid var(--border);
+    text-align:center;
+  }
+  .footer a{
+    font-size:0.72rem;
+    color:var(--muted);
+    transition:color .2s;
+  }
+  .footer a:hover{color:var(--blue)}
+
+  /* ── Responsive ── */
+  @media(max-width:768px){
+    .projects-grid{grid-template-columns:1fr}
+    .kb-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:500px){
+    .header .container{flex-direction:column;align-items:flex-start}
+    .archive-row{flex-direction:column}
+    .archive-pill{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-left">
+        <span class="prompt">kmazur ~$</span>
+        <span class="tagline">personal knowledge archive</span>
+      </div>
+      <a href="https://github.com/kmazur/kmazur.github.io" class="gh-link">github</a>
+    </div>
+  </header>
+
+  <!-- Projects -->
+  <section class="section">
+    <div class="container">
+      <div class="section-title">// <span>projects</span></div>
+      <div class="projects-grid">
+
+        <div class="project-card" data-accent="green">
+          <div class="project-name">JDK Explorer</div>
+          <div class="project-desc">Browse JDK releases, features, and API changes across versions.</div>
+          <div class="project-tags">
+            <span class="tag">java</span>
+            <span class="tag">web</span>
+            <span class="tag">reference</span>
+          </div>
+          <a href="./experiments/web/jdk/" class="project-link">open <span class="arrow">&rarr;</span></a>
+        </div>
+
+        <div class="project-card" data-accent="blue">
+          <div class="project-name">Travel Checklist</div>
+          <div class="project-desc">Reusable packing and preparation checklist for trips.</div>
+          <div class="project-tags">
+            <span class="tag">travel</span>
+            <span class="tag">checklist</span>
+          </div>
+          <a href="./experiments/web/travel/" class="project-link">open <span class="arrow">&rarr;</span></a>
+        </div>
+
+        <div class="project-card" data-accent="orange">
+          <div class="project-name">Cost Estimator</div>
+          <div class="project-desc">Estimate session costs for Claude Code usage.</div>
+          <div class="project-tags">
+            <span class="tag">tool</span>
+            <span class="tag">calculator</span>
+            <span class="tag">ai</span>
+          </div>
+          <a href="./tools/cost-estimator/" class="project-link">open <span class="arrow">&rarr;</span></a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Knowledge Base -->
+  <section class="section">
+    <div class="container">
+      <div class="section-title">// <span>knowledge base</span> <span style="color:var(--muted);font-weight:300">(drafts)</span></div>
+      <div class="kb-grid">
+
+        <div class="kb-category">
+          <div class="kb-cat-header" data-color="cyan"><span class="dot"></span> Engineering</div>
+          <ul class="kb-list">
+            <li class="kb-item"><span class="dot-sm"></span> System design patterns</li>
+            <li class="kb-item"><span class="dot-sm"></span> Distributed systems notes</li>
+            <li class="kb-item"><span class="dot-sm"></span> Performance optimization</li>
+            <li class="kb-item"><span class="dot-sm"></span> CI/CD pipelines</li>
+          </ul>
+        </div>
+
+        <div class="kb-category">
+          <div class="kb-cat-header" data-color="purple"><span class="dot"></span> Languages</div>
+          <ul class="kb-list">
+            <li class="kb-item"><span class="dot-sm"></span> JVM internals</li>
+            <li class="kb-item"><span class="dot-sm"></span> Kotlin idioms</li>
+            <li class="kb-item"><span class="dot-sm"></span> TypeScript patterns</li>
+            <li class="kb-item"><span class="dot-sm"></span> Rust exploration</li>
+          </ul>
+        </div>
+
+        <div class="kb-category">
+          <div class="kb-cat-header" data-color="green"><span class="dot"></span> Career</div>
+          <ul class="kb-list">
+            <li class="kb-item"><span class="dot-sm"></span> Technical leadership</li>
+            <li class="kb-item"><span class="dot-sm"></span> Code review practices</li>
+            <li class="kb-item"><span class="dot-sm"></span> Mentoring frameworks</li>
+          </ul>
+        </div>
+
+        <div class="kb-category">
+          <div class="kb-cat-header" data-color="orange"><span class="dot"></span> Research</div>
+          <ul class="kb-list">
+            <li class="kb-item"><span class="dot-sm"></span> LLM applications</li>
+            <li class="kb-item"><span class="dot-sm"></span> Agent architectures</li>
+            <li class="kb-item"><span class="dot-sm"></span> Knowledge management</li>
+          </ul>
+        </div>
+
+      </div>
+      <div class="kb-browse">
+        <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">browse all drafts &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Archive -->
+  <section class="section">
+    <div class="container">
+      <div class="section-title">// <span>archive</span></div>
+      <div class="archive-row">
+        <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" class="archive-pill">
+          <span class="pill-icon">&#9998;</span> Drafts
+        </a>
+        <a href="https://github.com/kmazur/kmazur.github.io/tree/master/data" class="archive-pill">
+          <span class="pill-icon">&#9776;</span> Data
+        </a>
+        <a href="https://github.com/kmazur/kmazur.github.io/tree/master/tools" class="archive-pill">
+          <span class="pill-icon">&#9881;</span> Tools
+        </a>
+        <a href="https://github.com/kmazur/kmazur.github.io/tree/master/references" class="archive-pill">
+          <span class="pill-icon">&#9733;</span> References
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <a href="https://github.com/kmazur/kmazur.github.io">github.com/kmazur/kmazur.github.io</a>
+    </div>
+  </footer>
+
+</body>
+</html>

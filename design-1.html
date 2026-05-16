@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krzysztof Mazur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #1a1b26;
+    --bg-surface: #1f2032;
+    --bg-hover: #24253a;
+    --border: #2e2f42;
+    --text: #c0caf5;
+    --text-dim: #787c9e;
+    --text-bright: #e0e4ff;
+    --green: #9ece6a;
+    --blue: #7aa2f7;
+    --yellow: #e0af68;
+    --magenta: #bb9af7;
+    --cyan: #7dcfff;
+    --red: #f7768e;
+    --orange: #ff9e64;
+  }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 3rem;
+  }
+
+  /* --- Header --- */
+  .header {
+    margin-bottom: 2.5rem;
+  }
+
+  .prompt {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 0.25rem;
+  }
+
+  .prompt .cursor {
+    display: inline-block;
+    width: 0.6em;
+    height: 1.15em;
+    background: var(--green);
+    opacity: 0.7;
+    vertical-align: text-bottom;
+    margin-left: 0.15em;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .description {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+
+  /* --- Section --- */
+  .section {
+    margin-bottom: 2.25rem;
+  }
+
+  .section-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+  }
+
+  /* --- Project rows --- */
+  .project {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 4px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+
+  .project:hover {
+    background: var(--bg-hover);
+    box-shadow: 0 0 12px rgba(122, 162, 247, 0.07);
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.1em 0.55em;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .tag-experiment { background: rgba(158, 206, 106, 0.15); color: var(--green); }
+  .tag-tool       { background: rgba(122, 162, 247, 0.15); color: var(--blue); }
+  .tag-data       { background: rgba(224, 175, 104, 0.15); color: var(--yellow); }
+
+  .project-title {
+    font-weight: 500;
+    color: var(--text-bright);
+    flex-shrink: 0;
+  }
+
+  .project-desc {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+  }
+
+  .arrow {
+    margin-left: auto;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.15s;
+    flex-shrink: 0;
+  }
+
+  .project:hover .arrow {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+
+  /* --- Archive list --- */
+  .archive-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .archive-list a {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.2em 0.6em;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .archive-list a:hover {
+    background: var(--bg-hover);
+    border-color: var(--blue);
+    box-shadow: 0 0 8px rgba(122, 162, 247, 0.1);
+  }
+
+  /* --- Topics --- */
+  .topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+  }
+
+  .topic {
+    font-size: 0.72rem;
+    padding: 0.15em 0.5em;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .topic-blue    { background: rgba(122, 162, 247, 0.12); color: var(--blue); }
+  .topic-green   { background: rgba(158, 206, 106, 0.12); color: var(--green); }
+  .topic-yellow  { background: rgba(224, 175, 104, 0.12); color: var(--yellow); }
+  .topic-magenta { background: rgba(187, 154, 247, 0.12); color: var(--magenta); }
+  .topic-cyan    { background: rgba(125, 207, 255, 0.12); color: var(--cyan); }
+  .topic-orange  { background: rgba(255, 158, 100, 0.12); color: var(--orange); }
+  .topic-red     { background: rgba(247, 118, 142, 0.12); color: var(--red); }
+
+  /* --- Footer --- */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding-top: 1.25rem;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .footer a {
+    color: var(--blue);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .footer a:hover {
+    color: var(--cyan);
+  }
+
+  /* --- Responsive --- */
+  @media (max-width: 600px) {
+    .container { padding: 1.5rem 1rem 2rem; }
+
+    .project {
+      flex-wrap: wrap;
+      gap: 0.3rem 0.6rem;
+    }
+
+    .project-desc {
+      width: 100%;
+      padding-left: 0;
+    }
+
+    .arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="prompt">krzysztof-mazur ~$<span class="cursor"></span></div>
+    <p class="description">Personal knowledge archive. Experiments, tools, and collected references.</p>
+  </header>
+
+  <!-- Projects -->
+  <section class="section">
+    <h2 class="section-title">Projects</h2>
+
+    <a class="project" href="./experiments/web/jdk/">
+      <span class="tag tag-experiment">experiment</span>
+      <span class="project-title">JDK Explorer</span>
+      <span class="project-desc">Browse and compare JDK APIs across versions</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+
+    <a class="project" href="./experiments/web/travel/">
+      <span class="tag tag-experiment">experiment</span>
+      <span class="project-title">Travel Checklist</span>
+      <span class="project-desc">Interactive packing and planning checklist</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+
+    <a class="project" href="./tools/cost-estimator/">
+      <span class="tag tag-tool">tool</span>
+      <span class="project-title">Cost Estimator</span>
+      <span class="project-desc">Estimate session costs for Claude Code</span>
+      <span class="arrow">&rarr;</span>
+    </a>
+  </section>
+
+  <!-- Archive -->
+  <section class="section">
+    <h2 class="section-title">Archive</h2>
+
+    <nav class="archive-list">
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">Drafts</a>
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/data">Data</a>
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/tools">Tools</a>
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/references">References</a>
+    </nav>
+
+    <div class="topics">
+      <span class="topic topic-blue">java</span>
+      <span class="topic topic-green">linux</span>
+      <span class="topic topic-yellow">ai</span>
+      <span class="topic topic-magenta">architecture</span>
+      <span class="topic topic-cyan">networking</span>
+      <span class="topic topic-orange">performance</span>
+      <span class="topic topic-red">security</span>
+      <span class="topic topic-blue">databases</span>
+      <span class="topic topic-green">devops</span>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>&mdash;</span>
+    <a href="https://github.com/kmazur/kmazur.github.io">github.com/kmazur/kmazur.github.io</a>
+  </footer>
+
+</div>
+
+</body>
+</html>

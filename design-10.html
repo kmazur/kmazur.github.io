@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krzysztof Mazur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: #111113;
+    color: #ededef;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 80px 24px 120px;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 64px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+
+  .header p {
+    font-size: 14px;
+    color: #71717a;
+  }
+
+  .rule {
+    border: none;
+    border-top: 1px solid #27272a;
+    margin-top: 24px;
+  }
+
+  /* Section labels */
+  .section-label {
+    font-size: 12px;
+    color: #71717a;
+    text-transform: lowercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 20px;
+  }
+
+  section {
+    margin-bottom: 56px;
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid #27272a;
+    margin-bottom: 56px;
+  }
+
+  /* Projects */
+  .project-list {
+    list-style: none;
+  }
+
+  .project-row {
+    border-bottom: 1px solid #27272a;
+  }
+
+  .project-row:first-child {
+    border-top: 1px solid #27272a;
+  }
+
+  .project-link {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 14px 12px;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transition: background 0.2s ease;
+  }
+
+  .project-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    right: 12px;
+    height: 1.5px;
+    transition: height 0.2s ease, opacity 0.2s ease;
+    opacity: 0.6;
+  }
+
+  .project-row:nth-child(1) .project-link::after { background: #4ade80; }
+  .project-row:nth-child(2) .project-link::after { background: #38bdf8; }
+  .project-row:nth-child(3) .project-link::after { background: #c084fc; }
+
+  .project-row:nth-child(1) .project-link:hover { background: rgba(74, 222, 128, 0.06); }
+  .project-row:nth-child(2) .project-link:hover { background: rgba(56, 189, 248, 0.06); }
+  .project-row:nth-child(3) .project-link:hover { background: rgba(192, 132, 252, 0.06); }
+
+  .project-link:hover::after {
+    height: 3px;
+    opacity: 1;
+  }
+
+  .project-title {
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .project-tags {
+    font-size: 11px;
+    color: #71717a;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .project-tags span {
+    display: inline-block;
+    padding: 1px 6px;
+    border: 1px solid #3f3f46;
+    border-radius: 3px;
+    margin-right: 4px;
+  }
+
+  .project-desc {
+    font-size: 13px;
+    font-weight: 400;
+    color: #71717a;
+    text-align: right;
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  /* Writing */
+  .writing-category {
+    font-size: 11px;
+    color: #71717a;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 20px 0 8px;
+  }
+
+  .writing-category:first-child {
+    padding-top: 0;
+  }
+
+  .writing-list {
+    list-style: none;
+  }
+
+  .writing-item {
+    border-bottom: 1px solid transparent;
+  }
+
+  .writing-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 7px 0;
+    text-decoration: none;
+    color: #ededef;
+    font-size: 14px;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+
+  .writing-link:hover {
+    color: #fff;
+    transform: translateX(6px);
+  }
+
+  .writing-link:hover .writing-tag {
+    color: #a1a1aa;
+  }
+
+  .writing-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .writing-tag {
+    font-size: 12px;
+    color: #71717a;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+  }
+
+  /* Archive */
+  .archive-links {
+    font-size: 14px;
+    line-height: 2;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .archive-links a {
+    color: #ededef;
+    text-decoration: none;
+    padding-bottom: 1px;
+    border-bottom: 1px solid transparent;
+    transition: color 0.15s ease, border-color 0.2s ease;
+  }
+
+  .archive-links a:hover {
+    color: #fff;
+    border-bottom-color: #71717a;
+  }
+
+  .archive-sep {
+    display: inline-block;
+    width: 1px;
+    height: 14px;
+    background: #3f3f46;
+    margin: 0 14px;
+    vertical-align: middle;
+    user-select: none;
+  }
+
+  /* Elsewhere */
+  .elsewhere a {
+    font-size: 14px;
+    color: #ededef;
+    text-decoration: none;
+    padding-bottom: 1px;
+    border-bottom: 1px solid transparent;
+    transition: color 0.15s ease, border-color 0.2s ease;
+  }
+
+  .elsewhere a:hover {
+    color: #fff;
+    border-bottom-color: #71717a;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container {
+      padding: 48px 20px 80px;
+    }
+
+    .project-link {
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 12px 8px;
+    }
+
+    .project-desc {
+      text-align: left;
+      width: 100%;
+      flex-basis: 100%;
+    }
+
+    .writing-link {
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .archive-links {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .archive-sep {
+      display: none;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <h1>Krzysztof Mazur</h1>
+    <p>software engineer, personal knowledge archive</p>
+    <hr class="rule">
+  </header>
+
+  <section>
+    <div class="section-label">projects</div>
+    <ul class="project-list">
+      <li class="project-row">
+        <a class="project-link" href="./experiments/web/jdk/">
+          <span class="project-title">JDK Explorer</span>
+          <span class="project-tags"><span>java</span><span>web</span></span>
+          <span class="project-desc">browse JDK versions, features, and API changes</span>
+        </a>
+      </li>
+      <li class="project-row">
+        <a class="project-link" href="./experiments/web/travel/">
+          <span class="project-title">Travel Checklist</span>
+          <span class="project-tags"><span>js</span><span>pwa</span></span>
+          <span class="project-desc">packing list generator for trips</span>
+        </a>
+      </li>
+      <li class="project-row">
+        <a class="project-link" href="./tools/cost-estimator/">
+          <span class="project-title">Cost Estimator</span>
+          <span class="project-tags"><span>js</span><span>tool</span></span>
+          <span class="project-desc">estimate cloud and compute costs</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <hr class="section-divider">
+
+  <section>
+    <div class="section-label">writing (drafts)</div>
+
+    <div class="writing-category">engineering practice</div>
+    <ul class="writing-list">
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Code Review</span>
+          <span class="writing-tag">process</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Pillars of Software Craftsmanship</span>
+          <span class="writing-tag">principles</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Seniority Matrix</span>
+          <span class="writing-tag">career</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Tech Radar</span>
+          <span class="writing-tag">tools</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="writing-category">programming</div>
+    <ul class="writing-list">
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Competitive Programming</span>
+          <span class="writing-tag">algorithms</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Fork-Join Pool in Java</span>
+          <span class="writing-tag">java</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Reactive Programming</span>
+          <span class="writing-tag">paradigm</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Experiments in Neural Networks</span>
+          <span class="writing-tag">ml</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="writing-category">interviews &amp; career</div>
+    <ul class="writing-list">
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Interview Preparation: Coding</span>
+          <span class="writing-tag">interview</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Interview Preparation: System Design</span>
+          <span class="writing-tag">interview</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="writing-category">other</div>
+    <ul class="writing-list">
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Subjective List of Best IT Books</span>
+          <span class="writing-tag">books</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Time Journey</span>
+          <span class="writing-tag">personal</span>
+        </a>
+      </li>
+      <li class="writing-item">
+        <a class="writing-link" href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <span class="writing-title">Warsaw Housing Market Analysis</span>
+          <span class="writing-tag">data</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <hr class="section-divider">
+
+  <section>
+    <div class="section-label">archive</div>
+    <div class="archive-links">
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">Drafts</a><span class="archive-sep"></span><a href="https://github.com/kmazur/kmazur.github.io/tree/master/data">Data</a><span class="archive-sep"></span><a href="https://github.com/kmazur/kmazur.github.io/tree/master/tools">Tools</a><span class="archive-sep"></span><a href="https://github.com/kmazur/kmazur.github.io/tree/master/references">References</a>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">elsewhere</div>
+    <div class="elsewhere">
+      <a href="https://github.com/kmazur/kmazur.github.io">GitHub</a>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

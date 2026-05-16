@@ -70,6 +70,9 @@ export const MODELS = {
     cache5m: 6.25,
     cache1h: 10,
     cachedInput: 0.5,
+    tokenUsageMultiplier: 1.175,
+    tokenUsageMultiplierMin: 1,
+    tokenUsageMultiplierMax: 1.35,
     maxContext: 1000000,
     minCacheable: 4096,
     reasoningMode: 'anthropic-effort',
@@ -78,7 +81,7 @@ export const MODELS = {
     autoCompact: true,
     searchSupported: true,
     execFeeSupported: false,
-    tokenUsageNote: 'Updated tokenizer can use roughly 1.0x-1.35x more tokens for the same fixed text.',
+    tokenUsageNote: 'Estimator applies a ~1.18x tokenizer uplift by default, with a documented 1.0x-1.35x range depending on content type.',
     effortUsageNote: 'At higher effort levels, Opus 4.7 tends to spend more thinking and output tokens than Opus 4.6.',
     defaultEffort: 'deep',
     performance: {

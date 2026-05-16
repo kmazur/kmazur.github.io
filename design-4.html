@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krzysztof Mazur — Knowledge Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --border: #2a2d3a;
+  --text: #e1e4ed;
+  --muted: #7a7f8d;
+  --emerald: #10b981;
+  --sky: #38bdf8;
+  --violet: #a78bfa;
+  --amber: #f59e0b;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Topographic contour pattern background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.04;
+  background:
+    repeating-radial-gradient(ellipse 600px 400px at 20% 30%, transparent 0, transparent 58px, var(--muted) 59px, transparent 60px),
+    repeating-radial-gradient(ellipse 500px 350px at 70% 20%, transparent 0, transparent 42px, var(--muted) 43px, transparent 44px),
+    repeating-radial-gradient(ellipse 450px 500px at 50% 70%, transparent 0, transparent 36px, var(--muted) 37px, transparent 38px),
+    repeating-radial-gradient(ellipse 700px 300px at 80% 60%, transparent 0, transparent 50px, var(--muted) 51px, transparent 52px),
+    repeating-radial-gradient(ellipse 550px 450px at 30% 80%, transparent 0, transparent 30px, var(--muted) 31px, transparent 32px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.header-sep {
+  color: var(--border);
+  font-weight: 300;
+}
+
+.header-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.header-github {
+  color: var(--muted);
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.header-github:hover {
+  color: var(--text);
+}
+
+/* Tagline */
+.tagline {
+  padding: 20px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 600px;
+}
+
+/* Sections */
+section {
+  margin-top: 40px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+/* Project Cards */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.project-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.project-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 8px 0 0 8px;
+}
+
+.project-card[data-accent="emerald"]::before { background: var(--emerald); }
+.project-card[data-accent="sky"]::before { background: var(--sky); }
+.project-card[data-accent="violet"]::before { background: var(--violet); }
+
+.project-card:hover {
+  transform: translateY(-2px);
+}
+
+.project-card[data-accent="emerald"]:hover {
+  box-shadow: 0 4px 24px rgba(16, 185, 129, 0.12), 0 0 0 1px rgba(16, 185, 129, 0.15);
+}
+.project-card[data-accent="sky"]:hover {
+  box-shadow: 0 4px 24px rgba(56, 189, 248, 0.12), 0 0 0 1px rgba(56, 189, 248, 0.15);
+}
+.project-card[data-accent="violet"]:hover {
+  box-shadow: 0 4px 24px rgba(167, 139, 250, 0.12), 0 0 0 1px rgba(167, 139, 250, 0.15);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.card-arrow {
+  color: var(--muted);
+  font-size: 14px;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.project-card:hover .card-arrow {
+  transform: translateX(3px);
+  color: var(--text);
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  flex: 1;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.card-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+}
+
+/* Knowledge Base */
+.kb-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.kb-category {
+  background: var(--surface);
+  padding: 16px;
+}
+
+.kb-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.kb-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.kb-dot.emerald { background: var(--emerald); }
+.kb-dot.sky { background: var(--sky); }
+.kb-dot.violet { background: var(--violet); }
+.kb-dot.amber { background: var(--amber); }
+
+.kb-category-name {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.kb-topics {
+  list-style: none;
+}
+
+.kb-topic {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s;
+}
+
+.kb-topic:last-child {
+  border-bottom: none;
+}
+
+.kb-topic::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.kb-topic:hover {
+  color: var(--text);
+}
+
+.kb-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--border);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Archive Links */
+.archive-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.archive-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.archive-chip:hover {
+  color: var(--text);
+  border-color: #3a3d4a;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.archive-chip svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Footer */
+footer {
+  margin-top: 48px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+footer a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+footer a:hover {
+  color: var(--text);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+  .kb-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .archive-links {
+    flex-direction: column;
+  }
+  .archive-chip {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .kb-grid {
+    grid-template-columns: 1fr;
+  }
+  .container {
+    padding: 0 16px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <span class="header-name">Krzysztof Mazur</span>
+      <span class="header-sep">/</span>
+      <span class="header-label">Knowledge Archive</span>
+    </div>
+    <a href="https://github.com/kmazur/kmazur.github.io" class="header-github" aria-label="GitHub repository">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+  </header>
+
+  <!-- Tagline -->
+  <p class="tagline">Software engineering notes, experiments, and reference material. A structured collection of drafts, tools, and data.</p>
+
+  <!-- Projects -->
+  <section>
+    <h2 class="section-title">Projects</h2>
+    <div class="projects-grid">
+
+      <a href="./experiments/web/jdk/" class="project-card" data-accent="emerald">
+        <div class="card-header">
+          <span class="card-icon">&#9881;</span>
+          <span class="card-arrow">&rarr;</span>
+        </div>
+        <div class="card-title">JDK Explorer</div>
+        <div class="card-desc">Interactive browser for JDK APIs, classes, and version changes. Explore the Java standard library across releases.</div>
+        <div class="card-tags">
+          <span class="card-tag">Java</span>
+          <span class="card-tag">JDK</span>
+          <span class="card-tag">Web</span>
+        </div>
+      </a>
+
+      <a href="./experiments/web/travel/" class="project-card" data-accent="sky">
+        <div class="card-header">
+          <span class="card-icon">&#9992;</span>
+          <span class="card-arrow">&rarr;</span>
+        </div>
+        <div class="card-title">Travel Checklist</div>
+        <div class="card-desc">Comprehensive packing and preparation checklist for trips. Categorized items with progress tracking.</div>
+        <div class="card-tags">
+          <span class="card-tag">HTML</span>
+          <span class="card-tag">CSS</span>
+          <span class="card-tag">JS</span>
+        </div>
+      </a>
+
+      <a href="./tools/cost-estimator/" class="project-card" data-accent="violet">
+        <div class="card-header">
+          <span class="card-icon">&#9889;</span>
+          <span class="card-arrow">&rarr;</span>
+        </div>
+        <div class="card-title">Cost Estimator</div>
+        <div class="card-desc">Session cost calculator for Claude Code usage. Estimates token spend and pricing across models.</div>
+        <div class="card-tags">
+          <span class="card-tag">ES Modules</span>
+          <span class="card-tag">LLM</span>
+          <span class="card-tag">Pricing</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- Knowledge Base -->
+  <section>
+    <h2 class="section-title">Knowledge Base &mdash; Draft Topics</h2>
+    <div class="kb-grid">
+
+      <div class="kb-category">
+        <div class="kb-category-header">
+          <span class="kb-dot emerald"></span>
+          <span class="kb-category-name">Engineering</span>
+        </div>
+        <ul class="kb-topics">
+          <li class="kb-topic">System Design<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Code Review<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Software Craftsmanship<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Design Patterns<span class="kb-count">draft</span></li>
+        </ul>
+      </div>
+
+      <div class="kb-category">
+        <div class="kb-category-header">
+          <span class="kb-dot sky"></span>
+          <span class="kb-category-name">Languages</span>
+        </div>
+        <ul class="kb-topics">
+          <li class="kb-topic">Java Ecosystem<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Reactive Programming<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Concurrency Models<span class="kb-count">draft</span></li>
+        </ul>
+      </div>
+
+      <div class="kb-category">
+        <div class="kb-category-header">
+          <span class="kb-dot violet"></span>
+          <span class="kb-category-name">Career</span>
+        </div>
+        <ul class="kb-topics">
+          <li class="kb-topic">Technical Interviews<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Seniority Levels<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Engineering Leadership<span class="kb-count">draft</span></li>
+        </ul>
+      </div>
+
+      <div class="kb-category">
+        <div class="kb-category-header">
+          <span class="kb-dot amber"></span>
+          <span class="kb-category-name">Research</span>
+        </div>
+        <ul class="kb-topics">
+          <li class="kb-topic">Machine Learning<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Housing Analysis<span class="kb-count">draft</span></li>
+          <li class="kb-topic">Competitive Programming<span class="kb-count">draft</span></li>
+        </ul>
+      </div>
+
+    </div>
+    <div style="margin-top: 12px; text-align: right;">
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" style="font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Browse all drafts &rarr;</a>
+    </div>
+  </section>
+
+  <!-- Archive Links -->
+  <section>
+    <h2 class="section-title">Archive Links</h2>
+    <div class="archive-links">
+
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts" class="archive-chip">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1.75V13.5h13V1.75H1.5zm-1.5 0A1.5 1.5 0 011.5.25h13A1.5 1.5 0 0116 1.75V13.5a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 010 13.5V1.75zM3 3.75h4v1.5H3v-1.5zm0 3h10v1.5H3v-1.5zm0 3h7v1.5H3v-1.5z"/></svg>
+        Drafts
+      </a>
+
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/data" class="archive-chip">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5c-3.17 0-5 .94-5 1.5S4.83 4.5 8 4.5s5-.94 5-1.5S11.17 1.5 8 1.5zM3 5.37V7c0 .56 1.83 1.5 5 1.5s5-.94 5-1.5V5.37C11.84 5.93 10.08 6.5 8 6.5S4.16 5.93 3 5.37zM3 9.37V11c0 .56 1.83 1.5 5 1.5s5-.94 5-1.5V9.37c-1.16.56-2.92 1.13-5 1.13S4.16 9.93 3 9.37zM3 13.37V15c0 .56 1.83 1.5 5 1.5s5-.94 5-1.5v-1.63c-1.16.56-2.92 1.13-5 1.13s-3.84-.57-5-1.13z"/></svg>
+        Data
+      </a>
+
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/tools" class="archive-chip">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5.433 2.304A4.494 4.494 0 003.5 6c0 1.598.832 3.002 2.09 3.802.518.328.929.923.902 1.64v.008l-.164 3.337a.75.75 0 11-1.498-.073l.163-3.33c.002-.085-.05-.216-.25-.348A5.994 5.994 0 012 6a5.994 5.994 0 013.09-5.248.75.75 0 11.686 1.333l-.343.219zm5.477-.219A5.994 5.994 0 0114 6a5.994 5.994 0 01-2.743 5.036c-.2.132-.252.263-.25.348l.164 3.33a.75.75 0 11-1.498.073l-.164-3.337c-.027-.717.384-1.312.902-1.64A4.494 4.494 0 0012.5 6c0-1.598-.832-3.002-2.09-3.802a.75.75 0 01.5-1.113z"/></svg>
+        Tools
+      </a>
+
+      <a href="https://github.com/kmazur/kmazur.github.io/tree/master/references" class="archive-chip">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75A.75.75 0 01.75 1h4.253c1.227 0 2.317.59 3 1.501A3.744 3.744 0 0111 1h4.25a.75.75 0 01.75.75v10.5a.75.75 0 01-.75.75H10.5a2.25 2.25 0 00-2.25 2.25.75.75 0 01-1.5 0A2.25 2.25 0 004.5 13H.75a.75.75 0 01-.75-.75V1.75zm5.003.75H1.5v9h3a3.74 3.74 0 012.25.75V3.5A2.25 2.25 0 004.503 2.5h.5zm5.997 0h.5A2.25 2.25 0 0113.5 4.75v6h-3a3.74 3.74 0 00-2.25.75V3.5A2.25 2.25 0 0111 2.5z"/></svg>
+        References
+      </a>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <span>&copy; 2024 Krzysztof Mazur</span>
+    <a href="https://github.com/kmazur/kmazur.github.io">github.com/kmazur/kmazur.github.io</a>
+  </footer>
+
+</div>
+
+</body>
+</html>

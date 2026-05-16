@@ -57,6 +57,18 @@ function getTaskPerformance(model, taskKey) {
   };
 }
 
+function getTokenUsageMultiplier(model) {
+  return model.tokenUsageMultiplier ?? 1;
+}
+
+function getTokenUsageRange(model) {
+  const base = getTokenUsageMultiplier(model);
+  return {
+    down: (model.tokenUsageMultiplierMin ?? base) / Math.max(base, 0.0001),
+    up: (model.tokenUsageMultiplierMax ?? base) / Math.max(base, 0.0001),
+  };
+}
+
 function getMinCacheableTokens(model) {
   if (model.cacheUnavailable) return Number.POSITIVE_INFINITY;
   if (Number.isFinite(model.minCacheable)) return model.minCacheable;
@@ -244,6 +256,7 @@ export function buildScenario(cfg, modelId = cfg.model, taskKey = cfg.taskProfil
   const effortKey = cfg.effort || model.defaultEffort;
   const effort = getEffortProfile(effortKey);
   const taskPerf = getTaskPerformance(model, taskKey);
+  const tokenUsageMultiplier = getTokenUsageMultiplier(model);
   const reasoning = getReasoningSettings(model, effortKey, (cfg.thinkingTokens || 0) * taskPerf.thinking);
   const backgroundUsesProviderDefault = !Number.isFinite(cfg.backgroundCost)
     || Math.abs((cfg.backgroundCost || 0) - sourceProvider.defaultBackgroundCost) < 1e-9;
@@ -254,10 +267,12 @@ export function buildScenario(cfg, modelId = cfg.model, taskKey = cfg.taskProfil
     model: model.id,
     contextWindow: Math.min(cfg.contextWindow, model.maxContext),
     turns: roundInt((cfg.turns || 0) * taskPerf.turns, 1),
-    responseTokens: roundInt((cfg.responseTokens || 0) * taskPerf.response * effort.responseMultiplier, 0),
+    sysPrompt: roundInt((cfg.sysPrompt || 0) * tokenUsageMultiplier, 0),
+    userMsg: roundInt((cfg.userMsg || 0) * tokenUsageMultiplier, 0),
+    responseTokens: roundInt((cfg.responseTokens || 0) * taskPerf.response * effort.responseMultiplier * tokenUsageMultiplier, 0),
     thinkingTokens: reasoning.tokens,
     toolRounds: roundInt((cfg.toolRounds || 0) * taskPerf.toolRounds * effort.toolMultiplier, 0),
-    toolResult: roundInt(cfg.toolResult || 0, 0),
+    toolResult: roundInt((cfg.toolResult || 0) * tokenUsageMultiplier, 0),
     autoCompact: !!cfg.autoCompact && !!model.autoCompact,
     backgroundCost: backgroundUsesProviderDefault ? provider.defaultBackgroundCost : cfg.backgroundCost,
     webSearches: model.searchSupported ? roundInt(cfg.webSearches || 0, 0) : 0,
@@ -470,17 +485,19 @@ export function simulateNoCacheCost(cfg, modelId = cfg.model, taskKey = cfg.task
   return simulateAdjusted({ ...scenario.adjustedCfg, _noCache: true }, scenario.model).T.cost;
 }
 
-function getRangeFactors(cfg) {
+function getRangeFactors(cfg, model) {
   const uncertainty = UNCERTAINTY_OPTIONS[cfg.uncertainty] || UNCERTAINTY_OPTIONS.med;
   const toolMix = TOOL_MIX_OPTIONS[cfg.toolMix] || TOOL_MIX_OPTIONS.balanced;
   const retryLift = Math.min(0.18, (cfg.retryRate || 0) / 250);
   const interruptionLift = Math.min(0.08, (cfg.interruptions || 0) * 0.0125);
   const helperLift = Math.min(0.12, (cfg.parallelAgents || 0) * 0.025);
+  const tokenUsageRange = getTokenUsageRange(model);
   return {
-    lean: uncertainty.rangeDown * toolMix.rangeDown,
-    heavy: uncertainty.rangeUp * toolMix.rangeUp * (1 + retryLift + interruptionLift + helperLift),
+    lean: uncertainty.rangeDown * toolMix.rangeDown * tokenUsageRange.down,
+    heavy: uncertainty.rangeUp * toolMix.rangeUp * tokenUsageRange.up * (1 + retryLift + interruptionLift + helperLift),
     uncertainty,
     toolMix,
+    tokenUsageRange,
   };
 }
 
@@ -563,7 +580,7 @@ export function computePlanning(cfg, modelId = cfg.model, taskKey = cfg.taskProf
   const monthlyLaborValue = blendedLaborValue * sessionsPerMonth;
   const monthlyNetValue = monthlyLaborValue - monthlyBlended;
 
-  const rangeFactors = getRangeFactors(cfg);
+  const rangeFactors = getRangeFactors(cfg, current.model);
   const monthlyLean = monthlyBlended * rangeFactors.lean;
   const monthlyHeavy = monthlyBlended * rangeFactors.heavy;
 
@@ -616,6 +633,7 @@ export function computePlanning(cfg, modelId = cfg.model, taskKey = cfg.taskProf
     dominantMix,
     toolMix: rangeFactors.toolMix,
     uncertainty: rangeFactors.uncertainty,
+    tokenUsageRange: rangeFactors.tokenUsageRange,
     directWebSearchCost: getWebSearchUnitCost(current.model),
     directExecSessionCost: getExecSessionUnitCost(current.model),
     comparisonRows: allComparisons,

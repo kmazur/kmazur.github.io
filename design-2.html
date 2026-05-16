@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krzysztof Mazur — Knowledge Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #fafaf9;
+    --text: #1c1917;
+    --text-secondary: #57534e;
+    --text-tertiary: #a8a29e;
+    --border: #e7e5e4;
+    --card-bg: #ffffff;
+    --java-orange: #e67e22;
+    --teal: #0d9488;
+    --purple: #7c3aed;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ---- TOP BAR ---- */
+  .topbar {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topbar-name {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .topbar-github {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+  }
+
+  .topbar-github:hover { color: var(--text); }
+
+  .topbar-github svg { width: 16px; height: 16px; }
+
+  .rule {
+    max-width: 960px;
+    margin: 16px auto 0;
+    padding: 0 24px;
+  }
+
+  .rule hr {
+    border: none;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ---- INTRO ---- */
+  .intro {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+
+  .intro p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 560px;
+  }
+
+  .intro p strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ---- SECTIONS ---- */
+  .section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 0;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+
+  /* ---- TOOL CARDS ---- */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .tool-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 24px 20px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.25s ease;
+    position: relative;
+  }
+
+  .tool-card--java { border-left-color: var(--java-orange); }
+  .tool-card--teal { border-left-color: var(--teal); }
+  .tool-card--purple { border-left-color: var(--purple); }
+
+  .tool-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .tool-card--java:hover {
+    box-shadow: 0 8px 24px rgba(230, 126, 34, 0.12), 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .tool-card--teal:hover {
+    box-shadow: 0 8px 24px rgba(13, 148, 136, 0.12), 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .tool-card--purple:hover {
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12), 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .tool-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+
+  .tool-card-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 14px;
+    flex: 1;
+  }
+
+  .tool-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .tool-card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tech-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #f5f5f4;
+    color: var(--text-tertiary);
+  }
+
+  .tool-card--java .tech-tag { background: #fef3e2; color: #b45309; }
+  .tool-card--teal .tech-tag { background: #e6fbf9; color: #0f766e; }
+  .tool-card--purple .tech-tag { background: #f3e8ff; color: #6d28d9; }
+
+  .tool-card-cta {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: transform 0.15s;
+  }
+
+  .tool-card--java .tool-card-cta { color: var(--java-orange); }
+  .tool-card--teal .tool-card-cta { color: var(--teal); }
+  .tool-card--purple .tool-card-cta { color: var(--purple); }
+
+  .tool-card:hover .tool-card-cta {
+    transform: translateX(2px);
+  }
+
+  /* ---- WRITING TABLE ---- */
+  .writing-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .writing-table tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+
+  .writing-table tr:last-child { border-bottom: none; }
+
+  .writing-table tr:hover { background: #f5f5f4; }
+
+  .writing-table td {
+    padding: 10px 0;
+    vertical-align: middle;
+  }
+
+  .writing-table a {
+    text-decoration: none;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .writing-table tr:hover a { color: var(--text); }
+
+  .writing-table .row-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+
+  .writing-table .row-tags {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .writing-table .row-tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #f5f5f4;
+    color: var(--text-tertiary);
+    margin-left: 4px;
+  }
+
+  .writing-table .row-arrow {
+    text-align: right;
+    width: 32px;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    transition: transform 0.15s, color 0.15s;
+  }
+
+  .writing-table tr:hover .row-arrow {
+    color: var(--text-secondary);
+    transform: translateX(2px);
+  }
+
+  /* ---- ARCHIVE ROW ---- */
+  .archive-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .archive-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    transition: color 0.15s, border-color 0.15s, box-shadow 0.2s;
+  }
+
+  .archive-link:hover {
+    color: var(--text);
+    border-color: #d6d3d1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .archive-link svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  /* ---- FOOTER ---- */
+  .footer {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 32px;
+  }
+
+  .footer hr {
+    border: none;
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 16px;
+  }
+
+  .footer p {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.12s;
+  }
+
+  .footer a:hover { color: var(--text); }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 768px) {
+    .tools-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .writing-table .row-tags {
+      display: none;
+    }
+
+    .archive-row {
+      gap: 8px;
+    }
+  }
+
+  @media (min-width: 769px) and (max-width: 960px) {
+    .tools-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <span class="topbar-name">Krzysztof Mazur</span>
+  <a href="https://github.com/kmazur/kmazur.github.io" class="topbar-github">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+    GitHub
+  </a>
+</div>
+
+<div class="rule"><hr></div>
+
+<!-- Intro -->
+<div class="intro">
+  <p><strong>Personal knowledge archive.</strong> A curated collection of interactive tools, experiments, references, and draft writing. Built in the open as a living notebook.</p>
+</div>
+
+<!-- Interactive Tools -->
+<div class="section">
+  <div class="section-label">Interactive Tools</div>
+  <div class="tools-grid">
+
+    <a href="./experiments/web/jdk/" class="tool-card tool-card--java">
+      <div class="tool-card-title">JDK Explorer</div>
+      <div class="tool-card-desc">Browse JDK APIs, classes, and methods across versions with an interactive explorer.</div>
+      <div class="tool-card-footer">
+        <div class="tool-card-tags">
+          <span class="tech-tag">Java</span>
+          <span class="tech-tag">API Browser</span>
+        </div>
+        <span class="tool-card-cta">Open &rarr;</span>
+      </div>
+    </a>
+
+    <a href="./experiments/web/travel/" class="tool-card tool-card--teal">
+      <div class="tool-card-title">Travel Checklist</div>
+      <div class="tool-card-desc">Never forget essentials before a trip. Categorized packing lists with persistence.</div>
+      <div class="tool-card-footer">
+        <div class="tool-card-tags">
+          <span class="tech-tag">Utility</span>
+          <span class="tech-tag">LocalStorage</span>
+        </div>
+        <span class="tool-card-cta">Open &rarr;</span>
+      </div>
+    </a>
+
+    <a href="./tools/cost-estimator/" class="tool-card tool-card--purple">
+      <div class="tool-card-title">Cost Estimator</div>
+      <div class="tool-card-desc">Estimate session costs for Claude Code based on token usage and model selection.</div>
+      <div class="tool-card-footer">
+        <div class="tool-card-tags">
+          <span class="tech-tag">Claude</span>
+          <span class="tech-tag">Calculator</span>
+        </div>
+        <span class="tool-card-cta">Open &rarr;</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<!-- Writing & Notes -->
+<div class="section">
+  <div class="section-label">Writing &amp; Notes</div>
+  <table class="writing-table">
+    <tr>
+      <td>
+        <a href="https://github.com/kmazur/kmazur.github.io/tree/master/content/drafts">
+          <svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Browse all drafts
+        </a>
+      </td>
+      <td class="row-tags">
+        <span class="row-tag">WIP</span>
+        <span class="row-tag">Notes</span>
+        <span class="row-tag">Articles</span>
+      </td>
+      <td class="row-arrow">&rarr;</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Archive -->
+<div class="section">
+  <div class="section-label">Archive</div>
+  <div class="archive-row">
+    <a href="https://github.com/kmazur/kmazur.github.io/tree/master/data" class="archive-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>
+      Data
+    </a>
+    <a href="https://github.com/kmazur/kmazur.github.io/tree/master/tools" class="archive-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+      Tools
+    </a>
+    <a href="https://github.com/kmazur/kmazur.github.io/tree/master/references" class="archive-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      References
+    </a>
+    <a href="https://github.com/kmazur/kmazur.github.io" class="archive-link">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      Full Repository
+    </a>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <hr>
+  <p>&copy; 2026 Krzysztof Mazur &middot; <a href="https://github.com/kmazur/kmazur.github.io">github.com/kmazur</a></p>
+</div>
+
+</body>
+</html>
